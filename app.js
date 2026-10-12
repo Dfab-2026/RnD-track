@@ -31,7 +31,7 @@ function migrateSnapshot(data){
     else snap.departments.push({id:i+1,name,active:1,sort_order:i+1});
   });
   snap.departments=snap.departments.slice(0,8);
-  snap.schema_version=2;
+  snap.schema_version=4;
   snap.updated_at=new Date().toISOString();
   return snap;
 }
@@ -42,7 +42,7 @@ async function enableNotifications(){if(!('Notification' in window))throw new Er
 function disableNotifications(){localStorage.setItem('rnd_notifications_enabled','0')}
 function notifyUser(title,body){if(!notificationsEnabled())return;try{new Notification(title,{body,tag:'rnd-track-'+title.replace(/\s+/g,'-').toLowerCase()})}catch{}}
 function maybeDailyReminder(){const m=currentMember();if(!m||m.role==='visitor'||!notificationsEnabled())return;const key=`rnd_reminder_${m.id}_${today()}`;if(localStorage.getItem(key))return;const submitted=state.ideas.some(i=>i.submitted_by===m.id&&i.submission_date===today());if(!submitted){notifyUser('R&D Track · Daily Idea','Your daily idea is still pending for today.');localStorage.setItem(key,'1')}}
-function rawSnapshot(){return {schema_version:2,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0})=>({id,name,role,active,sort_order})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
+function rawSnapshot(){return {schema_version:4,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0})=>({id,name,role,active,sort_order})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
 function exportDatabase(){const payload=JSON.stringify(rawSnapshot(),null,2);const blob=new Blob([payload],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`RND-TRACK-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
 async function importDatabaseFile(file){if(!file)throw new Error('Choose a backup file.');let parsed;try{parsed=JSON.parse(await file.text())}catch{throw new Error('Invalid backup file.')}if(!parsed||!Array.isArray(parsed.members)||!Array.isArray(parsed.ideas)||!Array.isArray(parsed.projects))throw new Error('This file is not a valid R&D Track backup.');const migrated=migrateSnapshot(parsed);await writeSnapshot(migrated);return true}
 const nextId=()=>Math.floor(Date.now()*1000+(crypto.getRandomValues(new Uint32Array(1))[0]%1000));

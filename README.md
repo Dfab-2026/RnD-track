@@ -1,39 +1,59 @@
-# R&D TRACK — Firebase-ready shared database build
+# R&D TRACK — Firebase shared database build v4
 
-This version preserves the existing R&D workflow and adds optional Firebase shared storage without API routes.
+This build preserves the existing R&D workflow and fixes Firebase submission reliability.
 
-## Preserved workflow
-- Name login with remembered session until logout
-- Addable members
-- R&D Member and Admin / Visitor roles
+## Core flow preserved
+- Name-only member login with close-name suggestion
+- Persistent login until Settings -> Logout
+- Addable members and Admin / Visitor role
 - Fixed departments: Production, NPD, R&D, Marketing, Purchase, Accounts, Quality, RFQ
 - Daily idea entry
 - Exactly 2 weekly shortlisted ideas
-- Weekly projects
-- Daily progress + remarks/blockers/next action
-- Daily/weekly reports
+- Weekly projects and daily progress updates
+- Daily / weekly reports
 - Browser notifications
-- Backup/restore
+- Local backup / restore
 
-## New shared-data architecture
-- Cloud Firestore: shared structured data
-- Cloud Storage: attachments
-- Anonymous Firebase Auth: background SDK authentication while keeping the visible name-only login
-- IndexedDB: offline cache/fallback
-- Real-time cross-browser refresh
-- Image compression before Storage upload
+## Firebase behavior
+- Anonymous Firebase Auth runs in the background.
+- Firestore is the shared database for members, ideas, cycles, projects and progress.
+- Departments are a locked local master and are NOT written to Firestore.
+- IndexedDB remains an offline/local cache.
+- Attachments stay local on the browser in this Spark-plan build.
+- Attachment base64 data is NEVER written into Firestore.
+- Multiple devices receive Firestore updates through realtime listeners.
 
-## Before Firebase is configured
-The site still works locally using IndexedDB exactly like the previous version.
+## Important v4 submission fix
+The previous Firebase build attempted to write the locked `departments` collection. With production rules that reject department writes, that could make cloud saves fail. v4 no longer writes departments to Firestore.
 
-## To enable shared Firebase data
-Follow `FIREBASE-SETUP.md` and fill `firebase-config.js`.
+The Firebase connection test now performs an allowed Firestore read instead of writing a `_system` document, so it works with the production rules already configured.
 
-## Start locally
-Double-click `START-KPI.bat`, or:
+## No grammar/spelling assistance
+Free-text fields set `spellcheck=false` and Grammarly-disable attributes. The website itself performs no grammar correction, rewriting or spell correction.
+
+## Firebase config
+Keep your existing configured `firebase-config.js` when updating an already-configured installation. If using this ZIP fresh, paste the Firebase Web App values into `firebase-config.js`.
+
+## Run locally
+Double-click `START-KPI.bat`, or serve the folder with:
 
 ```powershell
 py -m http.server 3000
 ```
 
-Then open http://localhost:3000
+Open `http://localhost:3000`.
+
+## Deploy
+Firebase Hosting:
+
+```powershell
+firebase login
+firebase init hosting
+firebase deploy --only hosting
+```
+
+Firestore rules can be deployed separately with:
+
+```powershell
+firebase deploy --only firestore:rules
+```

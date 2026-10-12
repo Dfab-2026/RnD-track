@@ -1,12 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Current app preserves the requested name-only UI and signs the browser in
-    // anonymously behind the scenes. This blocks completely unauthenticated traffic,
-    // but name-only login is NOT strong identity/security. For sensitive production
-    // data, upgrade later to email/PIN/custom-claims authentication.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /members/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    // Fixed master list used by the UI. The application does not write this
+    // collection; department names are locked in the app.
+    match /departments/{document=**} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /ideas/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /cycles/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /projects/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /progress/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /notifications/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /activity_logs/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }
