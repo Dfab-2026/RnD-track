@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Current app preserves the requested name-only UI and signs the browser in
+    // anonymously behind the scenes. This blocks completely unauthenticated traffic,
+    // but name-only login is NOT strong identity/security. For sensitive production
+    // data, upgrade later to email/PIN/custom-claims authentication.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

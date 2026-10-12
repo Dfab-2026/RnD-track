@@ -1,0 +1,10 @@
+R&D TRACK v2.0 — NO API
+
+1. Open index.html directly, or run: py -m http.server 3000
+2. Open http://localhost:3000
+3. Default members: Kabil, Abinaya, Gautham, Akash.
+4. Fixed departments: Production, NPD, R&D, Marketing, Purchase, Accounts, Quality, RFQ.
+5. Settings includes notifications, persistent browser storage, database backup/export and restore/import.
+6. No npm, package.json, backend server or API route is required.
+
+IMPORTANT: Data is stored in IndexedDB on this browser/device. Use Export backup regularly for long-term safety.
