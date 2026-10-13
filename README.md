@@ -57,3 +57,5 @@ Firestore rules can be deployed separately with:
 ```powershell
 firebase deploy --only firestore:rules
 ```
+
+V6: Firestore is the shared source of truth. IndexedDB is an offline cache. Live listeners synchronize members, ideas, weekly cycles, projects and progress across browsers.

@@ -125,13 +125,15 @@ function persistLogin(member){localStorage.setItem('rndLoggedInMember',JSON.stri
 function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.removeItem('rndActiveUser')}
 function showLogin(){document.querySelector('#appShell').classList.add('app-locked');document.querySelector('#loginGate').classList.remove('hidden');document.querySelector('#loginName').focus()}
 function showApp(){const member=currentMember();if(!member){clearLogin();showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');document.querySelector('#signedInName').textContent=member.name;document.querySelector('#settingsSignedInName').textContent=member.name;const badge=$('#signedInRole');if(badge){badge.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';badge.className='user-role-badge '+(member.role==='visitor'?'visitor':'member')}renderAll();setTimeout(maybeDailyReminder,500)}
-let cloudRuntimeStatus='connecting';
-function setCloudRuntimeStatus(status){
+let cloudRuntimeStatus='connecting', cloudRuntimeMessage='';
+function setCloudRuntimeStatus(status,message=''){
   cloudRuntimeStatus=status;
+  if(message) cloudRuntimeMessage=String(message);
   const top=$('#liveCloudBadge');
-  if(top){top.textContent=status==='live'?'CLOUD LIVE':status==='offline'?'CLOUD OFFLINE':'CLOUD CONNECTING';top.className='cloud-live-badge '+status;}
+  if(top){top.textContent=status==='live'?'CLOUD LIVE':status==='offline'?'CLOUD OFFLINE':'CLOUD CONNECTING';top.className='cloud-live-badge '+status;top.title=cloudRuntimeMessage||'';}
   const cs=$('#cloudStatus');
-  if(cs){cs.textContent=status==='live'?'Connected · shared Firebase database':status==='offline'?'Firebase offline · local cache active':'Connecting to Firebase…';cs.className=status==='live'?'cloud-good':'cloud-warn';}
+  if(cs){cs.textContent=status==='live'?'Connected · shared Firebase database':status==='offline'?(cloudRuntimeMessage||'Firebase offline · local cache active'):'Connecting to Firebase…';cs.className=status==='live'?'cloud-good':'cloud-warn';}
+  const ce=$('#cloudErrorDetail');if(ce){ce.textContent=status==='offline'?(cloudRuntimeMessage||'No Firebase error detail available.'):' ';ce.classList.toggle('hidden',status!=='offline');}
 }
 let cloudBooted=false,cloudWatching=false;
 function cloudIsEmpty(s){return !s||['members','departments','ideas','cycles','projects','progress'].every(k=>!(s[k]||[]).length)}
@@ -153,7 +155,7 @@ async function bootCloud(){
   try{
     setCloudRuntimeStatus('connecting');
     const result=await window.rndCloud.init();
-    if(!result.enabled){setCloudRuntimeStatus('offline');return;}
+    if(!result.enabled){setCloudRuntimeStatus('offline',result.reason||'Firebase is not configured.');return;}
     const remote=await window.rndCloud.loadSnapshot();
     const local=await readSnapshot()||seedSnapshot();
     const merged=mergeSnapshots(local,remote||{});
@@ -165,11 +167,11 @@ async function bootCloud(){
     setCloudRuntimeStatus('live');
     if(!cloudWatching){
       cloudWatching=true;
-      window.rndCloud.watch(applyRemoteSnapshot,status=>setCloudRuntimeStatus(status?.connected?'live':'offline'));
+      window.rndCloud.watch(applyRemoteSnapshot,status=>setCloudRuntimeStatus(status?.connected?'live':'offline',status?.message||status?.error?.message||''));
     }
   }catch(e){
     console.error('Firebase startup failed',e);
-    setCloudRuntimeStatus('offline');
+    setCloudRuntimeStatus('offline',`${e?.code?e.code+': ':''}${e?.message||e}`);
   }
 }
 async function load(){
@@ -205,7 +207,7 @@ function bind(){
   $('#notificationBtn').onclick=async()=>{try{if(notificationsEnabled()){disableNotifications();toast('Notifications disabled.')}else{await enableNotifications();notifyUser('R&D Track notifications','Notifications are now enabled.');toast('Notifications enabled.')}renderSettings()}catch(err){toast(err.message,true)}};
   $('#exportDbBtn').onclick=()=>{exportDatabase();toast('Database backup downloaded.');};
   $('#importDbInput').onchange=async e=>{try{await importDatabaseFile(e.target.files?.[0]);toast('Database restored successfully.');e.target.value='';await load()}catch(err){toast(err.message,true)}};
-  $('#requestStorageBtn').onclick=async()=>{const ok=await requestDurableStorage();toast(ok?'Persistent browser storage enabled.':'Browser kept standard storage mode.',!ok);renderSettings()};const ctb=$('#testCloudBtn');if(ctb)ctb.onclick=async()=>{try{const r=await window.rndCloud?.test?.();toast(r?.message||'Firebase is not configured.',!r?.ok);renderSettings()}catch(e){toast(e.message,true)}};
+  $('#requestStorageBtn').onclick=async()=>{const ok=await requestDurableStorage();toast(ok?'Persistent browser storage enabled.':'Browser kept standard storage mode.',!ok);renderSettings()};const ctb=$('#testCloudBtn');if(ctb)ctb.onclick=async()=>{try{ctb.disabled=true;ctb.textContent='Testing…';const r=await window.rndCloud?.test?.();setCloudRuntimeStatus(r?.ok?'live':'offline',r?.ok?'':r?.message||'Firebase test failed');toast(r?.message||'Firebase is not configured.',!r?.ok);renderSettings()}catch(e){setCloudRuntimeStatus('offline',e.message);toast(e.message,true)}finally{ctb.disabled=false;ctb.textContent='Test Firebase connection'}};const crb=$('#retryCloudBtn');if(crb)crb.onclick=async()=>{crb.disabled=true;crb.textContent='RECONNECTING…';setCloudRuntimeStatus('connecting');const r=await window.rndCloud?.reconnect?.(applyRemoteSnapshot,status=>setCloudRuntimeStatus(status?.connected?'live':'offline',status?.message||status?.error?.message||''));if(!r?.ok)setCloudRuntimeStatus('offline',r?.error||'Reconnect failed');else setCloudRuntimeStatus('live');crb.disabled=false;crb.textContent='Reconnect Firebase';renderSettings()};
   $('#logoutBtn').onclick=()=>{clearLogin();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';showLogin()};
   $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');$('#quickIdeaBtn').onclick=openIdea;$('#newIdeaBtn').onclick=openIdea;$('#newWeekBtn').onclick=()=>{if(isVisitor())return toast('Admin visitors are view-only.',true);$('#weekDialog').showModal()};$$('[data-close]').forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close).close());['#ideaSearch','#ideaPersonFilter','#ideaDeptFilter','#ideaDateFilter'].forEach(s=>$(s).addEventListener('input',renderIdeas));$('#clearIdeaFilters').onclick=()=>{$('#ideaSearch').value='';$('#ideaPersonFilter').value='';$('#ideaDeptFilter').value='';$('#ideaDateFilter').value='';renderIdeas()};$('#weekSelect').onchange=renderWeekly;$$('.report-tab').forEach(b=>b.onclick=()=>{$$('.report-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.reportType=b.dataset.report;renderReportControls()});$('#ideaForm').onsubmit=async e=>{e.preventDefault();const submitBtn=e.submitter||e.target.querySelector('button[type="submit"],button:not([type])');if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='SUBMITTING…'}try{const attachment=await fileData($('#ideaAttachment'));const row=await createIdeaLocal({submitted_by:Number($('#ideaMember').value),department_id:Number($('#ideaDepartment').value),problem:$('#ideaProblem').value,proposed_idea:$('#ideaProposal').value,expected_benefit:$('#ideaBenefit').value,priority:$('#ideaPriority').value,submission_date:$('#ideaDate').value,attachment});$('#ideaDialog').close();e.target.reset();disableWritingAssist(e.target);renderAll();toast(`${row.idea_number} submitted and dashboard updated.`)}catch(err){toast(err.message,true)}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Submit Idea'}}};$('#weekForm').onsubmit=async e=>{e.preventDefault();try{await createCycleLocal({label:$('#weekLabel').value,start_date:$('#weekStart').value,end_date:$('#weekEnd').value});$('#weekDialog').close();e.target.reset();toast('Working week created.');await load()}catch(err){toast(err.message,true)}};$('#progressForm').onsubmit=async e=>{e.preventDefault();try{const attachment=await fileData($('#progressAttachment'));await addProgressLocal(Number(e.target.dataset.projectId),{user_id:Number($('#progressMember').value),update_date:$('#progressDate').value,progress_percent:Number($('#progressPercent').value),work_done:$('#progressWork').value,remarks:$('#progressRemarks').value,blocker:$('#progressBlocker').value,next_action:$('#progressNext').value,attachment});$('#progressDialog').close();e.target.reset();toast('Progress update saved.');await load()}catch(err){toast(err.message,true)}}}
 disableWritingAssist();new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)disableWritingAssist(n)}))).observe(document.documentElement,{childList:true,subtree:true});bind();load().catch(e=>{showLogin();$('#loginMessage').textContent=e.message});

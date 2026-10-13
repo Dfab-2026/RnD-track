@@ -51,3 +51,4 @@ th{background:#eaf2fb;color:#496787}th,td{border-color:#dbe5ef}.table-wrap{box-s
 .cloud-live-badge.live{border-color:#93c5fd;background:#dbeafe;color:#1d4ed8}
 .cloud-live-badge.offline{border-color:#fecaca;background:#fef2f2;color:#b91c1c}
 .cloud-live-badge.connecting{border-color:#dbeafe;background:#f8fbff;color:#64748b}
+.cloud-error-detail{margin-top:10px;padding:10px 12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:10px;font:600 12px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-word}.cloud-error-detail.hidden{display:none}.button-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
