@@ -143,7 +143,7 @@ function renderPage(name=state.page){
   else if(name==='ideas')renderIdeas();
   else if(name==='weekly')renderWeekly();
   else if(name==='progress')renderProjects();
-  else if(name==='reports'){renderAnalyticsOverview();renderReportControls()}
+  else if(name==='reports'){safeRenderAnalytics();renderReportControls()}
   else if(name==='settings')renderSettings();
   bindRecordActions();
 }
@@ -266,7 +266,7 @@ function workingMembers(){return state.members.filter(m=>m.role!=='visitor'&&Num
 function persistLogin(member){localStorage.setItem('rndLoggedInMember',JSON.stringify({id:member.id,name:member.name,role:member.role||'member'}));localStorage.setItem('rndActiveUser',String(member.id))}
 function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.removeItem('rndActiveUser')}
 function showLogin(){document.querySelector('#appShell').classList.add('app-locked');document.querySelector('#loginGate').classList.remove('hidden');document.querySelector('#loginName').focus()}
-function showApp(){const member=currentMember();if(!member){clearLogin();showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');document.querySelector('#signedInName').textContent=member.name;document.querySelector('#settingsSignedInName').textContent=member.name;const avatar=$('#signedInAvatar');if(avatar)avatar.textContent=(member.name||'R').trim().charAt(0).toUpperCase();const badge=$('#signedInRole');if(badge){badge.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';badge.className='user-role-badge '+(member.role==='visitor'?'visitor':'member')}renderAll();setTimeout(maybeDailyReminder,500)}
+function showApp(){const member=currentMember();if(!member){showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');document.querySelector('#signedInName').textContent=member.name;document.querySelector('#settingsSignedInName').textContent=member.name;const avatar=$('#signedInAvatar');if(avatar)avatar.textContent=(member.name||'R').trim().charAt(0).toUpperCase();const badge=$('#signedInRole');if(badge){badge.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';badge.className='user-role-badge '+(member.role==='visitor'?'visitor':'member')}try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500)}
 let cloudRuntimeStatus='connecting', cloudRuntimeMessage='';
 function setCloudRuntimeStatus(status,message=''){
   cloudRuntimeStatus=status;
@@ -291,8 +291,14 @@ async function applyRemoteSnapshot(remote){
   const ui={page:state.page,selectedProject:state.selectedProject,reportType:state.reportType};
   Object.assign(state,enrich(reconciled),ui);
   const saved=storedLogin();
-  if(saved&&state.members.some(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0))persistLogin(state.members.find(m=>Number(m.id)===Number(saved.id)));
-  else if(saved)clearLogin();
+  if(saved){
+    let member=state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0);
+    if(!member){
+      const cachedMember=(local.members||[]).find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0);
+      if(cachedMember){state.members.push({...cachedMember});member=cachedMember;}
+    }
+    if(member)persistLogin(member);
+  }
   setCloudRuntimeStatus('live');
   if(!$('#appShell').classList.contains('app-locked'))scheduleRender();
 }
@@ -334,11 +340,23 @@ async function bootCloud(){
 }
 async function load(){
   await refreshFromStorage();
+  let saved=storedLogin();
+  let member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
+  if(member){
+    persistLogin(member);
+    showApp();
+    void bootCloud().then(()=>{
+      const current=currentMember();
+      if(current){persistLogin(current);scheduleRender(true);}
+    });
+    return;
+  }
   await bootCloud();
-  const saved=storedLogin();
-  if(saved&&state.members.some(m=>Number(m.id)===Number(saved.id))){persistLogin(state.members.find(m=>Number(m.id)===Number(saved.id)));showApp()}else showLogin();
+  saved=storedLogin();
+  member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
+  if(member){persistLogin(member);showApp()}else showLogin();
 }
-function renderAll(){populateSelects();applyRoleAccess();renderDashboard();renderIdeas();renderWeekly();renderProjects();renderSettings();renderAnalyticsOverview();renderReportControls();bindRecordActions()}
+function renderAll(){populateSelects();applyRoleAccess();renderDashboard();renderIdeas();renderWeekly();renderProjects();renderSettings();safeRenderAnalytics();renderReportControls();bindRecordActions()}
 
 function populateSelects(){const workers=workingMembers();const opts=workers.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');['#ideaMember','#progressMember'].forEach(sel=>{const el=$(sel);const val=el.value||activeUser();el.innerHTML=opts;el.value=workers.some(m=>m.id===Number(val))?val:(workers[0]?.id||'')});const filterMembers=state.members.filter(m=>Number(m.active)!==0||state.ideas.some(i=>Number(i.submitted_by)===Number(m.id))||state.progress.some(p=>Number(p.user_id)===Number(m.id)));const allOpts=filterMembers.map(m=>`<option value="${m.id}">${esc(m.name)}${Number(m.active)===0?' · Archived':m.role==='visitor'?' · Visitor':''}</option>`).join('');$('#ideaPersonFilter').innerHTML='<option value="">All people</option>'+allOpts;const deps=state.departments.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');$('#ideaDepartment').innerHTML=deps;$('#ideaDeptFilter').innerHTML='<option value="">All departments</option>'+deps;$('#weekSelect').innerHTML=state.cycles.length?state.cycles.map(c=>`<option value="${c.id}">${esc(c.label)} · ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</option>`).join(''):'<option value="">No week created</option>'}
 
@@ -363,6 +381,96 @@ function renderSettings(){
   $$('[data-delete-member]').forEach(btn=>btn.onclick=async()=>{const id=Number(btn.dataset.deleteMember),m=state.members.find(x=>Number(x.id)===id);if(!m)return;if(!confirm(`Delete ${m.name} from active logins? Historical records will be preserved.`))return;try{btn.disabled=true;await deleteMemberLocal(id);toast(`${m.name} removed from active logins.`)}catch(e){toast(e.message,true);renderSettings()}finally{btn.disabled=false}});
   const addForm=$('#addMemberForm');if(addForm)addForm.onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{await addMemberLocal({name:$('#newMemberName').value,role:$('#newMemberRole').value});toast('New login added and saved to Firebase.')}catch(err){toast(err.message,true)}finally{b.disabled=false}};
   disableWritingAssist($('#settingsPage'));
+}
+function safeRenderAnalytics(){
+  try{
+    renderAnalyticsPanel();
+  }catch(err){
+    console.error('Analytics render failed:',err);
+    const host=$('#analyticsOverview');
+    if(host)host.innerHTML='<div class="empty-state">Analytics is temporarily unavailable. Your tracker data and login remain available.</div>';
+  }
+}
+function renderAnalyticsPanel(){
+  const host=$('#analyticsOverview');if(!host)return;
+  const workers=workingMembers();
+  const now=new Date();
+  const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const monthIdeas=state.ideas.filter(i=>String(i.submission_date||'').startsWith(monthKey)).length;
+  const active=state.projects.filter(p=>p.status!=='completed');
+  const completed=state.projects.filter(p=>p.status==='completed').length;
+  const avg=active.length?Math.round(active.reduce((a,p)=>a+Number(p.progress||0),0)/active.length):0;
+  const blockers=state.progress.filter(p=>String(p.blocker||'').trim()).length;
+  const totalIdeas=state.ideas.length;
+  const todayKey=today();
+  const todayIdeas=state.ideas.filter(i=>i.submission_date===todayKey);
+  const submittedToday=new Set(todayIdeas.map(i=>Number(i.submitted_by))).size;
+  const coverage=Math.round((submittedToday/Math.max(1,workers.length))*100);
+  const onTime=state.projects.length?Math.round((state.projects.filter(p=>p.status==='completed' && (!p.end_date || Number(p.progress)===100)).length/Math.max(1,completed))*100):0;
+
+  const last7=[];
+  for(let n=6;n>=0;n--){
+    const d=new Date();d.setDate(d.getDate()-n);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    last7.push({key,label:d.toLocaleDateString('en-IN',{weekday:'short'}),value:state.ideas.filter(i=>i.submission_date===key).length});
+  }
+  const maxTrend=Math.max(1,...last7.map(x=>x.value));
+  const points=last7.map((x,i)=>`${i*(100/6)},${88-(x.value/maxTrend)*68}`).join(' ');
+  const trendSvg=`<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="7 day idea trend"><defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity=".25"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs><polygon points="0,100 ${points} 100,100" fill="url(#trendFill)"/><polyline points="${points}" fill="none" stroke="#2563eb" stroke-width="2.6" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  const deptData=state.departments.map(d=>({label:d.name,value:state.ideas.filter(i=>Number(i.department_id)===Number(d.id)).length})).sort((a,b)=>b.value-a.value);
+  const memberData=workers.map(m=>({label:m.name,value:state.ideas.filter(i=>Number(i.submitted_by)===Number(m.id)).length})).sort((a,b)=>b.value-a.value);
+  const projectData=state.projects.slice().sort((a,b)=>Number(b.progress||0)-Number(a.progress||0)).slice(0,5);
+  const activeBlockers=new Set(state.progress.filter(x=>String(x.blocker||'').trim()).map(x=>Number(x.project_id))).size;
+
+  host.innerHTML=`
+    <section class="analytics-hero-card">
+      <div class="analytics-hero-copy">
+        <span class="kicker">R&D PERFORMANCE CENTER</span>
+        <h3>Team performance at a glance</h3>
+        <p>Live KPI view generated from the common Firebase dataset. Every idea, weekly assignment and progress update feeds these metrics automatically.</p>
+      </div>
+      <div class="analytics-hero-score">
+        <span>Today submission coverage</span>
+        <strong>${coverage}%</strong>
+        <small>${submittedToday} of ${workers.length} R&D members submitted</small>
+      </div>
+    </section>
+
+    <div class="analytics-kpi-grid">
+      <article class="analytics-kpi-card primary"><div class="kpi-icon">01</div><div><span>Ideas this month</span><strong>${monthIdeas}</strong><small>${totalIdeas} ideas stored overall</small></div></article>
+      <article class="analytics-kpi-card"><div class="kpi-icon">02</div><div><span>Active projects</span><strong>${active.length}</strong><small>${avg}% average execution</small></div></article>
+      <article class="analytics-kpi-card"><div class="kpi-icon">03</div><div><span>Completed</span><strong>${completed}</strong><small>${state.projects.length} total weekly projects</small></div></article>
+      <article class="analytics-kpi-card warning"><div class="kpi-icon">04</div><div><span>Projects with blockers</span><strong>${activeBlockers}</strong><small>${blockers} blocker updates logged</small></div></article>
+      <article class="analytics-kpi-card"><div class="kpi-icon">05</div><div><span>Team size</span><strong>${workers.length}</strong><small>active idea contributors</small></div></article>
+      <article class="analytics-kpi-card"><div class="kpi-icon">06</div><div><span>Execution health</span><strong>${avg}%</strong><small>${onTime}% completion health</small></div></article>
+    </div>
+
+    <div class="analytics-dashboard-grid">
+      <section class="analytics-card trend-card">
+        <div class="analytics-card-head"><div><span class="kicker">IDEA VELOCITY</span><h4>Last 7 days</h4></div><span class="analytics-value-chip">${last7.reduce((a,b)=>a+b.value,0)} ideas</span></div>
+        <div class="trend-chart">${trendSvg}</div>
+        <div class="trend-labels">${last7.map(x=>`<span><b>${x.value}</b><small>${x.label}</small></span>`).join('')}</div>
+      </section>
+      <section class="analytics-card health-card">
+        <div class="analytics-card-head"><div><span class="kicker">TEAM DISCIPLINE</span><h4>Daily submission health</h4></div></div>
+        <div class="analytics-ring-wrap"><div class="analytics-ring" style="--score:${coverage}"><div><strong>${coverage}%</strong><span>coverage</span></div></div><div class="analytics-health-copy"><b>${submittedToday}/${workers.length} submitted today</b><p>${coverage===100?'All R&D members have completed today’s idea entry.':`${Math.max(0,workers.length-submittedToday)} member${workers.length-submittedToday===1?'':'s'} still pending today.`}</p></div></div>
+      </section>
+      <section class="analytics-card department-card">
+        <div class="analytics-card-head"><div><span class="kicker">DEPARTMENT SIGNAL</span><h4>Ideas by department</h4></div><span class="analytics-value-chip">All time</span></div>
+        ${analyticsBars(deptData,Math.max(1,...deptData.map(x=>x.value)))}
+      </section>
+      <section class="analytics-card member-card">
+        <div class="analytics-card-head"><div><span class="kicker">CONTRIBUTION</span><h4>Ideas by member</h4></div><span class="analytics-value-chip">All time</span></div>
+        ${analyticsBars(memberData,Math.max(1,...memberData.map(x=>x.value)))}
+      </section>
+      <section class="analytics-card project-card-wide">
+        <div class="analytics-card-head"><div><span class="kicker">EXECUTION PORTFOLIO</span><h4>Current project progress</h4></div><span class="analytics-value-chip">${active.length} active</span></div>
+        <div class="analytics-project-table">
+          ${projectData.length?projectData.map(p=>`<div class="analytics-project-row"><div><b>${esc(p.project_number||'PROJECT')}</b><span>${esc(p.title||'Untitled project')}</span></div><div class="analytics-project-progress"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><strong>${Number(p.progress||0)}%</strong></div><span class="tag ${p.status||'active'}">${esc(String(p.status||'active').replaceAll('_',' '))}</span></div>`).join(''):'<div class="empty-state">No weekly projects yet.</div>'}
+        </div>
+      </section>
+    </div>`;
 }
 function analyticsBars(items,maxValue,labelKey='label',valueKey='value',suffix=''){
   const max=Math.max(1,Number(maxValue)||Math.max(0,...items.map(x=>Number(x[valueKey]||0))));
@@ -401,4 +509,4 @@ function bind(){
   $('#requestStorageBtn').onclick=async()=>{const ok=await requestDurableStorage();toast(ok?'Persistent browser storage enabled.':'Browser kept standard storage mode.',!ok);renderSettings()};;
   $('#logoutBtn').onclick=()=>{clearLogin();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';showLogin()};
   $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');$('#quickIdeaBtn').onclick=()=>{requestNotificationsFromGesture();openIdea()};$('#newIdeaBtn').onclick=()=>{requestNotificationsFromGesture();openIdea()};$('#newWeekBtn').onclick=()=>{if(isVisitor())return toast('Admin visitors are view-only.',true);delete $('#weekForm').dataset.editId;$('#weekForm').reset();$('#weekDialogTitle').textContent='Create Working Week';$('#weekDialog').showModal()};$$('[data-close]').forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close).close());['#ideaSearch','#ideaPersonFilter','#ideaDeptFilter','#ideaDateFilter'].forEach(s=>$(s).addEventListener('input',renderIdeas));$('#clearIdeaFilters').onclick=()=>{$('#ideaSearch').value='';$('#ideaPersonFilter').value='';$('#ideaDeptFilter').value='';$('#ideaDateFilter').value='';renderIdeas()};$('#weekSelect').onchange=renderWeekly;$$('.report-tab').forEach(b=>b.onclick=()=>{$$('.report-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.reportType=b.dataset.report;renderReportControls()});$('#ideaForm').onsubmit=async e=>{e.preventDefault();const submitBtn=e.submitter||e.target.querySelector('button[type="submit"],button:not([type])');if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='SUBMITTING…'}try{const attachment=await fileData($('#ideaAttachment'));const payload={submitted_by:Number($('#ideaMember').value),department_id:Number($('#ideaDepartment').value),problem:$('#ideaProblem').value,proposed_idea:$('#ideaProposal').value,expected_benefit:$('#ideaBenefit').value,priority:$('#ideaPriority').value,submission_date:$('#ideaDate').value,attachment};const editId=Number(e.target.dataset.editId)||0;const row=editId?await updateIdeaLocal(editId,payload):await createIdeaLocal(payload);delete e.target.dataset.editId;$('#ideaDialog').close();e.target.reset();disableWritingAssist(e.target);scheduleRender();toast(editId?`${row.idea_number} updated.`:(row.cloud_saved?`${row.idea_number} saved to Firebase and dashboard updated.`:`${row.idea_number} saved locally · Firebase sync pending.`),!editId&&!row.cloud_saved)}catch(err){toast(err.message,true)}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Submit Idea'}}};$('#weekForm').onsubmit=async e=>{e.preventDefault();try{const payload={label:$('#weekLabel').value,start_date:$('#weekStart').value,end_date:$('#weekEnd').value};const editId=Number(e.target.dataset.editId)||0;if(editId)await updateCycleLocal(editId,payload);else await createCycleLocal(payload);delete e.target.dataset.editId;$('#weekDialog').close();e.target.reset();toast(editId?'Working week updated.':'Working week created.');scheduleRender()}catch(err){toast(err.message,true)}};$('#projectEditForm').onsubmit=async e=>{e.preventDefault();try{await updateProjectLocal(Number($('#projectEditId').value),{title:$('#projectEditTitle').value,owner_id:Number($('#projectEditOwner').value),start_date:$('#projectEditStart').value,end_date:$('#projectEditEnd').value});$('#projectEditDialog').close();toast('Project updated.')}catch(err){toast(err.message,true)}};$('#progressForm').onsubmit=async e=>{e.preventDefault();try{const attachment=await fileData($('#progressAttachment'));const payload={user_id:Number($('#progressMember').value),update_date:$('#progressDate').value,progress_percent:Number($('#progressPercent').value),work_done:$('#progressWork').value,remarks:$('#progressRemarks').value,blocker:$('#progressBlocker').value,next_action:$('#progressNext').value,attachment};const editId=Number(e.target.dataset.editId)||0;if(editId)await updateProgressLocal(editId,payload);else await addProgressLocal(Number(e.target.dataset.projectId),payload);delete e.target.dataset.editId;$('#progressDialog').close();e.target.reset();toast(editId?'Progress update edited.':'Progress update saved.');scheduleRender()}catch(err){toast(err.message,true)}}}
-disableWritingAssist();new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)disableWritingAssist(n)}))).observe(document.documentElement,{childList:true,subtree:true});bind();load().catch(e=>{showLogin();$('#loginMessage').textContent=e.message});
+disableWritingAssist();new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)disableWritingAssist(n)}))).observe(document.documentElement,{childList:true,subtree:true});bind();load().catch(e=>{console.error('App startup failed',e);const saved=storedLogin();const member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;if(member){persistLogin(member);showApp();toast('Loaded saved session. Cloud sync will retry automatically.',true)}else{showLogin();$('#loginMessage').textContent=e?.message||'Unable to start the app.'}});

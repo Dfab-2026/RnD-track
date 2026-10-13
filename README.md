@@ -64,3 +64,18 @@ Only names are editable in Settings. Roles and slot count are fixed. Renaming a 
 - Realtime collection events are debounced and duplicate snapshots are ignored.
 - Removed full app reloads after weekly assignment and progress mutations.
 - Mutation buttons are guarded against double-clicks and surface errors cleanly.
+
+
+## v16 login/render stabilization
+- Restores remembered member immediately from local storage on refresh/reopen.
+- Firebase synchronization now starts in the background after the saved session is shown.
+- Restored missing Analytics renderer that caused `renderAnalyticsOverview is not defined`.
+- Startup/render errors no longer clear a valid remembered login.
+- Login is cleared only by the explicit Settings → Log out action or member deactivation logic where applicable.
+
+
+## v17 render hardening
+- Removed the old renderAnalyticsOverview symbol entirely.
+- Analytics rendering is isolated so it cannot block login/app startup.
+- Asset version 17.0.1 and no-cache Vercel headers prevent mixed deployments.
+- Existing Firebase configuration and tracker flows remain unchanged.
