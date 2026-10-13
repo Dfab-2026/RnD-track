@@ -143,3 +143,20 @@ input,select,textarea{width:100%;border:1px solid #bdd0e5;border-radius:10px;pad
 .panel-head .panel-actions{justify-content:flex-end}
 #ideasTable td:last-child{white-space:nowrap}
 @media(max-width:760px){.row-actions,.panel-actions,.project-actions{gap:6px}.mini-action{padding:7px 8px}.project-actions>*{flex:1 1 auto}.panel-head .panel-actions{width:100%;justify-content:flex-start}}
+
+/* v15 responsiveness: mutations render optimistically while cloud sync continues */
+.mini-action.is-busy,
+button.is-busy {
+  opacity: .55;
+  pointer-events: none;
+  cursor: wait;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+.table-wrap,
+.panel,
+.metric,
+.settings-card {
+  contain: layout paint;
+}

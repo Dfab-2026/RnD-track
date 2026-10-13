@@ -71,8 +71,9 @@
     }
   }
   const errText=e=>{if(!e)return'Unknown Firebase error';const code=e.code?String(e.code):'';const msg=e.message?String(e.message):String(e);return code?`${code}: ${msg}`:msg};
-  function makeSnapshot(){return {members:[...remoteCache.members],departments:[],ideas:[...remoteCache.ideas],cycles:[...remoteCache.cycles],projects:[...remoteCache.projects],progress:[...remoteCache.progress],schema_version:11,updated_at:new Date().toISOString()}}
-  function status(){return {configured:configured(),sdk:Boolean(window.firebase),authenticated:Boolean(authUid),uid:authUid,connected:ready,projectId:cfg().projectId||'',error:lastError?errText(lastError):'',schema:'compact-v2-roster'}}
+  function sortedRows(rows){return [...rows].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}))}
+  function makeSnapshot(){return {members:sortedRows(remoteCache.members),departments:[],ideas:sortedRows(remoteCache.ideas),cycles:sortedRows(remoteCache.cycles),projects:sortedRows(remoteCache.projects),progress:sortedRows(remoteCache.progress),schema_version:15,updated_at:new Date().toISOString()}}
+  function status(){return {configured:configured(),sdk:Boolean(window.firebase),authenticated:Boolean(authUid),uid:authUid,connected:ready,projectId:cfg().projectId||'',error:lastError?errText(lastError):'',schema:'compact-v3-fast-sync'}}
   function waitForAuthUser(timeoutMs=15000){return new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('Firebase Auth timed out. Check Anonymous sign-in and network access.'))},timeoutMs);const off=auth.onAuthStateChanged(user=>{if(done||!user)return;done=true;clearTimeout(timer);off();resolve(user)},err=>{if(done)return;done=true;clearTimeout(timer);off();reject(err)})})}
 
   async function init(force=false){
@@ -125,9 +126,31 @@
   }
   function clearWatchers(){unsubscribers.forEach(fn=>{try{fn()}catch{}});unsubscribers=[]}
   function watch(onChange,onStatus){
-    if(!ready||typeof onChange!=='function')return()=>{};clearWatchers();let seen=0;
-    const emit=()=>{seen++;ready=true;lastError=null;if(typeof onStatus==='function')onStatus({connected:true,seen});onChange(makeSnapshot())};
-    COLLECTIONS.forEach(name=>{const unsub=db.collection(name).onSnapshot({includeMetadataChanges:true},qs=>{remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));emit()},err=>{lastError=err;ready=false;console.error('Firebase live listener',name,err);if(typeof onStatus==='function')onStatus({connected:false,error:err,message:errText(err)})});unsubscribers.push(unsub)});return clearWatchers;
+    if(!ready||typeof onChange!=='function')return()=>{};
+    clearWatchers();let seen=0,emitTimer=null,lastSig='';
+    const emit=()=>{
+      clearTimeout(emitTimer);
+      emitTimer=setTimeout(()=>{
+        const snapshot=makeSnapshot();
+        const sig=JSON.stringify(COLLECTIONS.map(k=>(snapshot[k]||[]).map(r=>[r.id,r.updated_at||r.created_at||'',r.status||'',r.progress??'',r.active??'',r.name||'',r.problem||'',r.work_done||''])));
+        if(sig===lastSig)return;
+        lastSig=sig;seen++;ready=true;lastError=null;
+        if(typeof onStatus==='function')onStatus({connected:true,seen});
+        onChange(snapshot);
+      },90);
+    };
+    COLLECTIONS.forEach(name=>{
+      const unsub=db.collection(name).onSnapshot(qs=>{
+        remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));
+        emit();
+      },err=>{
+        lastError=err;ready=false;console.error('Firebase live listener',name,err);
+        if(typeof onStatus==='function')onStatus({connected:false,error:err,message:errText(err)});
+      });
+      unsubscribers.push(unsub);
+    });
+    unsubscribers.push(()=>clearTimeout(emitTimer));
+    return clearWatchers;
   }
   async function reconnect(onChange,onStatus){clearTimeout(reconnectTimer);try{const r=await init(true);if(!r.enabled)throw r.error||new Error(r.reason||'Firebase not enabled');const snapshot=await loadSnapshot();if(typeof onChange==='function'&&snapshot)onChange(snapshot);if(typeof onStatus==='function')onStatus({connected:true});if(typeof onChange==='function')watch(onChange,onStatus);return{ok:true,status:status()}}catch(e){if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});reconnectTimer=setTimeout(()=>reconnect(onChange,onStatus),15000);return{ok:false,error:errText(e),status:status()}}}
   async function test(){try{const r=await init(true);if(!r.enabled)return{ok:false,message:r.reason||'Firebase is not configured.',details:status()};await db.collection('members').limit(1).get({source:'server'});return{ok:true,message:`Firebase connected · Auth OK · Firestore OK · compact schema · ${cfg().projectId}`,details:status()}}catch(e){lastError=e;return{ok:false,message:errText(e),details:status()}}}

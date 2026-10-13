@@ -54,3 +54,13 @@ Only names are editable in Settings. Roles and slot count are fixed. Renaming a 
 - Edit and × Delete for ideas, weeks, projects, progress updates, and logins.
 - Deletes are dependency-aware and synchronized to Firestore.
 - Fixed departments remain protected.
+
+
+## v15 stability and speed update
+- Optimistic UI rendering for create/edit/delete actions.
+- Firestore writes and deletes continue in the background after local persistence.
+- Pending-delete tombstones prevent deleted records from reappearing during realtime sync.
+- Firestore is authoritative when cloud data exists; IndexedDB is the offline cache.
+- Realtime collection events are debounced and duplicate snapshots are ignored.
+- Removed full app reloads after weekly assignment and progress mutations.
+- Mutation buttons are guarded against double-clicks and surface errors cleanly.
