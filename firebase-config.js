@@ -3,7 +3,7 @@
 // Firebase Console -> Project settings -> Your apps -> Web app.
 // This config is safe to include in browser code; security is enforced by Firebase rules.
 window.RND_FIREBASE_CONFIG = {
-   apiKey: "AIzaSyAbArRptyHA6u9KY-sQ24kRDYEhCXCznv4",
+  apiKey: "AIzaSyAbArRptyHA6u9KY-sQ24kRDYEhCXCznv4",
   authDomain: "dfab-rnd-track.firebaseapp.com",
   projectId: "dfab-rnd-track",
   storageBucket: "dfab-rnd-track.firebasestorage.app",

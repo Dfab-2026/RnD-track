@@ -1,61 +1,41 @@
-# R&D TRACK — Firebase shared database build v4
+# R&D Track v9
 
-This build preserves the existing R&D workflow and fixes Firebase submission reliability.
+Static HTML/CSS/JavaScript R&D idea, weekly execution and KPI tracker.
 
-## Core flow preserved
-- Name-only member login with close-name suggestion
-- Persistent login until Settings -> Logout
-- Addable members and Admin / Visitor role
-- Fixed departments: Production, NPD, R&D, Marketing, Purchase, Accounts, Quality, RFQ
-- Daily idea entry
-- Exactly 2 weekly shortlisted ideas
-- Weekly projects and daily progress updates
-- Daily / weekly reports
-- Browser notifications
-- Local backup / restore
+## Cloud architecture
+- Cloud Firestore: shared source of truth for members, ideas, weekly cycles, projects and progress entries.
+- IndexedDB: offline cache and local attachment bytes.
+- Firebase Anonymous Auth: background client authentication.
+- Realtime listeners: all open browsers receive shared data changes.
 
-## Firebase behavior
-- Anonymous Firebase Auth runs in the background.
-- Firestore is the shared database for members, ideas, cycles, projects and progress.
-- Departments are a locked local master and are NOT written to Firestore.
-- IndexedDB remains an offline/local cache.
-- Attachments stay local on the browser in this Spark-plan build.
-- Attachment base64 data is NEVER written into Firestore.
-- Multiple devices receive Firestore updates through realtime listeners.
+## Compact Firestore schema
+v9 stores normalized compact documents in Firestore:
+- short field names in cloud only (the UI still uses readable names)
+- document IDs are not duplicated inside document data
+- timestamps are stored as numbers instead of ISO text
+- derived display names are not duplicated
+- blank fields are omitted
+- attachment binary/base64 is never stored in Firestore
+- only changed records are written instead of rewriting all collections
+- older verbose Firestore documents are migrated automatically when loaded
 
-## Important v4 submission fix
-The previous Firebase build attempted to write the locked `departments` collection. With production rules that reject department writes, that could make cloud saves fail. v4 no longer writes departments to Firestore.
+All form text/data is persisted in Firestore. Attachment bytes remain in IndexedDB because Firebase Storage requires the Blaze plan for this project; only small attachment metadata is stored in Firestore.
 
-The Firebase connection test now performs an allowed Firestore read instead of writing a `_system` document, so it works with the production rules already configured.
+## Deploy update
+When patching an existing configured deployment, keep your existing `firebase-config.js` and replace:
+- index.html
+- app.js
+- firebase-cloud.js
+- styles.css
+- vercel.json
 
-## No grammar/spelling assistance
-Free-text fields set `spellcheck=false` and Grammarly-disable attributes. The website itself performs no grammar correction, rewriting or spell correction.
+Then push to GitHub/Vercel.
 
-## Firebase config
-Keep your existing configured `firebase-config.js` when updating an already-configured installation. If using this ZIP fresh, paste the Firebase Web App values into `firebase-config.js`.
+## v10 protected Firebase config
+`firebase-config.js` is intentionally not bundled in update packages. Keep the configured file already deployed in your repository/project root. Future patches update UI/application files only. A template is provided as `firebase-config.example.js` for first-time setup.
 
-## Run locally
-Double-click `START-KPI.bat`, or serve the folder with:
-
-```powershell
-py -m http.server 3000
-```
-
-Open `http://localhost:3000`.
-
-## Deploy
-Firebase Hosting:
-
-```powershell
-firebase login
-firebase init hosting
-firebase deploy --only hosting
-```
-
-Firestore rules can be deployed separately with:
-
-```powershell
-firebase deploy --only firestore:rules
-```
-
-V6: Firestore is the shared source of truth. IndexedDB is an offline cache. Live listeners synchronize members, ideas, weekly cycles, projects and progress across browsers.
+## V11 professional reconstruction
+- Rebuilt dashboard, Daily Ideas, Weekly Tasks, Progress Tracker, Analytics and Settings presentation.
+- Added same-page edit actions for ideas, working weeks, projects, progress logs and members.
+- Edits keep the original record IDs and save through the existing IndexedDB + Firestore sync path.
+- firebase-config.js remains protected and is never included in patch ZIPs.

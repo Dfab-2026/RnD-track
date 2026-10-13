@@ -1,10 +1,13 @@
-R&D TRACK v2.0 — NO API
+R&D TRACK v9
 
-1. Open index.html directly, or run: py -m http.server 3000
-2. Open http://localhost:3000
-3. Default members: Kabil, Abinaya, Gautham, Akash.
-4. Fixed departments: Production, NPD, R&D, Marketing, Purchase, Accounts, Quality, RFQ.
-5. Settings includes notifications, persistent browser storage, database backup/export and restore/import.
-6. No npm, package.json, backend server or API route is required.
+For your existing Firebase/Vercel deployment:
+1. KEEP your existing firebase-config.js with the real Firebase values.
+2. Replace index.html, app.js, firebase-cloud.js, styles.css and vercel.json.
+3. git add .
+4. git commit -m "Upgrade R&D tracker compact Firebase persistence"
+5. git push
+6. Wait for Vercel deployment.
+7. Confirm the top badge says CLOUD LIVE.
+8. Submit one idea and verify it appears in another browser.
 
-IMPORTANT: Data is stored in IndexedDB on this browser/device. Use Export backup regularly for long-term safety.
+All structured form data is stored in Firestore. Attachment bytes stay local until Firebase Storage is enabled.

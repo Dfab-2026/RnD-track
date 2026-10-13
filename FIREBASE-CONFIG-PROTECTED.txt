@@ -1,0 +1,3 @@
+IMPORTANT: firebase-config.js is a protected deployment file.
+Future update ZIPs intentionally do NOT include or replace it.
+Keep your existing configured firebase-config.js in the project root.
