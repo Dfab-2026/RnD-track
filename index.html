@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=17.0.1" />
+  <link rel="stylesheet" href="styles.css?v=18.0.0" />
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
   <section class="login-gate" id="loginGate" aria-label="R&D member login">
@@ -33,7 +33,7 @@
         <button class="nav-btn active" data-page="dashboard"><span>01</span> Dashboard</button>
         <button class="nav-btn" data-page="ideas"><span>02</span> Daily Ideas</button>
         <button class="nav-btn" data-page="weekly"><span>03</span> Weekly Tasks</button>
-        <button class="nav-btn" data-page="progress"><span>04</span> Progress Tracker</button>
+        <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
         <button class="nav-btn" data-page="reports"><span>05</span> Analytics</button>
         <button class="nav-btn" data-page="settings"><span>06</span> Settings</button>
       </nav>
@@ -88,15 +88,23 @@
       </section>
 
       <section class="page" id="progressPage">
-        <div class="section-toolbar"><div><span class="kicker">EXECUTION</span><h2>Progress Tracker</h2><p>Daily updates are permanent and feed the weekly analytics automatically.</p></div></div>
-        <div class="project-layout"><div id="projectList" class="project-list"></div><div id="projectDetail" class="project-detail empty-state">Select a weekly project to view its execution history.</div></div>
+        <div class="section-toolbar work-toolbar"><div><span class="kicker">EXECUTION CONTROL</span><h2>Work Tracking</h2><p>Run the two weekly priorities from assignment to completion with one live execution view.</p></div><div class="work-toolbar-note"><span class="signal"></span><b>LIVE WORKSPACE</b><small>Firebase shared</small></div></div>
+        <div id="workSummary" class="work-summary-grid"></div>
+        <div class="work-filter-bar">
+          <div class="work-search"><span>⌕</span><input id="workSearch" placeholder="Search project, owner or department" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></div>
+          <select id="workStatusFilter"><option value="">All work</option><option value="assigned">Assigned</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="blocked">With blocker</option></select>
+          <button class="ghost-btn" id="clearWorkFilters" type="button">Clear</button>
+        </div>
+        <div class="work-layout"><aside class="work-portfolio"><div class="work-list-head"><div><span class="kicker">PROJECT PORTFOLIO</span><h3>Weekly priorities</h3></div><b id="workProjectCount">0</b></div><div id="projectList" class="project-list"></div></aside><div id="projectDetail" class="project-detail work-detail empty-state">Select a weekly project to open its execution workspace.</div></div>
       </section>
 
       <section class="page" id="reportsPage">
-        <div class="section-toolbar analytics-toolbar"><div><span class="kicker">PERFORMANCE INTELLIGENCE</span><h2>Analytics & Reports</h2><p>See submission discipline, execution progress, team contribution and blockers from the shared live data.</p></div><div class="analytics-live-chip"><span></span>LIVE KPI VIEW</div></div>
+        <div class="section-toolbar analytics-toolbar"><div><span class="kicker">R&D PERFORMANCE CENTER</span><h2>Analytics</h2><p>Management view of idea discipline, weekly execution, blockers and team contribution from the common Firebase data.</p></div><div class="analytics-live-chip"><span></span>LIVE FIREBASE DATA</div></div>
         <div class="analytics-overview" id="analyticsOverview"></div>
-        <div class="report-tabs analytics-tabs"><button class="report-tab active" data-report="daily">Daily Analytics</button><button class="report-tab" data-report="weekly">Weekly Analytics</button></div>
-        <div id="reportControls"></div><div id="reportOutput" class="report-sheet analytics-sheet"></div>
+        <section class="analytics-report-zone">
+          <div class="analytics-report-head"><div><span class="kicker">REPORT CENTER</span><h3>Daily & weekly detail</h3><p>Generate the exact operating report you need without leaving analytics.</p></div><div class="report-tabs analytics-tabs"><button class="report-tab active" data-report="daily">Daily</button><button class="report-tab" data-report="weekly">Weekly</button></div></div>
+          <div id="reportControls"></div><div id="reportOutput" class="report-sheet analytics-sheet"></div>
+        </section>
       </section>
 
       <section class="page" id="settingsPage">
@@ -125,8 +133,8 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-  <script defer src="firebase-config.js?v=17.0.1"></script>
-  <script defer src="firebase-cloud.js?v=17.0.1"></script>
-  <script defer src="app.js?v=17.0.1"></script>
+  <script defer src="firebase-config.js?v=18.0.0"></script>
+  <script defer src="firebase-cloud.js?v=18.0.0"></script>
+  <script defer src="app.js?v=18.0.0"></script>
 </body>
 </html>

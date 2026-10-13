@@ -1,3 +1,7 @@
+# R&D Track v18 — Reconstructed Work Tracking + Analytics
+
+This build reconstructs only Work Tracking and Analytics on top of the stable v17 Firebase/login baseline. All existing idea, weekly assignment, settings, member, Firebase sync and persistence flows are preserved.
+
 # R&D Track v9
 
 Static HTML/CSS/JavaScript R&D idea, weekly execution and KPI tracker.
