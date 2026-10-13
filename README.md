@@ -31,11 +31,26 @@ When patching an existing configured deployment, keep your existing `firebase-co
 
 Then push to GitHub/Vercel.
 
-## v10 protected Firebase config
-`firebase-config.js` is intentionally not bundled in update packages. Keep the configured file already deployed in your repository/project root. Future patches update UI/application files only. A template is provided as `firebase-config.example.js` for first-time setup.
+## Fixed login roster (v10)
 
-## V11 professional reconstruction
-- Rebuilt dashboard, Daily Ideas, Weekly Tasks, Progress Tracker, Analytics and Settings presentation.
-- Added same-page edit actions for ideas, working weeks, projects, progress logs and members.
-- Edits keep the original record IDs and save through the existing IndexedDB + Firestore sync path.
-- firebase-config.js remains protected and is never included in patch ZIPs.
+The team roster is intentionally fixed to exactly five logins:
+
+- 4 R&D Member slots
+- 1 Admin / Visitor slot
+
+Only names are editable in Settings. Roles and slot count are fixed. Renaming a slot preserves its member ID, so historical ideas, weekly assignments and progress remain linked to the same person. Duplicate names are rejected. Existing duplicate member documents are consolidated during Firebase startup and obsolete member documents are removed after references are repaired.
+
+
+## v11 Settings update
+- Departments and login management are shown side-by-side on desktop.
+- Members and visitors can be added, renamed, role-changed, and removed from active login access.
+- Duplicate names are blocked; re-adding a deleted name restores the same member ID.
+- Delete is non-destructive for history: old ideas/projects/progress remain linked.
+- Chrome notification permission is handled by the browser, so there is no notification settings card.
+- Firebase test controls were removed from Settings; cloud status remains visible in the header.
+
+
+## v14 record controls
+- Edit and × Delete for ideas, weeks, projects, progress updates, and logins.
+- Deletes are dependency-aware and synchronized to Firestore.
+- Fixed departments remain protected.

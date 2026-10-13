@@ -71,8 +71,8 @@
     }
   }
   const errText=e=>{if(!e)return'Unknown Firebase error';const code=e.code?String(e.code):'';const msg=e.message?String(e.message):String(e);return code?`${code}: ${msg}`:msg};
-  function makeSnapshot(){return {members:[...remoteCache.members],departments:[],ideas:[...remoteCache.ideas],cycles:[...remoteCache.cycles],projects:[...remoteCache.projects],progress:[...remoteCache.progress],schema_version:9,updated_at:new Date().toISOString()}}
-  function status(){return {configured:configured(),sdk:Boolean(window.firebase),authenticated:Boolean(authUid),uid:authUid,connected:ready,projectId:cfg().projectId||'',error:lastError?errText(lastError):'',schema:'compact-v1'}}
+  function makeSnapshot(){return {members:[...remoteCache.members],departments:[],ideas:[...remoteCache.ideas],cycles:[...remoteCache.cycles],projects:[...remoteCache.projects],progress:[...remoteCache.progress],schema_version:11,updated_at:new Date().toISOString()}}
+  function status(){return {configured:configured(),sdk:Boolean(window.firebase),authenticated:Boolean(authUid),uid:authUid,connected:ready,projectId:cfg().projectId||'',error:lastError?errText(lastError):'',schema:'compact-v2-roster'}}
   function waitForAuthUser(timeoutMs=15000){return new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('Firebase Auth timed out. Check Anonymous sign-in and network access.'))},timeoutMs);const off=auth.onAuthStateChanged(user=>{if(done||!user)return;done=true;clearTimeout(timer);off();resolve(user)},err=>{if(done)return;done=true;clearTimeout(timer);off();reject(err)})})}
 
   async function init(force=false){
@@ -118,6 +118,11 @@
     const ops=[];for(const name of COLLECTIONS){for(const row of Array.isArray(snapshot?.[name])?snapshot[name]:[])ops.push({collection:name,row})}await writeMany(ops);return snapshot;
   }
   async function upsert(collection,row){await writeMany([{collection,row}]);return row}
+  async function deleteMany(collection,ids){
+    if(!COLLECTIONS.includes(collection))return true;if(!ready)await init(true);
+    const clean=[...new Set((ids||[]).map(String).filter(Boolean))];if(!clean.length)return true;
+    try{let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;await batch.commit();batch=db.batch();count=0};for(const id of clean){batch.delete(db.collection(collection).doc(id));count++;if(count>=400)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;ready=false;throw e}
+  }
   function clearWatchers(){unsubscribers.forEach(fn=>{try{fn()}catch{}});unsubscribers=[]}
   function watch(onChange,onStatus){
     if(!ready||typeof onChange!=='function')return()=>{};clearWatchers();let seen=0;
@@ -126,5 +131,5 @@
   }
   async function reconnect(onChange,onStatus){clearTimeout(reconnectTimer);try{const r=await init(true);if(!r.enabled)throw r.error||new Error(r.reason||'Firebase not enabled');const snapshot=await loadSnapshot();if(typeof onChange==='function'&&snapshot)onChange(snapshot);if(typeof onStatus==='function')onStatus({connected:true});if(typeof onChange==='function')watch(onChange,onStatus);return{ok:true,status:status()}}catch(e){if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});reconnectTimer=setTimeout(()=>reconnect(onChange,onStatus),15000);return{ok:false,error:errText(e),status:status()}}}
   async function test(){try{const r=await init(true);if(!r.enabled)return{ok:false,message:r.reason||'Firebase is not configured.',details:status()};await db.collection('members').limit(1).get({source:'server'});return{ok:true,message:`Firebase connected · Auth OK · Firestore OK · compact schema · ${cfg().projectId}`,details:status()}}catch(e){lastError=e;return{ok:false,message:errText(e),details:status()}}}
-  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,watch,reconnect,test,status,get enabled(){return ready}};
+  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,test,status,get enabled(){return ready}};
 })();
