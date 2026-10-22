@@ -1,47 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
+    function isSignedIn() { return request.auth != null; }
 
-    match /members/{document=**} {
-      allow read, write: if isSignedIn();
-    }
+    // Main collections only accept the compact fields used by the app.
+    function validMember() { return request.resource.data.keys().hasOnly(['n','r','a','o','c','u']); }
+    function validIdea() { return request.resource.data.keys().hasOnly(['n','s','d','p','i','b','q','t','x','f','c','u']); }
+    function validCycle() { return request.resource.data.keys().hasOnly(['l','s','e','x','c','u']); }
+    function validProject() { return request.resource.data.keys().hasOnly(['c','i','n','t','o','s','e','p','x','g','z','u']); }
+    function validProgress() { return request.resource.data.keys().hasOnly(['p','m','d','w','r','b','n','v','f','c','u']); }
 
-    // Fixed master list used by the UI. The application does not write this
-    // collection; department names are locked in the app.
-    match /departments/{document=**} {
+    match /members/{document=**} { allow read: if isSignedIn(); allow create, update: if isSignedIn() && validMember(); allow delete: if isSignedIn(); }
+    match /departments/{document=**} { allow read: if isSignedIn(); allow write: if false; }
+    match /ideas/{document=**} { allow read: if isSignedIn(); allow create, update: if isSignedIn() && validIdea(); allow delete: if isSignedIn(); }
+    match /cycles/{document=**} { allow read: if isSignedIn(); allow create, update: if isSignedIn() && validCycle(); allow delete: if isSignedIn(); }
+    match /projects/{document=**} { allow read: if isSignedIn(); allow create, update: if isSignedIn() && validProject(); allow delete: if isSignedIn(); }
+    match /progress/{document=**} { allow read: if isSignedIn(); allow create, update: if isSignedIn() && validProgress(); allow delete: if isSignedIn(); }
+
+    // Retained for backward compatibility with earlier workbook builds.
+    match /excel_sheets/{sheetId} { allow read, create, update, delete: if isSignedIn(); }
+    match /app_meta/{document=**} { allow read, write: if isSignedIn(); }
+    match /master_sheet/{rowId} { allow read, create, update, delete: if isSignedIn(); }
+
+    match /team_chat/{messageId} {
       allow read: if isSignedIn();
-      allow write: if false;
+      allow create: if isSignedIn()
+                    && request.resource.data.keys().hasOnly(['m','t','c'])
+                    && request.resource.data.keys().hasAll(['m','t','c'])
+                    && request.resource.data.t is string
+                    && request.resource.data.t.size() > 0
+                    && request.resource.data.t.size() <= 1000;
+      allow update, delete: if false;
     }
 
-    match /ideas/{document=**} {
-      allow read, write: if isSignedIn();
-    }
+    match /notifications/{document=**} { allow read, write: if isSignedIn(); }
 
-    match /cycles/{document=**} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /projects/{document=**} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /progress/{document=**} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /notifications/{document=**} {
-      allow read, write: if isSignedIn();
-    }
-
+    // Lightweight recovery copies created before destructive deletes.
     match /activity_logs/{document=**} {
-      allow read, write: if isSignedIn();
+      allow read, create: if isSignedIn();
+      allow update, delete: if false;
     }
 
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /{document=**} { allow read, write: if false; }
   }
 }

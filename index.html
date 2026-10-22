@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=18.0.0" />
+  <link rel="stylesheet" href="styles.css?v=59.0.0" />
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
   <section class="login-gate" id="loginGate" aria-label="R&D member login">
@@ -28,27 +28,28 @@
 
   <div class="app-shell app-locked" id="appShell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="brand-mark">R</span><div><strong>R&D TRACK</strong><small>IDEA → IMPACT</small></div></div>
+      <div class="brand"><span class="brand-mark">R</span><div class="brand-copy"><strong>R&D TRACK</strong><small>IDEA → IMPACT</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button></div>
       <nav id="nav">
         <button class="nav-btn active" data-page="dashboard"><span>01</span> Dashboard</button>
         <button class="nav-btn" data-page="ideas"><span>02</span> Daily Ideas</button>
         <button class="nav-btn" data-page="weekly"><span>03</span> Weekly Tasks</button>
         <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
-        <button class="nav-btn" data-page="reports"><span>05</span> Analytics</button>
-        <button class="nav-btn" data-page="settings"><span>06</span> Settings</button>
+        <button class="nav-btn" data-page="chat"><span>05</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
+        <button class="nav-btn" data-page="liveSheet"><span>06</span> Live Google Sheet</button>
+        <button class="nav-btn" data-page="settings"><span>07</span> Settings</button>
       </nav>
       <div class="side-note"><b>TEAM MODE</b><p>R&D idea and execution tracker with member and visitor access.</p></div>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open navigation">☰</button>
+        <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Toggle navigation" aria-expanded="true">☰</button>
         <div><div class="eyebrow" id="pageEyebrow">R&D OPERATIONS</div><h1 id="pageTitle">Dashboard</h1></div>
         <div class="top-actions">
           <div class="account-summary" aria-label="Current session">
             <div class="account-status-row">
-              <span id="liveCloudBadge" class="cloud-live-badge connecting">CLOUD CONNECTING</span>
               <span class="account-label">SIGNED IN</span>
+              <span id="liveCloudBadge" class="cloud-live-badge connecting">CLOUD CONNECTING</span>
             </div>
             <div class="account-identity-row">
               <div class="account-avatar" id="signedInAvatar" aria-hidden="true">R</div>
@@ -58,7 +59,6 @@
               </div>
             </div>
           </div>
-          <button class="primary-btn quick-idea-btn" id="quickIdeaBtn"><span>+</span> NEW IDEA</button>
         </div>
       </header>
 
@@ -77,7 +77,7 @@
 
       <section class="page" id="ideasPage">
         <div class="section-toolbar"><div><span class="kicker">DAILY INPUT</span><h2>Idea Register</h2><p>One simple place to capture problems and proposed improvements.</p></div><button class="primary-btn" id="newIdeaBtn">+ NEW IDEA</button></div>
-        <div class="filter-line"><input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaSearch" placeholder="Search problem, idea, department..." autocorrect="off" autocapitalize="off"><select id="ideaPersonFilter"><option value="">All people</option></select><select id="ideaDeptFilter"><option value="">All departments</option></select><input type="date" id="ideaDateFilter" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"><button class="ghost-btn" id="clearIdeaFilters">Clear</button></div>
+        <div class="filter-line"><input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaSearch" placeholder="Search problem, idea, department..." autocorrect="off" autocapitalize="off"><select id="ideaPersonFilter"><option value="">All people</option></select><select id="ideaDeptFilter"><option value="">All departments</option></select><div class="idea-date-filter" aria-label="Filter ideas by date"><input type="text" id="ideaDateFilterDisplay" value="" readonly aria-label="Selected date"><input type="date" id="ideaDateFilter" aria-label="Choose date" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></div><button class="ghost-btn" id="clearIdeaFilters">Clear</button></div>
         <div class="table-wrap"><table><thead><tr><th>Date</th><th>Idea</th><th>Person</th><th>Department</th><th>Problem</th><th>Proposed Solution</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead><tbody id="ideasTable"></tbody></table></div>
       </section>
 
@@ -88,22 +88,55 @@
       </section>
 
       <section class="page" id="progressPage">
-        <div class="section-toolbar work-toolbar"><div><span class="kicker">EXECUTION CONTROL</span><h2>Work Tracking</h2><p>Run the two weekly priorities from assignment to completion with one live execution view.</p></div><div class="work-toolbar-note"><span class="signal"></span><b>LIVE WORKSPACE</b><small>Firebase shared</small></div></div>
-        <div id="workSummary" class="work-summary-grid"></div>
+        <div class="section-toolbar work-toolbar"><div><span class="kicker">EXECUTION CONTROL</span><h2>Work Tracking</h2><p>Run the two weekly priorities from assignment to completion with one live execution view.</p></div><div class="work-toolbar-actions"><div class="work-period-nav" aria-label="Work tracking period"><label class="work-period-month"><span>MONTH</span><select id="workMonthSelect" aria-label="Work tracking month"></select></label><label class="work-period-week"><span>WEEK</span><select id="workWeekSelect" aria-label="Work tracking week"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></div><div class="work-toolbar-note"><span class="signal"></span><b>LIVE WORKSPACE</b><small>Firebase shared</small></div></div></div>
+        <div class="work-selected-projects" aria-label="Selected weekly projects"><div id="projectList" class="project-list work-project-grid"></div></div>
         <div class="work-filter-bar">
           <div class="work-search"><span>⌕</span><input id="workSearch" placeholder="Search project, owner or department" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></div>
           <select id="workStatusFilter"><option value="">All work</option><option value="assigned">Assigned</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="blocked">With blocker</option></select>
           <button class="ghost-btn" id="clearWorkFilters" type="button">Clear</button>
         </div>
-        <div class="work-layout"><aside class="work-portfolio"><div class="work-list-head"><div><span class="kicker">PROJECT PORTFOLIO</span><h3>Weekly priorities</h3></div><b id="workProjectCount">0</b></div><div id="projectList" class="project-list"></div></aside><div id="projectDetail" class="project-detail work-detail empty-state">Select a weekly project to open its execution workspace.</div></div>
+        <div class="work-layout work-layout-single"><div id="projectDetail" class="project-detail work-detail empty-state">Select a weekly project to open its execution workspace.</div></div>
       </section>
 
-      <section class="page" id="reportsPage">
-        <div class="section-toolbar analytics-toolbar"><div><span class="kicker">R&D PERFORMANCE CENTER</span><h2>Analytics</h2><p>Management view of idea discipline, weekly execution, blockers and team contribution from the common Firebase data.</p></div><div class="analytics-live-chip"><span></span>LIVE FIREBASE DATA</div></div>
-        <div class="analytics-overview" id="analyticsOverview"></div>
-        <section class="analytics-report-zone">
-          <div class="analytics-report-head"><div><span class="kicker">REPORT CENTER</span><h3>Daily & weekly detail</h3><p>Generate the exact operating report you need without leaving analytics.</p></div><div class="report-tabs analytics-tabs"><button class="report-tab active" data-report="daily">Daily</button><button class="report-tab" data-report="weekly">Weekly</button></div></div>
-          <div id="reportControls"></div><div id="reportOutput" class="report-sheet analytics-sheet"></div>
+
+      <section class="page" id="chatPage">
+        <div class="section-toolbar chat-page-toolbar"><div><span class="kicker">LIVE DISCUSSION</span><h2>Team Chat</h2><p>Shared R&D discussion for everyone signed in to this workspace.</p></div><div class="chat-live-state"><span class="signal"></span><div><b>COMMON CHAT</b><small id="teamChatStatus">Connecting to Firebase…</small></div></div></div>
+        <section class="team-chat-page-shell" aria-label="R&D team chat">
+          <div id="teamChatMessages" class="team-chat-messages team-chat-page-messages" role="log" aria-live="polite" aria-relevant="additions"><div class="team-chat-empty">No messages yet. Start the team discussion.</div></div>
+          <form id="teamChatForm" class="team-chat-composer team-chat-page-composer">
+            <div class="team-chat-me" id="teamChatIdentity"><span class="team-chat-mini-avatar">R</span><span>Signed in profile</span></div>
+            <div class="team-chat-compose-row"><textarea id="teamChatInput" maxlength="1000" rows="2" placeholder="Write a message to the team…" aria-label="Team chat message" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></textarea><button id="teamChatSend" class="team-chat-send" type="submit">Send</button></div>
+          </form>
+        </section>
+      </section>
+
+      <section class="page" id="liveSheetPage">
+        <div class="live-sheet-head">
+          <div>
+            <span class="kicker">LIVE WORKBOOK</span>
+            <h2>Innovation Work Tracker 26–27</h2>
+            <p>Your shared Google Sheet inside R&amp;D Track.</p>
+          </div>
+          <div class="live-sheet-actions">
+            <button class="ghost-btn" id="reloadLiveSheetBtn" type="button">↻ Reload</button>
+            <a class="secondary-btn live-sheet-open-btn" href="https://docs.google.com/spreadsheets/d/1eC65js37QzvlqL-Ryo3waFJt04Kbyf5FieniIEY3AJk/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Open in Google Sheets ↗</a>
+          </div>
+        </div>
+        <section class="live-sheet-shell">
+          <div class="live-sheet-note">
+            <span class="signal"></span>
+            <span>Live Google Sheet</span>
+            <small>If Google asks you to sign in or blocks editing inside this page, use “Open in Google Sheets”.</small>
+          </div>
+          <iframe
+            id="liveGoogleSheetFrame"
+            class="live-sheet-frame"
+            src="https://docs.google.com/spreadsheets/d/1eC65js37QzvlqL-Ryo3waFJt04Kbyf5FieniIEY3AJk/edit?rm=minimal&embedded=true"
+            title="Innovation Work Tracker Google Sheet"
+            loading="lazy"
+            allow="clipboard-read; clipboard-write"
+            referrerpolicy="strict-origin-when-cross-origin">
+          </iframe>
         </section>
       </section>
 
@@ -123,18 +156,19 @@
 
   <dialog id="ideaDialog" class="modal"><form method="dialog" id="ideaForm"><div class="modal-head"><div><span class="kicker">NEW ENTRY</span><h2 id="ideaDialogTitle">Submit Daily Idea</h2></div><button type="button" class="icon-btn" data-close="ideaDialog">×</button></div><div class="form-grid"><label>Submitted By<select id="ideaMember" required></select></label><label>Department<select id="ideaDepartment" required></select></label><label class="full">Problem / Observation<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProblem" required maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label class="full">Idea / Proposed Solution<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProposal" required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label>Expected Benefit<select id="ideaBenefit"><option value="">Select benefit</option><option>Time Saving</option><option>Cost Saving</option><option>Quality Improvement</option><option>Safety</option><option>Productivity</option><option>Automation</option><option>Process Improvement</option><option>Other</option></select></label><label>Priority<select id="ideaPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label><label>Date<input type="date" id="ideaDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Attachment <small>(optional, max 8 MB · images auto-compressed)</small><input type="file" id="ideaAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="ideaDialog">Cancel</button><button class="primary-btn" value="default">Submit Idea</button></div></form></dialog>
 
-  <dialog id="weekDialog" class="modal small"><form method="dialog" id="weekForm"><div class="modal-head"><div><span class="kicker">NEW PERIOD</span><h2 id="weekDialogTitle">Create Working Week</h2></div><button type="button" class="icon-btn" data-close="weekDialog">×</button></div><div class="form-grid one"><label>Week Label<input id="weekLabel" placeholder="October - Week 2" maxlength="80" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Start Date<input type="date" id="weekStart" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>End Date<input type="date" id="weekEnd" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="weekDialog">Cancel</button><button class="primary-btn">Create Week</button></div></form></dialog>
+  <dialog id="weekDialog" class="modal week-period-modal"><form method="dialog" id="weekForm"><div class="modal-head"><div><span class="kicker">NEW PERIOD</span><h2 id="weekDialogTitle">Create Working Week</h2></div><button type="button" class="icon-btn" data-close="weekDialog">×</button></div><div class="week-period-builder"><section class="month-picker-card" aria-label="Select working month"><div class="month-picker-year"><button type="button" class="month-year-nav" id="weekPrevYear" aria-label="Previous year">‹</button><strong id="weekYearLabel">2026</strong><button type="button" class="month-year-nav" id="weekNextYear" aria-label="Next year">›</button></div><div class="month-grid" id="weekMonthGrid"></div></section><div class="week-selection-row"><label>Selected Month<input id="weekMonthDisplay" type="text" readonly required></label><label>Week<select id="weekNumber" required><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></div><div class="week-date-row"><label>Start Date<input type="date" id="weekStart" required readonly></label><label>End Date<input type="date" id="weekEnd" required readonly></label></div></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="weekDialog">Cancel</button><button class="primary-btn">Create Week</button></div></form></dialog>
 
   <dialog id="progressDialog" class="modal"><form method="dialog" id="progressForm"><div class="modal-head"><div><span class="kicker">DAILY UPDATE</span><h2 id="progressDialogTitle">Update Project</h2></div><button type="button" class="icon-btn" data-close="progressDialog">×</button></div><div class="form-grid"><label>Updated By<select id="progressMember" required></select></label><label>Date<input type="date" id="progressDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Overall Completion %<input type="number" min="0" max="100" id="progressPercent" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Attachment<input type="file" id="progressAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label class="full">Today's Work<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressWork" required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label class="full">Remarks<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressRemarks" maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label>Blocker<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressBlocker" maxlength="800" autocorrect="off" autocapitalize="off"></textarea></label><label>Next Action<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressNext" maxlength="800" autocorrect="off" autocapitalize="off"></textarea></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="progressDialog">Cancel</button><button class="primary-btn">Save Progress</button></div></form></dialog>
 
 
   <dialog id="projectEditDialog" class="modal small"><form method="dialog" id="projectEditForm"><input type="hidden" id="projectEditId"><div class="modal-head"><div><span class="kicker">PROJECT</span><h2>Edit Weekly Project</h2></div><button type="button" class="icon-btn" data-close="projectEditDialog">×</button></div><div class="form-grid one"><label>Project Title<input id="projectEditTitle" maxlength="140" required spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></label><label>Owner<select id="projectEditOwner" required></select></label><label>Start Date<input type="date" id="projectEditStart" required></label><label>End Date<input type="date" id="projectEditEnd" required></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="projectEditDialog">Cancel</button><button class="primary-btn">Save Project</button></div></form></dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-  <script defer src="firebase-config.js?v=18.0.0"></script>
-  <script defer src="firebase-cloud.js?v=18.0.0"></script>
-  <script defer src="app.js?v=18.0.0"></script>
+  <script defer src="firebase-config.js?v=22.0.0"></script>
+  <script defer src="firebase-cloud.js?v=60.0.0"></script>
+  <script defer src="app.js?v=59.0.0"></script>
 </body>
 </html>

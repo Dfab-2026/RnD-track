@@ -1,4 +1,4 @@
-# R&D Track v18 — Reconstructed Work Tracking + Analytics
+# R&D Track v19 — Reconstructed Work Tracking + Analytics
 
 This build reconstructs only Work Tracking and Analytics on top of the stable v17 Firebase/login baseline. All existing idea, weekly assignment, settings, member, Firebase sync and persistence flows are preserved.
 
@@ -83,3 +83,11 @@ Only names are editable in Settings. Roles and slot count are fixed. Renaming a 
 - Analytics rendering is isolated so it cannot block login/app startup.
 - Asset version 17.0.1 and no-cache Vercel headers prevent mixed deployments.
 - Existing Firebase configuration and tracker flows remain unchanged.
+
+## v21 — Excel-style Analytics Project Tracker
+
+Analytics now includes a spreadsheet-style project control matrix. Each project is one row, with sticky identity columns and date-by-date progress columns. Click a row to inspect the full daily work log (work done, remarks, blockers, next action). Search, week/status filters and Excel-compatible CSV export are included. Existing Firebase realtime sync, weekly backlog assignment, login and Work Tracking flows are unchanged.
+
+
+## v27 Work Tracking period navigation
+Work Tracking now inherits the active month from Daily Ideas / Weekly Tasks and lets the user switch Week 1–4 from a compact header control. Other application flows are unchanged.

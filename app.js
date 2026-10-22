@@ -1,8 +1,10 @@
-const state={members:[],departments:[],ideas:[],cycles:[],projects:[],progress:[],page:'dashboard',selectedProject:null,reportType:'daily'};
+const state={members:[],departments:[],ideas:[],cycles:[],projects:[],progress:[],masterSheet:[],page:'dashboard',selectedProject:null,reportType:'daily',analyticsRange:'30',workMonthKey:'',workWeek:1};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const today=()=>{const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const fmtDate=s=>s?new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const fmtDateFilter=s=>{if(!s)return '';const [y,m,d]=String(s).split('-');return y&&m&&d?`${d}-${m}-${y}`:s};
+function syncIdeaDateDisplay(){const input=$('#ideaDateFilter'),display=$('#ideaDateFilterDisplay');if(display)display.value=fmtDateFilter(input?.value||'')}
 const toast=(m,err=false)=>{const t=$('#toast');t.textContent=m;t.className='toast show'+(err?' error':'');setTimeout(()=>t.className='toast',2600)};
 const DB_NAME='rndTrackerStatic';
 const DB_VERSION=2;
@@ -66,7 +68,7 @@ function migrateSnapshot(data){
     else snap.departments.push({id:i+1,name,active:1,sort_order:i+1});
   });
   snap.departments=snap.departments.slice(0,8);
-  snap.schema_version=18;
+  snap.schema_version=20;
   snap.updated_at=new Date().toISOString();
   return snap;
 }
@@ -107,7 +109,7 @@ async function enableNotifications(){if(!('Notification' in window))return false
 function requestNotificationsFromGesture(){if(!('Notification' in window)||Notification.permission!=='default')return;enableNotifications().then(ok=>{if(ok){notifyUser('R&D Track notifications','Chrome notifications are enabled for this tracker.');maybeDailyReminder()}}).catch(()=>{})}
 function notifyUser(title,body){if(!notificationsEnabled())return;try{new Notification(title,{body,tag:'rnd-track-'+title.replace(/\s+/g,'-').toLowerCase()})}catch{}}
 function maybeDailyReminder(){const m=currentMember();if(!m||m.role==='visitor'||!notificationsEnabled())return;const key=`rnd_reminder_${m.id}_${today()}`;if(localStorage.getItem(key))return;const submitted=state.ideas.some(i=>Number(i.submitted_by)===Number(m.id)&&i.submission_date===today());if(!submitted){notifyUser('R&D Track · Daily Idea','Your daily idea is still pending for today.');localStorage.setItem(key,'1')}}
-function rawSnapshot(){return {schema_version:18,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0,created_at,updated_at})=>({id,name,role,active,sort_order,created_at,updated_at})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
+function rawSnapshot(){return {schema_version:21,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0,created_at,updated_at})=>({id,name,role,active,sort_order,created_at,updated_at})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
 function exportDatabase(){const payload=JSON.stringify(rawSnapshot(),null,2);const blob=new Blob([payload],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`RND-TRACK-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
 async function importDatabaseFile(file){if(!file)throw new Error('Choose a backup file.');let parsed;try{parsed=JSON.parse(await file.text())}catch{throw new Error('Invalid backup file.')}if(!parsed||!Array.isArray(parsed.members)||!Array.isArray(parsed.ideas)||!Array.isArray(parsed.projects))throw new Error('This file is not a valid R&D Track backup.');const migrated=migrateSnapshot(parsed);await writeSnapshot(migrated);if(window.rndCloud?.enabled){try{await window.rndCloud.syncSnapshot(migrated);clearPendingCloudOps()}catch(e){queueCloudOps(['members','ideas','cycles','projects','progress'].flatMap(collection=>(migrated[collection]||[]).map(row=>({collection,row}))))}}return true}
 const nextId=()=>Math.floor(Date.now()*1000+(crypto.getRandomValues(new Uint32Array(1))[0]%1000));
@@ -117,6 +119,8 @@ function levenshtein(a,b){const m=a.length,n=b.length,d=Array.from({length:m+1},
 function findLogin(name){const q=normalizeName(name);if(!q)return {matched:false,error:'Enter your name.'};const logins=state.members.filter(m=>Number(m.active)!==0);const exact=logins.find(m=>normalizeName(m.name)===q);if(exact)return {matched:true,member:exact};let best=null,bestScore=-1;for(const m of logins){const n=normalizeName(m.name),qt=q.split(' '),nt=n.split(' ');let score=0;if(n.includes(q)||q.includes(n))score+=8;score+=qt.filter(t=>nt.some(x=>x===t||x.startsWith(t)||t.startsWith(x))).length*5;const dist=levenshtein(q,n),max=Math.max(q.length,n.length)||1;score+=(1-dist/max)*4;if(score>bestScore){bestScore=score;best=m}}return best&&bestScore>=3?{matched:false,error:'Name not matched exactly.',suggestion:best}:{matched:false,error:'Name not found in saved members.'}}
 const PENDING_KEY='rnd_pending_cloud_ops';
 const PENDING_DELETE_KEY='rnd_pending_cloud_deletes';
+const SIDEBAR_CLOSED_KEY='rnd_sidebar_closed';
+let selectedManualTrackerRow=null;
 function pendingCloudOps(){try{return JSON.parse(localStorage.getItem(PENDING_KEY)||'[]')}catch{return[]}}
 function queueCloudOps(ops){const deletes=new Set(pendingCloudDeletes().map(x=>`${x.collection}:${x.id}`)),existing=pendingCloudOps(),map=new Map(existing.map(x=>[`${x.collection}:${x.row?.id}`,x]));(ops||[]).forEach(x=>{const key=`${x?.collection}:${x?.row?.id}`;if(x?.collection&&x?.row?.id!==undefined&&!deletes.has(key))map.set(key,x)});localStorage.setItem(PENDING_KEY,JSON.stringify([...map.values()].slice(-500)))}
 function removePendingCloudOps(ops){const keys=new Set((ops||[]).map(x=>`${x?.collection}:${x?.row?.id}`));const left=pendingCloudOps().filter(x=>!keys.has(`${x.collection}:${x.row?.id}`));if(left.length)localStorage.setItem(PENDING_KEY,JSON.stringify(left));else localStorage.removeItem(PENDING_KEY)}
@@ -143,7 +147,8 @@ function renderPage(name=state.page){
   else if(name==='ideas')renderIdeas();
   else if(name==='weekly')renderWeekly();
   else if(name==='progress')renderProjects();
-  else if(name==='reports'){safeRenderAnalytics();renderReportControls()}
+  else if(name==='chat'){updateTeamChatIdentity();renderTeamChat();startTeamChat();}
+  else if(name==='liveSheet'){}
   else if(name==='settings')renderSettings();
   bindRecordActions();
 }
@@ -210,7 +215,7 @@ async function deleteMemberLocal(id){
 async function updateDepartmentLocal(){throw new Error('Department master is locked and cannot be edited.')}
 async function createIdeaLocal(b){if(isVisitor())throw new Error('Admin visitors do not submit ideas.');const member=state.members.find(m=>Number(m.id)===Number(b.submitted_by)),dep=state.departments.find(d=>Number(d.id)===Number(b.department_id));const problem=String(b.problem||'').trim(),proposal=String(b.proposed_idea||'').trim();if(!member||!dep||!problem||!proposal)throw new Error('Submitted by, department, problem and idea are required.');if(problem.length>1200||proposal.length>1600)throw new Error('Problem or proposed solution is too long.');const date=b.submission_date||today(),seq=state.ideas.filter(i=>i.submission_date===date).length+1,now=new Date().toISOString();const row={id:nextId(state.ideas),idea_number:`IDEA-${date.replaceAll('-','')}-${String(seq).padStart(2,'0')}`,submitted_by:Number(member.id),department_id:Number(dep.id),problem,proposed_idea:proposal,expected_benefit:String(b.expected_benefit||'').trim(),priority:['Low','Medium','High','Critical'].includes(b.priority)?b.priority:'Medium',submission_date:date,status:'submitted',attachment:b.attachment||null,created_at:now,updated_at:now};state.ideas.unshift({...row,submitted_by_name:member.name,department_name:dep.name,attachment_path:row.attachment?.data||''});await persistThenSync([{collection:'ideas',row}]);notifyUser('Idea submitted',`${member.name} submitted ${row.idea_number} for ${dep.name}.`);return {...row,cloud_saved:Boolean(window.rndCloud?.enabled)}}
 async function createCycleLocal(b){if(isVisitor())throw new Error('Admin visitors have view-only access.');const start=b.start_date,end=b.end_date,label=String(b.label||'').trim();if(!start||!end||start>end)throw new Error('Valid start and end dates are required.');if(!label)throw new Error('Week label is required.');if(label.length>80)throw new Error('Week label must be 80 characters or less.');if(state.cycles.some(c=>!(c.end_date<start||c.start_date>end)))throw new Error('A weekly cycle already overlaps these dates.');const now=new Date().toISOString(),row={id:nextId(state.cycles),label,start_date:start,end_date:end,status:'active',created_at:now,updated_at:now};state.cycles.unshift(row);await persistThenSync([{collection:'cycles',row}]);return row}
-async function assignWeekLocal(cycleId,ideaIds,ownerIds){if(isVisitor())throw new Error('Admin visitors have view-only access.');const cycle=state.cycles.find(c=>c.id===Number(cycleId)),ids=[...new Set((ideaIds||[]).map(Number))];if(!cycle)throw new Error('Weekly cycle not found.');if(ids.length!==2)throw new Error('Exactly 2 ideas must be selected for a weekly assignment.');if(state.projects.some(p=>p.cycle_id===cycle.id))throw new Error('This week already has its two assigned projects.');const ideas=ids.map(id=>state.ideas.find(i=>i.id===id&&i.status==='submitted'));if(ideas.some(x=>!x))throw new Error('Only unassigned submitted ideas can be selected.');const now=new Date().toISOString(),ops=[];ids.forEach((id,idx)=>{const idea=ideas[idx],owner=workingMembers().find(m=>m.id===Number(ownerIds?.[idx]))||workingMembers()[0];if(!owner)throw new Error('Add at least one R&D Member before assigning projects.');const raw={id:nextId(state.projects),cycle_id:cycle.id,idea_id:id,project_number:`RND-${cycle.start_date.slice(0,4)}-W${String(cycle.id).slice(-4)}-${idx+1}`,title:idea.proposed_idea.slice(0,140),owner_id:owner.id,start_date:cycle.start_date,end_date:cycle.end_date,progress:0,status:'assigned',created_at:now,updated_at:now};state.projects.unshift({...raw,owner_name:owner.name,cycle_label:cycle.label,department_name:idea.department_name});idea.status='assigned';idea.updated_at=now;ops.push({collection:'projects',row:raw},{collection:'ideas',row:idea})});cycle.updated_at=now;await persistThenSync(ops);notifyUser('Weekly tasks assigned',`${cycle.label}: 2 R&D tasks are now active.`);return true}
+async function assignWeekLocal(cycleId,ideaIds,ownerIds){if(isVisitor())throw new Error('Admin visitors have view-only access.');const cycle=state.cycles.find(c=>c.id===Number(cycleId)),ids=[...new Set((ideaIds||[]).map(Number))];if(!cycle)throw new Error('Weekly cycle not found.');if(ids.length!==2)throw new Error('Exactly 2 ideas must be selected for a weekly assignment.');if(state.projects.some(p=>p.cycle_id===cycle.id))throw new Error('This week already has its two assigned projects.');const ideas=ids.map(id=>state.ideas.find(i=>Number(i.id)===Number(id)&&String(i.status||'submitted').toLowerCase()==='submitted'&&!state.projects.some(p=>Number(p.idea_id)===Number(i.id))));if(ideas.some(x=>!x))throw new Error('Only submitted ideas that are not already assigned can be selected.');const now=new Date().toISOString(),ops=[];ids.forEach((id,idx)=>{const idea=ideas[idx],owner=workingMembers().find(m=>m.id===Number(ownerIds?.[idx]))||workingMembers()[0];if(!owner)throw new Error('Add at least one R&D Member before assigning projects.');const raw={id:nextId(state.projects),cycle_id:cycle.id,idea_id:id,project_number:`RND-${cycle.start_date.slice(0,4)}-W${String(cycle.id).slice(-4)}-${idx+1}`,title:idea.proposed_idea.slice(0,140),owner_id:owner.id,start_date:cycle.start_date,end_date:cycle.end_date,progress:0,status:'assigned',created_at:now,updated_at:now};state.projects.unshift({...raw,owner_name:owner.name,cycle_label:cycle.label,department_name:idea.department_name});idea.status='assigned';idea.updated_at=now;ops.push({collection:'projects',row:raw},{collection:'ideas',row:idea})});cycle.updated_at=now;await persistThenSync(ops);notifyUser('Weekly tasks assigned',`${cycle.label}: 2 R&D tasks are now active.`);return true}
 async function addProgressLocal(projectId,b){if(isVisitor())throw new Error('Admin visitors have view-only access.');const p=state.projects.find(x=>x.id===Number(projectId)),member=state.members.find(m=>m.id===Number(b.user_id)),pct=Number(b.progress_percent),work=String(b.work_done||'').trim();if(!p)throw new Error('Project not found.');if(!member||!Number.isFinite(pct)||pct<0||pct>100||!work)throw new Error('Member, work done and progress 0-100 are required.');if(work.length>1600)throw new Error("Today's work must be 1600 characters or less.");if(pct<p.progress)throw new Error(`Progress cannot go backwards. Current project progress is ${p.progress}%.`);const now=new Date().toISOString(),u={id:nextId(state.progress),project_id:p.id,user_id:member.id,update_date:b.update_date||today(),work_done:work,progress_percent:pct,remarks:String(b.remarks||'').trim().slice(0,1200),blocker:String(b.blocker||'').trim().slice(0,800),next_action:String(b.next_action||'').trim().slice(0,800),attachment:b.attachment||null,created_at:now,updated_at:now,user_name:member.name,attachment_path:b.attachment?.data||''};state.progress.push(u);p.progress=pct;p.status=pct>=100?'completed':pct>0?'in_progress':'assigned';p.updated_at=now;const ops=[{collection:'progress',row:u},{collection:'projects',row:p}];if(pct>=100){const peers=state.projects.filter(x=>x.cycle_id===p.cycle_id);if(peers.length===2&&peers.every(x=>x.progress===100)){const c=state.cycles.find(x=>x.id===p.cycle_id);if(c){c.status='completed';c.updated_at=now;ops.push({collection:'cycles',row:c})}}}await persistThenSync(ops);notifyUser('Progress updated',`${p.project_number} is now ${pct}% complete.`);return u}
 async function updateIdeaLocal(id,b){
   if(isVisitor())throw new Error('Admin visitors have view-only access.');
@@ -261,12 +266,113 @@ async function fileData(input){
 function storedLogin(){try{return JSON.parse(localStorage.getItem('rndLoggedInMember')||'null')}catch{return null}}
 function activeUser(){return Number(storedLogin()?.id)||0}
 function currentMember(){return state.members.find(m=>Number(m.id)===activeUser()&&Number(m.active)!==0)||null}
+
+let teamChatMessages=[],teamChatStop=null,teamChatStarted=false,teamChatOpen=false,teamChatUnread=0;
+function chatTime(ms){
+  const d=new Date(Number(ms)||Date.now());
+  const same=d.toDateString()===new Date().toDateString();
+  return same?d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function updateTeamChatIdentity(){
+  const m=currentMember(),host=$('#teamChatIdentity');if(!host)return;
+  if(!m){host.innerHTML='<span class="team-chat-mini-avatar">R</span><span>Signed in profile</span>';return}
+  const initial=(m.name||'R').trim().charAt(0).toUpperCase();
+  host.innerHTML=`<span class="team-chat-mini-avatar">${esc(initial)}</span><span><b>${esc(m.name)}</b><small>${m.role==='visitor'?'VISITOR':'R&D MEMBER'}</small></span>`;
+}
+function renderTeamChat(){
+  const host=$('#teamChatMessages');if(!host)return;
+  const me=currentMember();
+  if(!teamChatMessages.length){host.innerHTML='<div class="team-chat-empty">No messages yet. Start the team discussion.</div>';return}
+  host.innerHTML=teamChatMessages.map(msg=>{
+    const own=me&&Number(msg.member_id)===Number(me.id);
+    const savedMember=state.members.find(m=>Number(m.id)===Number(msg.member_id));
+    const senderName=String(savedMember?.name||msg.name||'Unknown');
+    const senderRole=savedMember?.role||msg.role||'member';
+    const initial=senderName.trim().charAt(0).toUpperCase()||'?';
+    return `<article class="team-chat-message ${own?'own':''}"><div class="team-chat-avatar" title="${esc(senderName)}">${esc(initial)}</div><div class="team-chat-bubble"><div class="team-chat-meta"><b>${esc(senderName)}</b><span>${senderRole==='visitor'?'VISITOR':'R&D MEMBER'}</span><time>${esc(chatTime(msg.created_at))}</time></div><p>${esc(msg.text).replace(/\n/g,'<br>')}</p></div></article>`;
+  }).join('');
+  if(teamChatOpen)requestAnimationFrame(()=>{host.scrollTop=host.scrollHeight});
+}
+function setTeamChatStatus(text,ok=true){const el=$('#teamChatStatus');if(el){el.textContent=text;el.classList.toggle('offline',!ok)}const send=$('#teamChatSend');if(send)send.disabled=!ok}
+function updateTeamChatUnread(){const badge=$('#teamChatUnread');if(!badge)return;badge.textContent=String(teamChatUnread);badge.classList.toggle('hidden',teamChatUnread<=0)}
+function setTeamChatOpen(open){
+  teamChatOpen=Boolean(open);
+  if(teamChatOpen){teamChatUnread=0;updateTeamChatUnread();const host=$('#teamChatMessages');requestAnimationFrame(()=>{if(host)host.scrollTop=host.scrollHeight});setTimeout(()=>$('#teamChatInput')?.focus(),80)}
+}
+function startTeamChat(){
+  updateTeamChatIdentity();
+  if(!currentMember()||!window.rndCloud?.enabled||typeof window.rndCloud.watchChat!=='function'){setTeamChatStatus(cloudRuntimeStatus==='offline'?'Chat offline · reconnecting…':'Connecting to Firebase…',false);return}
+  if(teamChatStarted)return;
+  teamChatStarted=true;setTeamChatStatus('Live · shared with everyone',true);
+  teamChatStop=window.rndCloud.watchChat(rows=>{
+    const oldLast=teamChatMessages.at(-1)?.id||'';
+    teamChatMessages=Array.isArray(rows)?rows:[];
+    const newLast=teamChatMessages.at(-1)?.id||'';
+    if(oldLast&&newLast&&oldLast!==newLast&&!teamChatOpen)teamChatUnread++;
+    renderTeamChat();updateTeamChatUnread();
+  },status=>{if(status?.connected)setTeamChatStatus('Live · shared with everyone',true);else setTeamChatStatus('Chat offline · reconnecting…',false)});
+}
+function stopTeamChat(){
+  if(typeof teamChatStop==='function'){try{teamChatStop()}catch{}};
+  window.rndCloud?.stopChat?.();teamChatStop=null;teamChatStarted=false;teamChatMessages=[];teamChatUnread=0;updateTeamChatUnread();renderTeamChat();setTeamChatOpen(false);
+}
+
+
+
+
+const EXCEL_COLS=26;
+const EXCEL_ROWS=120;
+const EXCEL_LETTERS=Array.from({length:EXCEL_COLS},(_,i)=>String.fromCharCode(65+i));
+let excelSheets=[],excelActiveSheetId='',excelSheetRows=new Map(),excelSheetFormats=new Map(),masterSheetStop=null,masterSheetStarted=false,masterSheetSaveTimers=new Map(),excelActiveCell={row:1,col:0},excelSwitching=false;
+function excelDefaultSheet(){return{id:'sheet1',name:'Sheet1',order:1,color:'#217346',tab_width:120,column_widths:{},row_heights:{},created_at:Date.now(),updated_at:Date.now()}}
+function excelActiveSheet(){return excelSheets.find(s=>s.id===excelActiveSheetId)||excelSheets[0]||null}
+function excelSheetKey(){return excelActiveSheetId||excelActiveSheet()?.id||''}
+function excelRowDoc(row){return excelSheetRows.get(Number(row))||{}}
+function excelRowFormats(row){return excelSheetFormats.get(Number(row))||{}}
+function excelCellFormat(row,col){return excelRowFormats(row)[EXCEL_LETTERS[col]]||{}}
+function excelNonEmptyCount(){let n=0;excelSheetRows.forEach(row=>Object.values(row||{}).forEach(v=>{if(String(v||'').length)n++}));return n}
+function excelCellRef(row,col){return `${EXCEL_LETTERS[col]}${row}`}
+function excelClampRow(row){return Math.max(1,Math.min(EXCEL_ROWS,Number(row)||1))}
+function excelClampCol(col){return Math.max(0,Math.min(EXCEL_COLS-1,Number(col)||0))}
+function excelNormalizeRowMap(rowMap){const clean={};EXCEL_LETTERS.forEach(letter=>{const value=String(rowMap?.[letter]??'').replace(/\r/g,'').slice(0,4000);if(value!=='')clean[letter]=value});return clean}
+function excelNormalizeFormatMap(map){const out={};EXCEL_LETTERS.forEach(k=>{const f=map?.[k]||{},x={};if(/^#[0-9a-f]{6}$/i.test(f.b||''))x.b=f.b;if(/^#[0-9a-f]{6}$/i.test(f.t||''))x.t=f.t;if(Object.keys(x).length)out[k]=x});return out}
+function excelSafeSheetName(name){return String(name||'').trim().replace(/[\\/:*?\[\]]/g,' ').replace(/\s+/g,' ').slice(0,31)||'Sheet'}
+function excelUniqueSheetName(base='Sheet'){const names=new Set(excelSheets.map(s=>s.name.toLowerCase()));let candidate=excelSafeSheetName(base),n=1;while(names.has(candidate.toLowerCase()))candidate=`${excelSafeSheetName(base).replace(/\d+$/,'')||'Sheet'}${++n}`;return candidate}
+function excelColumnWidth(col){const s=excelActiveSheet();return Math.max(60,Math.min(420,Number(s?.column_widths?.[EXCEL_LETTERS[col]])||130))}
+function excelRowHeight(row){const s=excelActiveSheet();return Math.max(22,Math.min(180,Number(s?.row_heights?.[row])||26))}
+function renderExcelHead(){const head=$('#excelGridHead');if(!head)return;head.innerHTML=`<tr><th class="excel-corner"></th>${EXCEL_LETTERS.map((c,i)=>`<th class="excel-col-head" data-resize-col="${i}" style="width:${excelColumnWidth(i)}px;min-width:${excelColumnWidth(i)}px;max-width:${excelColumnWidth(i)}px">${c}<span class="excel-col-resizer" data-col-resizer="${i}"></span></th>`).join('')}</tr>`;bindExcelResizers()}
+function renderExcelSheetTabs(){const wrap=$('#excelSheetTabs');if(!wrap)return;wrap.innerHTML=[...excelSheets].sort((a,b)=>(a.order||0)-(b.order||0)).map(s=>`<button class="excel-sheet-tab ${s.id===excelActiveSheetId?'active':''}" style="--tab-color:${esc(s.color||'#217346')};width:${Math.max(80,Math.min(240,Number(s.tab_width)||120))}px" type="button" data-sheet-id="${esc(s.id)}" title="${esc(s.name)}">${esc(s.name)}</button>`).join('');$$('[data-sheet-id]').forEach(btn=>{btn.onclick=e=>{e.preventDefault();e.stopPropagation();switchExcelSheet(btn.dataset.sheetId)};btn.ondblclick=e=>{e.preventDefault();e.stopPropagation();renameExcelSheet(btn.dataset.sheetId)};btn.oncontextmenu=e=>{e.preventDefault();deleteExcelSheet(btn.dataset.sheetId)}});syncExcelFormatControls()}
+function renderMasterSheet(){const body=$('#masterSheetBody');if(!body)return;renderExcelHead();renderExcelSheetTabs();let html='';for(let r=1;r<=EXCEL_ROWS;r++){const row=excelRowDoc(r),h=excelRowHeight(r);html+=`<tr data-excel-row="${r}" style="height:${h}px"><th class="excel-row-head" data-resize-row="${r}" style="height:${h}px">${r}<span class="excel-row-resizer" data-row-resizer="${r}"></span></th>`;for(let c=0;c<EXCEL_COLS;c++){const letter=EXCEL_LETTERS[c],value=String(row[letter]||''),fmt=excelCellFormat(r,c),w=excelColumnWidth(c);html+=`<td class="excel-cell" contenteditable="true" tabindex="0" data-excel-row="${r}" data-excel-col="${c}" data-excel-ref="${letter}${r}" spellcheck="false" style="width:${w}px;min-width:${w}px;max-width:${w}px;height:${h}px;${fmt.b?`background:${fmt.b};`:''}${fmt.t?`color:${fmt.t};`:''}">${esc(value)}</td>`}html+='</tr>'}body.innerHTML=html;const count=excelNonEmptyCount();$('#masterSheetCount').textContent=`${count} saved cell${count===1?'':'s'}`;bindMasterSheetGrid();bindExcelResizers();excelSelectCell(excelActiveCell.row,excelActiveCell.col,false)}
+function excelCellElement(row,col){return $(`.excel-cell[data-excel-row="${row}"][data-excel-col="${col}"]`)}
+function excelSelectCell(row,col,focus=true){row=excelClampRow(row);col=excelClampCol(col);excelActiveCell={row,col};$$('.excel-cell.excel-active').forEach(x=>x.classList.remove('excel-active'));const cell=excelCellElement(row,col);if(cell){cell.classList.add('excel-active');$('#excelNameBox').textContent=excelCellRef(row,col);$('#excelFormulaBar').value=cell.textContent||'';syncExcelFormatControls();if(focus)cell.focus()}}
+function excelCommitCell(row,col,value){if(!excelSheetKey())return;row=excelClampRow(row);col=excelClampCol(col);const letter=EXCEL_LETTERS[col],current={...excelRowDoc(row)},clean=String(value??'').replace(/\r/g,'').slice(0,4000);if(clean==='')delete current[letter];else current[letter]=clean;const normalized=excelNormalizeRowMap(current);if(Object.keys(normalized).length)excelSheetRows.set(row,normalized);else excelSheetRows.delete(row);const cell=excelCellElement(row,col);if(cell&&cell.textContent!==clean)cell.textContent=clean;const count=excelNonEmptyCount();$('#masterSheetCount').textContent=`${count} saved cell${count===1?'':'s'}`;scheduleMasterSheetSave(row)}
+function scheduleMasterSheetSave(row,immediate=false){row=excelClampRow(row);const sheetId=excelSheetKey();if(!sheetId)return;const timerKey=`${sheetId}:${row}`;clearTimeout(masterSheetSaveTimers.get(timerKey));const run=async()=>{if(!window.rndCloud?.enabled||typeof window.rndCloud.saveExcelGridRow!=='function')return;try{await window.rndCloud.saveExcelGridRow(sheetId,row,excelNormalizeRowMap(excelRowDoc(row)),excelNormalizeFormatMap(excelRowFormats(row)));setMasterSheetStatus('Live · saved',true)}catch(err){setMasterSheetStatus('Save pending',false);toast(err?.message||'Unable to save spreadsheet row.',true)}};if(immediate)run();else masterSheetSaveTimers.set(timerKey,setTimeout(run,350))}
+function excelUpdateFormulaFromActive(){const {row,col}=excelActiveCell,cell=excelCellElement(row,col);if(cell)$('#excelFormulaBar').value=cell.textContent||''}
+function excelClearCell(){const {row,col}=excelActiveCell,cell=excelCellElement(row,col);if(!cell)return;cell.textContent='';excelCommitCell(row,col,'');$('#excelFormulaBar').value='';cell.focus()}
+function excelClearRow(){const row=excelActiveCell.row;excelSheetRows.delete(row);excelSheetFormats.delete(row);for(let c=0;c<EXCEL_COLS;c++){const cell=excelCellElement(row,c);if(cell){cell.textContent='';cell.style.background='';cell.style.color=''}}$('#excelFormulaBar').value='';const count=excelNonEmptyCount();$('#masterSheetCount').textContent=`${count} saved cell${count===1?'':'s'}`;scheduleMasterSheetSave(row,true)}
+function excelPasteMatrix(startRow,startCol,text){const rows=String(text||'').replace(/\r/g,'').split('\n');if(rows.length&&rows[rows.length-1]==='')rows.pop();const touched=new Set();rows.forEach((line,ri)=>line.split('\t').forEach((value,ci)=>{const row=startRow+ri,col=startCol+ci;if(row>EXCEL_ROWS||col>=EXCEL_COLS)return;const letter=EXCEL_LETTERS[col],map={...excelRowDoc(row)};if(value==='')delete map[letter];else map[letter]=value.slice(0,4000);const clean=excelNormalizeRowMap(map);if(Object.keys(clean).length)excelSheetRows.set(row,clean);else excelSheetRows.delete(row);const cell=excelCellElement(row,col);if(cell)cell.textContent=value.slice(0,4000);touched.add(row)}));touched.forEach(row=>scheduleMasterSheetSave(row));const count=excelNonEmptyCount();$('#masterSheetCount').textContent=`${count} saved cell${count===1?'':'s'}`;excelUpdateFormulaFromActive()}
+function bindMasterSheetGrid(){$$('.excel-cell').forEach(cell=>{const row=Number(cell.dataset.excelRow),col=Number(cell.dataset.excelCol);cell.addEventListener('focus',()=>excelSelectCell(row,col,false));cell.addEventListener('click',()=>excelSelectCell(row,col,false));cell.addEventListener('input',()=>{excelCommitCell(row,col,cell.textContent||'');excelUpdateFormulaFromActive()});cell.addEventListener('paste',e=>{const text=e.clipboardData?.getData('text/plain')||'';if(text.includes('\t')||text.includes('\n')){e.preventDefault();excelPasteMatrix(row,col,text)}});cell.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();excelCommitCell(row,col,cell.textContent||'');excelSelectCell(row+1,col,true)}else if(e.key==='Enter'&&e.shiftKey){e.preventDefault();excelCommitCell(row,col,cell.textContent||'');excelSelectCell(row-1,col,true)}else if((e.key==='Delete'||e.key==='Backspace')&&!cell.textContent){e.preventDefault();excelClearCell()}})})}
+function applyExcelCellColor(kind,color){const {row,col}=excelActiveCell,letter=EXCEL_LETTERS[col],rowFmt={...excelRowFormats(row)},fmt={...(rowFmt[letter]||{})};if(kind==='b'){if(color)fmt.b=color;else delete fmt.b}else if(kind==='t'){if(color)fmt.t=color;else delete fmt.t}if(Object.keys(fmt).length)rowFmt[letter]=fmt;else delete rowFmt[letter];if(Object.keys(rowFmt).length)excelSheetFormats.set(row,rowFmt);else excelSheetFormats.delete(row);const cell=excelCellElement(row,col);if(cell){if(kind==='b')cell.style.background=color||'';else cell.style.color=color||''}scheduleMasterSheetSave(row);syncExcelFormatControls()}
+function syncExcelFormatControls(){const s=excelActiveSheet(),fmt=excelCellFormat(excelActiveCell.row,excelActiveCell.col),fill=$('#excelFillColor'),text=$('#excelTextColor'),tab=$('#excelTabColor'),tw=$('#excelTabWidth');if(fill)fill.value=fmt.b||'#ffffff';if(text)text.value=fmt.t||'#1f2937';if(tab)tab.value=s?.color||'#217346';if(tw)tw.value=String(Math.max(80,Math.min(240,Number(s?.tab_width)||120)))}
+async function saveExcelLayoutPatch(patch){const s=excelActiveSheet();if(!s)return;Object.assign(s,patch);try{await window.rndCloud.updateExcelSheet(s.id,patch);renderExcelSheetTabs()}catch(err){toast(err?.message||'Unable to save Excel layout.',true)}}
+function bindExcelResizers(){$$('[data-col-resizer]').forEach(handle=>{handle.onmousedown=e=>{e.preventDefault();e.stopPropagation();const col=Number(handle.dataset.colResizer),startX=e.clientX,startW=excelColumnWidth(col),letter=EXCEL_LETTERS[col];const move=ev=>{const w=Math.max(60,Math.min(420,startW+ev.clientX-startX));$$(`[data-resize-col="${col}"],.excel-cell[data-excel-col="${col}"]`).forEach(el=>{el.style.width=`${w}px`;el.style.minWidth=`${w}px`;el.style.maxWidth=`${w}px`})};const up=ev=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);const w=Math.max(60,Math.min(420,startW+ev.clientX-startX)),cw={...(excelActiveSheet()?.column_widths||{}),[letter]:Math.round(w)};saveExcelLayoutPatch({column_widths:cw})};document.addEventListener('mousemove',move);document.addEventListener('mouseup',up)}});$$('[data-row-resizer]').forEach(handle=>{handle.onmousedown=e=>{e.preventDefault();e.stopPropagation();const row=Number(handle.dataset.rowResizer),startY=e.clientY,startH=excelRowHeight(row);const move=ev=>{const h=Math.max(22,Math.min(180,startH+ev.clientY-startY)),tr=$(`tr[data-excel-row="${row}"]`);if(tr)tr.style.height=`${h}px`;$$(`.excel-cell[data-excel-row="${row}"],.excel-row-head[data-resize-row="${row}"]`).forEach(el=>el.style.height=`${h}px`)};const up=ev=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);const h=Math.max(22,Math.min(180,startH+ev.clientY-startY)),rh={...(excelActiveSheet()?.row_heights||{}),[row]:Math.round(h)};saveExcelLayoutPatch({row_heights:rh})};document.addEventListener('mousemove',move);document.addEventListener('mouseup',up)}})}
+function setMasterSheetStatus(text,ok=true){const el=$('#masterSheetStatus');if(el){el.textContent=text;el.classList.toggle('offline',!ok)}}
+async function addExcelSheet(){if(!window.rndCloud?.enabled)return toast('Firebase is not connected.',true);try{const name=excelUniqueSheetName(`Sheet${excelSheets.length+1}`),saved=await window.rndCloud.createExcelSheet({name,order:excelSheets.length+1,color:'#217346',tab_width:120});excelSheets.push(saved);await switchExcelSheet(saved.id,{saveMeta:true,force:true});toast(`${saved.name} created.`)}catch(err){toast(err?.message||'Unable to add sheet.',true)}}
+async function renameExcelSheet(id){const sheet=excelSheets.find(s=>s.id===id);if(!sheet)return;const entered=prompt('Rename sheet',sheet.name);if(entered===null)return;const name=excelSafeSheetName(entered);if(excelSheets.some(s=>s.id!==id&&s.name.toLowerCase()===name.toLowerCase()))return toast('A sheet with that name already exists.',true);try{const saved=await window.rndCloud.updateExcelSheet(id,{name});Object.assign(sheet,saved);renderExcelSheetTabs();toast('Sheet renamed.')}catch(err){toast(err?.message||'Unable to rename sheet.',true)}}
+async function deleteExcelSheet(id){if(excelSheets.length<=1)return toast('At least one sheet must remain.',true);const sheet=excelSheets.find(s=>s.id===id);if(!sheet||!confirm(`Delete "${sheet.name}" and all of its saved cells?`))return;try{await window.rndCloud.deleteExcelSheet(id);excelSheets=excelSheets.filter(s=>s.id!==id);if(excelActiveSheetId===id)await switchExcelSheet(excelSheets[0].id,{saveMeta:true,force:true});else renderExcelSheetTabs();toast('Sheet deleted.')}catch(err){toast(err?.message||'Unable to delete sheet.',true)}}
+async function loadExcelSheetRows(sheetId){const data=await window.rndCloud.loadExcelGrid(sheetId);excelSheetRows=new Map();excelSheetFormats=new Map();(data||[]).forEach(item=>{const row=Number(item.row);if(row>=1&&row<=EXCEL_ROWS){const clean=excelNormalizeRowMap(item.cells||{}),fm=excelNormalizeFormatMap(item.formats||{});if(Object.keys(clean).length)excelSheetRows.set(row,clean);if(Object.keys(fm).length)excelSheetFormats.set(row,fm)}});renderMasterSheet()}
+async function switchExcelSheet(id,{saveMeta=true,force=false}={}){if(!id||excelSwitching)return;if(!force&&id===excelActiveSheetId){renderExcelSheetTabs();return}excelSwitching=true;try{excelActiveSheetId=id;excelActiveCell={row:1,col:0};excelSheetRows=new Map();excelSheetFormats=new Map();renderExcelSheetTabs();setMasterSheetStatus('Loading sheet…',true);await loadExcelSheetRows(id);if(saveMeta)await window.rndCloud.saveExcelWorkbookMeta({active_sheet_id:id});setMasterSheetStatus('Live · Firebase shared',true)}catch(err){toast(err?.message||'Unable to switch sheet.',true)}finally{excelSwitching=false}}
+function startMasterSheet(){if(masterSheetStarted)return;if(!window.rndCloud?.enabled||typeof window.rndCloud.watchExcelWorkbook!=='function'){setMasterSheetStatus('Offline · reconnecting…',false);return}masterSheetStarted=true;setMasterSheetStatus('Live · Firebase shared',true);masterSheetStop=window.rndCloud.watchExcelWorkbook(async data=>{const sheets=Array.isArray(data?.sheets)?data.sheets:[];excelSheets=sheets.length?sheets:[excelDefaultSheet()];const requested=data?.meta?.active_sheet_id,valid=excelSheets.some(s=>s.id===excelActiveSheetId)?excelActiveSheetId:(excelSheets.some(s=>s.id===requested)?requested:excelSheets[0].id);if(!excelActiveSheetId){await switchExcelSheet(valid,{saveMeta:false,force:true})}else{renderExcelSheetTabs()}},status=>setMasterSheetStatus(status?.connected?'Live · Firebase shared':'Offline · reconnecting…',Boolean(status?.connected)))}
+function stopMasterSheet(){if(typeof masterSheetStop==='function'){try{masterSheetStop()}catch{}}window.rndCloud?.stopExcelWorkbook?.();masterSheetStop=null;masterSheetStarted=false;excelSheets=[];excelActiveSheetId='';excelSheetRows=new Map();excelSheetFormats=new Map();masterSheetSaveTimers.forEach(t=>clearTimeout(t));masterSheetSaveTimers.clear()}
+function excelCsvEscape(value){const s=String(value??'');return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
+function exportExcelCsv(){let lastRow=1,lastCol=0;excelSheetRows.forEach((row,r)=>{if(Object.keys(row).length){lastRow=Math.max(lastRow,r);Object.keys(row).forEach(k=>lastCol=Math.max(lastCol,EXCEL_LETTERS.indexOf(k)))}});const lines=[];for(let r=1;r<=lastRow;r++){const row=excelRowDoc(r);lines.push(Array.from({length:lastCol+1},(_,c)=>excelCsvEscape(row[EXCEL_LETTERS[c]]||'')).join(','))}const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${excelSafeSheetName(excelActiveSheet()?.name||'Sheet')}-${today()}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Current sheet exported as CSV.')}
+
 function isVisitor(){return currentMember()?.role==='visitor'}
 function workingMembers(){return state.members.filter(m=>m.role!=='visitor'&&Number(m.active)!==0).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))}
 function persistLogin(member){localStorage.setItem('rndLoggedInMember',JSON.stringify({id:member.id,name:member.name,role:member.role||'member'}));localStorage.setItem('rndActiveUser',String(member.id))}
 function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.removeItem('rndActiveUser')}
 function showLogin(){document.querySelector('#appShell').classList.add('app-locked');document.querySelector('#loginGate').classList.remove('hidden');document.querySelector('#loginName').focus()}
-function showApp(){const member=currentMember();if(!member){showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');document.querySelector('#signedInName').textContent=member.name;document.querySelector('#settingsSignedInName').textContent=member.name;const avatar=$('#signedInAvatar');if(avatar)avatar.textContent=(member.name||'R').trim().charAt(0).toUpperCase();const badge=$('#signedInRole');if(badge){badge.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';badge.className='user-role-badge '+(member.role==='visitor'?'visitor':'member')}try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500)}
+function showApp(){const member=currentMember();if(!member){showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');document.querySelector('#signedInName').textContent=member.name;document.querySelector('#settingsSignedInName').textContent=member.name;const avatar=$('#signedInAvatar');if(avatar)avatar.textContent=(member.name||'R').trim().charAt(0).toUpperCase();const badge=$('#signedInRole');if(badge){badge.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';badge.className='user-role-badge '+(member.role==='visitor'?'visitor':'member')}try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);updateTeamChatIdentity();setTimeout(startTeamChat,120)}
 let cloudRuntimeStatus='connecting', cloudRuntimeMessage='';
 function setCloudRuntimeStatus(status,message=''){
   cloudRuntimeStatus=status;
@@ -276,6 +382,7 @@ function setCloudRuntimeStatus(status,message=''){
   const cs=$('#cloudStatus');
   if(cs){cs.textContent=status==='live'?'Connected · shared Firebase database':status==='offline'?(cloudRuntimeMessage||'Firebase offline · local cache active'):'Connecting to Firebase…';cs.className=status==='live'?'cloud-good':'cloud-warn';}
   const ce=$('#cloudErrorDetail');if(ce){ce.textContent=status==='offline'?(cloudRuntimeMessage||'No Firebase error detail available.'):' ';ce.classList.toggle('hidden',status!=='offline');}
+  if(status==='live'&&currentMember())setTimeout(startTeamChat,0);else if(status==='offline')setTeamChatStatus('Chat offline · reconnecting…',false);
 }
 let cloudBooted=false,cloudWatching=false;
 function cloudIsEmpty(s){return !s||['members','departments','ideas','cycles','projects','progress'].every(k=>!(s[k]||[]).length)}
@@ -356,66 +463,376 @@ async function load(){
   member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
   if(member){persistLogin(member);showApp()}else showLogin();
 }
-function renderAll(){populateSelects();applyRoleAccess();renderDashboard();renderIdeas();renderWeekly();renderProjects();renderSettings();safeRenderAnalytics();renderReportControls();bindRecordActions()}
+function renderAll(){populateSelects();applyRoleAccess();renderDashboard();renderIdeas();renderWeekly();renderProjects();renderMasterSheet();renderSettings();safeRenderAnalytics();renderReportControls();bindRecordActions()}
 
 function populateSelects(){const workers=workingMembers();const opts=workers.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');['#ideaMember','#progressMember'].forEach(sel=>{const el=$(sel);const val=el.value||activeUser();el.innerHTML=opts;el.value=workers.some(m=>m.id===Number(val))?val:(workers[0]?.id||'')});const filterMembers=state.members.filter(m=>Number(m.active)!==0||state.ideas.some(i=>Number(i.submitted_by)===Number(m.id))||state.progress.some(p=>Number(p.user_id)===Number(m.id)));const allOpts=filterMembers.map(m=>`<option value="${m.id}">${esc(m.name)}${Number(m.active)===0?' · Archived':m.role==='visitor'?' · Visitor':''}</option>`).join('');$('#ideaPersonFilter').innerHTML='<option value="">All people</option>'+allOpts;const deps=state.departments.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');$('#ideaDepartment').innerHTML=deps;$('#ideaDeptFilter').innerHTML='<option value="">All departments</option>'+deps;$('#weekSelect').innerHTML=state.cycles.length?state.cycles.map(c=>`<option value="${c.id}">${esc(c.label)} · ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</option>`).join(''):'<option value="">No week created</option>'}
 
-function renderDashboard(){const t=today();$('#todayLabel').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();const workers=workingMembers();const todays=state.ideas.filter(i=>i.submission_date===t);const completed=state.projects.filter(p=>p.status==='completed').length;const active=state.projects.filter(p=>p.status!=='completed');const avg=active.length?Math.round(active.reduce((a,p)=>a+p.progress,0)/active.length):0;const workerIds=new Set(workers.map(m=>m.id));const submitters=new Set(todays.filter(i=>workerIds.has(Number(i.submitted_by))).map(i=>Number(i.submitted_by)));$('#dashboardMetrics').innerHTML=`<div class="metric accent"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric"><span class="m-label">ACTIVE WEEK TASKS</span><strong>${active.length}</strong><small>execution items</small></div><div class="metric"><span class="m-label">AVERAGE PROGRESS</span><strong>${avg}%</strong><small>active projects</small></div><div class="metric"><span class="m-label">COMPLETED TOTAL</span><strong>${completed}</strong><small>weekly projects</small></div>`;$('#todayActivity').innerHTML=`<div class="activity-grid">${workers.map(m=>{const n=todays.filter(i=>Number(i.submitted_by)===Number(m.id)).length;return `<div class="activity-person"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">${n?`${n} idea${n>1?'s':''} submitted`:'No entry yet'}</div></div><span class="status-dot ${n?'done':''}">${n?'✓ Submitted':'Pending'}</span></div>`}).join('')}${state.members.filter(m=>m.role==='visitor'&&Number(m.active)!==0).map(m=>`<div class="activity-person visitor-row"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">Admin visitor · no idea required</div></div><span class="tag visitor">VISITOR</span></div>`).join('')}</div>`;const latest=state.cycles.find(c=>state.projects.some(p=>p.cycle_id===c.id))||state.cycles[0];const ps=latest?state.projects.filter(p=>p.cycle_id===latest.id):[];$('#weeklyFocus').innerHTML=latest?`<div class="muted" style="font-size:12px;margin-bottom:10px">${esc(latest.label)} · ${fmtDate(latest.start_date)} – ${fmtDate(latest.end_date)}</div>${ps.length?ps.map(p=>`<div class="focus-project"><div class="focus-title"><span>${esc(p.title)}</span><span>${p.progress}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${p.progress}%"></div></div></div>`).join(''):'<div class="empty-state">No tasks assigned for this week yet.</div>'}`:'<div class="empty-state">Create your first working week.</div>'}
+function renderDashboard(){const t=today();$('#todayLabel').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();const workers=workingMembers();const todays=state.ideas.filter(i=>i.submission_date===t);const completed=state.projects.filter(p=>p.status==='completed').length;const active=state.projects.filter(p=>p.status!=='completed');const avg=active.length?Math.round(active.reduce((a,p)=>a+p.progress,0)/active.length):0;const workerIds=new Set(workers.map(m=>m.id));const submitters=new Set(todays.filter(i=>workerIds.has(Number(i.submitted_by))).map(i=>Number(i.submitted_by)));$('#dashboardMetrics').innerHTML=`<div class="metric accent dashboard-nav" data-go="ideas" role="button" tabindex="0" aria-label="Open Daily Ideas"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric dashboard-nav" data-go="weekly" role="button" tabindex="0" aria-label="Open Weekly Tasks"><span class="m-label">ACTIVE WEEK TASKS</span><strong>${active.length}</strong><small>execution items</small></div><div class="metric dashboard-nav" data-go="progress" role="button" tabindex="0" aria-label="Open Work Tracking"><span class="m-label">AVERAGE PROGRESS</span><strong>${avg}%</strong><small>active projects</small></div><div class="metric"><span class="m-label">COMPLETED TOTAL</span><strong>${completed}</strong><small>weekly projects</small></div>`;$$('#dashboardMetrics .dashboard-nav').forEach(card=>{card.onclick=()=>showPage(card.dataset.go);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showPage(card.dataset.go)}}});$('#todayActivity').innerHTML=`<div class="activity-grid">${workers.map(m=>{const n=todays.filter(i=>Number(i.submitted_by)===Number(m.id)).length;return `<div class="activity-person"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">${n?`${n} idea${n>1?'s':''} submitted`:'No entry yet'}</div></div><span class="status-dot ${n?'done':''}">${n?'✓ Submitted':'Pending'}</span></div>`}).join('')}${state.members.filter(m=>m.role==='visitor'&&Number(m.active)!==0).map(m=>`<div class="activity-person visitor-row"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">Admin visitor · no idea required</div></div><span class="tag visitor">VISITOR</span></div>`).join('')}</div>`;const latest=state.cycles.find(c=>state.projects.some(p=>p.cycle_id===c.id))||state.cycles[0];const ps=latest?state.projects.filter(p=>p.cycle_id===latest.id):[];$('#weeklyFocus').innerHTML=latest?`<div class="muted" style="font-size:12px;margin-bottom:10px">${esc(latest.label)} · ${fmtDate(latest.start_date)} – ${fmtDate(latest.end_date)}</div>${ps.length?ps.map(p=>`<div class="focus-project"><div class="focus-title"><span>${esc(p.title)}</span><span>${p.progress}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${p.progress}%"></div></div></div>`).join(''):'<div class="empty-state">No tasks assigned for this week yet.</div>'}`:'<div class="empty-state">Create your first working week.</div>'}
 
 function renderIdeas(){const q=$('#ideaSearch').value.toLowerCase().trim(), person=Number($('#ideaPersonFilter').value)||0, dep=Number($('#ideaDeptFilter').value)||0, date=$('#ideaDateFilter').value;const rows=state.ideas.filter(i=>(!q||[i.problem,i.proposed_idea,i.department_name,i.submitted_by_name,i.idea_number].join(' ').toLowerCase().includes(q))&&(!person||i.submitted_by===person)&&(!dep||i.department_id===dep)&&(!date||i.submission_date===date));$('#ideasTable').innerHTML=rows.length?rows.map(i=>`<tr><td>${fmtDate(i.submission_date)}</td><td><b>${esc(i.idea_number)}</b>${i.attachment_path?`<div class="sub"><a class="link" href="${i.attachment_path}" target="_blank">Attachment ↗</a></div>`:''}</td><td>${esc(i.submitted_by_name)}</td><td>${esc(i.department_name)}</td><td>${esc(i.problem)}</td><td>${esc(i.proposed_idea)}</td><td><span class="tag ${i.priority.toLowerCase()}">${esc(i.priority)}</span></td><td><span class="tag ${i.status}">${esc(i.status)}</span></td><td>${isVisitor()?'—':`<div class="row-actions"><button class="mini-action" data-edit-idea="${i.id}" title="Edit idea">Edit</button><button class="mini-action danger" data-delete-idea="${i.id}" title="Delete idea">×</button></div>`}</td></tr>`).join(''):'<tr><td colspan="9" class="empty-state">No ideas match the selected filters.</td></tr>'}
-function renderWeekly(){const sel=Number($('#weekSelect').value)||state.cycles[0]?.id;if(sel)$('#weekSelect').value=sel;const c=state.cycles.find(x=>x.id===sel);if(!c){$('#weeklySetup').innerHTML='<div class="empty-state">Create a working week to begin shortlisting.</div>';return}const assigned=state.projects.filter(p=>p.cycle_id===c.id);if(assigned.length){$('#weeklySetup').innerHTML=`<div class="panel"><div class="panel-head"><div><span class="kicker">LOCKED WEEKLY ASSIGNMENT</span><h3>${esc(c.label)}</h3></div><div class="panel-actions"><span class="tag ${c.status}">${esc(c.status)}</span>${isVisitor()?'':`<button class="mini-action" data-edit-cycle="${c.id}">Edit</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button>`}</div></div>${assigned.map((p,i)=>`<div class="focus-project"><div class="focus-title"><span>0${i+1} · ${esc(p.title)}</span><span>${p.progress}%</span></div><div class="muted" style="font-size:12px;margin:5px 0">Owner: ${esc(p.owner_name||'—')} · ${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}</div><div class="progress-track"><div class="progress-fill" style="width:${p.progress}%"></div></div></div>`).join('')}</div>`;return}const candidates=state.ideas.filter(i=>i.status==='submitted'&&i.submission_date>=c.start_date&&i.submission_date<=c.end_date);if(isVisitor()){$('#weeklySetup').innerHTML=`<section class="panel"><div class="panel-head"><div><span class="kicker">VIEW ONLY</span><h3>${esc(c.label)} · Available Ideas</h3></div><span class="tag visitor">ADMIN · VISITOR</span></div><div class="visitor-readonly">This account can review weekly ideas and assignments but cannot shortlist or create tasks.</div>${candidates.length?candidates.map(i=>`<div class="idea-choice"><div></div><div><b>${esc(i.proposed_idea)}</b><div class="muted" style="font-size:11px;margin-top:4px">${esc(i.idea_number)} · ${esc(i.submitted_by_name)} · ${esc(i.department_name)}</div><div style="font-size:12px;margin-top:6px">${esc(i.problem)}</div></div></div>`).join(''):'<div class="empty-state">No unassigned ideas available.</div>'}</section>`;return}$('#weeklySetup').innerHTML=`<div class="shortlist-grid"><section class="panel"><div class="panel-head"><div><span class="kicker">UNASSIGNED IDEAS</span><h3>Select 2 Ideas</h3></div><div class="panel-actions"><button class="mini-action" data-edit-cycle="${c.id}">Edit</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button></div></div><div id="candidateIdeas">${candidates.length?candidates.map(i=>`<label class="idea-choice"><input type="checkbox" class="ideaPick" value="${i.id}"><div><b>${esc(i.proposed_idea)}</b><div class="muted" style="font-size:11px;margin-top:4px">${esc(i.idea_number)} · ${esc(i.submitted_by_name)} · ${esc(i.department_name)}</div><div style="font-size:12px;margin-top:6px">${esc(i.problem)}</div></div></label>`).join(''):'<div class="empty-state">No unassigned ideas available. Submit ideas first.</div>'}</div></section><aside class="counter-box"><span class="kicker" style="color:#9eaaa3">WEEKLY RULE</span><div class="counter-num"><span id="pickCount">0</span> / 2</div><p>Exactly two ideas are required. Once assigned, they become this week's execution projects.</p><div id="ownerPickers"></div><button class="secondary-btn" id="assignWeekBtn" style="width:100%;margin-top:14px" disabled>Create Weekly Assignment</button></aside></div>`;bindWeeklyPicks()}
+function renderWeekly(){
+  // Keep Weekly Tasks aligned with the Daily Ideas reference period.
+  // populateSelects() rebuilds the dropdown before this renderer runs, so
+  // resolve the cycle from the shared month/week state instead of trusting
+  // the browser's first option. Manual dropdown changes update this same
+  // state first, so manual selection still works exactly as before.
+  const periodCycle=state.cycles.find(c=>
+    monthKeyFromDate(c.start_date)===state.workMonthKey &&
+    workCycleWeek(c)===Number(state.workWeek)
+  );
+  const sel=Number(periodCycle?.id)||Number($('#weekSelect').value)||state.cycles[0]?.id;
+  if(sel)$('#weekSelect').value=String(sel);
+  const c=state.cycles.find(x=>Number(x.id)===Number(sel));
+  if(!c){$('#weeklySetup').innerHTML='<div class="empty-state">Create a working week to begin shortlisting.</div>';return}
+  syncWorkPeriodFromCycle(c);
+  const assigned=state.projects.filter(p=>Number(p.cycle_id)===Number(c.id));
+  if(assigned.length){
+    $('#weeklySetup').innerHTML=`<div class="panel"><div class="panel-head"><div><span class="kicker">WEEKLY EXECUTION</span><h3>${esc(c.label)}</h3><p class="muted weekly-subcopy">${fmtDate(c.start_date)} – ${fmtDate(c.end_date)} · exactly two priorities</p></div><div class="panel-actions"><span class="tag ${c.status}">${esc(c.status)}</span>${isVisitor()?'':`<button class="mini-action" data-edit-cycle="${c.id}">Edit</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button>`}</div></div><div class="assigned-week-grid">${assigned.map((p,i)=>`<article class="assigned-week-card"><div class="assigned-week-index">0${i+1}</div><div class="assigned-week-body"><div class="focus-title"><span>${esc(p.title)}</span><strong>${Number(p.progress||0)}%</strong></div><div class="assigned-week-meta"><span>${esc(p.owner_name||'—')}</span><span>${esc(p.department_name||'—')}</span><span>${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,Number(p.progress||0))}%"></div></div></div></article>`).join('')}</div></div>`;
+    return;
+  }
+  const linked=new Set(state.projects.map(p=>Number(p.idea_id)));
+  const candidates=state.ideas.filter(i=>String(i.status||'submitted').toLowerCase()==='submitted'&&!linked.has(Number(i.id))).sort((a,b)=>String(b.submission_date||'').localeCompare(String(a.submission_date||''))||Number(b.id)-Number(a.id));
+  const thisWeek=candidates.filter(i=>i.submission_date>=c.start_date&&i.submission_date<=c.end_date).length;
+  const backlog=Math.max(0,candidates.length-thisWeek);
+  const ideaCards=candidates.map(i=>{const inWeek=i.submission_date>=c.start_date&&i.submission_date<=c.end_date;return `<label class="idea-choice weekly-idea-card"><input type="checkbox" class="ideaPick" value="${i.id}"><div class="weekly-idea-main"><div class="weekly-idea-top"><b>${esc(i.proposed_idea)}</b><span class="weekly-source ${inWeek?'current':'backlog'}">${inWeek?'THIS WEEK':'BACKLOG'}</span></div><div class="weekly-idea-meta"><span>${esc(i.idea_number)}</span><span>${fmtDate(i.submission_date)}</span><span>${esc(i.submitted_by_name)}</span><span>${esc(i.department_name)}</span></div><p>${esc(i.problem)}</p></div></label>`}).join('');
+  if(isVisitor()){
+    $('#weeklySetup').innerHTML=`<section class="panel"><div class="panel-head"><div><span class="kicker">AVAILABLE IDEA BACKLOG</span><h3>${esc(c.label)}</h3><p class="muted weekly-subcopy">All submitted, unassigned ideas are eligible. Week dates define execution, not submission date.</p></div><span class="tag visitor">ADMIN · VISITOR</span></div><div class="weekly-backlog-stats"><span><b>${candidates.length}</b> available</span><span><b>${thisWeek}</b> this week</span><span><b>${backlog}</b> backlog</span></div><div class="visitor-readonly">View only: this account can review ideas but cannot shortlist or assign work.</div><div class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available.</div>'}</div></section>`;
+    return;
+  }
+  $('#weeklySetup').innerHTML=`<div class="weekly-assignment-shell"><section class="panel weekly-backlog-panel"><div class="panel-head"><div><span class="kicker">AVAILABLE IDEA BACKLOG</span><h3>Select exactly 2 priorities</h3><p class="muted weekly-subcopy">All submitted, unassigned ideas are shown here. The selected week controls the project start/end dates.</p></div><div class="panel-actions"><button class="mini-action" data-edit-cycle="${c.id}">Edit week</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button></div></div><div class="weekly-backlog-stats"><span><b>${candidates.length}</b> available</span><span><b>${thisWeek}</b> submitted this week</span><span><b>${backlog}</b> older backlog</span></div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available. Submit an idea first.</div>'}</div></section><aside class="weekly-rule-card"><span class="kicker">WEEKLY RULE</span><div class="weekly-rule-count"><span id="pickCount">0</span><small>/ 2</small></div><p>Choose exactly two ideas. Each becomes a tracked weekly project for ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}.</p><div id="ownerPickers" class="weekly-owner-pickers"></div><button class="primary-btn" id="assignWeekBtn" disabled>Create Weekly Assignment</button></aside></div>`;
+  bindWeeklyPicks();
+}
 function bindWeeklyPicks(){$$('.ideaPick').forEach(cb=>cb.addEventListener('change',()=>{const picks=$$('.ideaPick:checked');if(picks.length>2){cb.checked=false;toast('Only 2 ideas can be selected.',true)}const now=$$('.ideaPick:checked');$$('.idea-choice').forEach(x=>x.classList.toggle('selected',x.querySelector('input').checked));$('#pickCount').textContent=now.length;$('#assignWeekBtn').disabled=now.length!==2;$('#ownerPickers').innerHTML=now.map((x,i)=>{const idea=state.ideas.find(a=>a.id===Number(x.value));return `<div class="owner-row"><span style="font-size:12px">0${i+1} ${esc(idea.proposed_idea.slice(0,42))}</span><select class="ownerSelect">${workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div>`}).join('')}));$('#assignWeekBtn')?.addEventListener('click',assignWeek)}
 async function assignWeek(){try{const ids=$$('.ideaPick:checked').map(x=>Number(x.value));if(ids.length!==2)return;const owners=$$('.ownerSelect').map(x=>Number(x.value));await assignWeekLocal(Number($('#weekSelect').value),ids,owners);toast('Two weekly projects assigned.');scheduleRender()}catch(e){toast(e.message,true)}}
 function projectHasBlocker(projectId){return state.progress.some(u=>Number(u.project_id)===Number(projectId)&&String(u.blocker||'').trim())}
 function projectLastUpdate(projectId){return state.progress.filter(u=>Number(u.project_id)===Number(projectId)).sort((a,b)=>String(b.update_date||'').localeCompare(String(a.update_date||''))||Number(b.id)-Number(a.id))[0]||null}
 function daysTo(date){if(!date)return null;const a=new Date(today()+'T00:00:00'),b=new Date(date+'T00:00:00');return Math.ceil((b-a)/86400000)}
-function renderWorkSummary(){const host=$('#workSummary');if(!host)return;const total=state.projects.length,active=state.projects.filter(p=>p.status!=='completed').length,done=state.projects.filter(p=>p.status==='completed').length,blocked=state.projects.filter(p=>projectHasBlocker(p.id)&&p.status!=='completed').length,avg=total?Math.round(state.projects.reduce((n,p)=>n+Number(p.progress||0),0)/total):0;host.innerHTML=`<article class="work-stat primary"><span>ACTIVE WORK</span><strong>${active}</strong><small>${total} projects total</small></article><article class="work-stat"><span>AVG COMPLETION</span><strong>${avg}%</strong><small>across weekly projects</small></article><article class="work-stat"><span>COMPLETED</span><strong>${done}</strong><small>closed weekly priorities</small></article><article class="work-stat ${blocked?'alert':''}"><span>BLOCKED</span><strong>${blocked}</strong><small>${blocked?'needs attention':'no active blockers'}</small></article>`}
-function filteredProjects(){const q=String($('#workSearch')?.value||'').trim().toLowerCase(),status=$('#workStatusFilter')?.value||'';return state.projects.filter(p=>{const text=`${p.project_number||''} ${p.title||''} ${p.owner_name||''} ${p.department_name||''} ${p.cycle_label||''}`.toLowerCase();if(q&&!text.includes(q))return false;if(status==='blocked')return projectHasBlocker(p.id)&&p.status!=='completed';if(status&&p.status!==status)return false;return true}).sort((a,b)=>{const rank={in_progress:0,assigned:1,completed:2};return (rank[a.status]??3)-(rank[b.status]??3)||String(b.start_date||'').localeCompare(String(a.start_date||''))})}
-function renderProjects(){renderWorkSummary();const list=$('#projectList');if(!list)return;const rows=filteredProjects();const count=$('#workProjectCount');if(count)count.textContent=String(rows.length);if(!state.projects.length){list.innerHTML='<div class="empty-state">No weekly projects yet. Shortlist two ideas in Weekly Tasks to start execution.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='No work has been assigned yet.';return}if(!rows.length){list.innerHTML='<div class="empty-state">No projects match this filter.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='Change the filter to select a project.';return}if(!state.selectedProject||!rows.some(p=>Number(p.id)===Number(state.selectedProject)))state.selectedProject=rows[0].id;list.innerHTML=rows.map(p=>{const last=projectLastUpdate(p.id),blocked=projectHasBlocker(p.id),due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';return `<button class="work-project-card ${Number(p.id)===Number(state.selectedProject)?'active':''}" data-project="${p.id}"><div class="work-project-top"><span>${esc(p.project_number)}</span><em class="work-status ${p.status}">${statusLabel}</em></div><h4>${esc(p.title)}</h4><div class="work-project-meta"><span>${esc(p.owner_name||'Unassigned')}</span><span>${esc(p.department_name||'—')}</span></div><div class="work-progress-row"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><div class="work-project-foot"><span>${last?`Updated ${fmtDate(last.update_date)}`:'No updates yet'}</span><span class="${blocked?'danger-text':''}">${blocked?'● Blocker':p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)}d overdue`:due===0?'Due today':`${due}d left`}</span></div></button>`}).join('');$$('[data-project]').forEach(b=>b.onclick=()=>{state.selectedProject=Number(b.dataset.project);renderProjects()});renderProjectDetail()}
-function renderProjectDetail(){const p=state.projects.find(x=>Number(x.id)===Number(state.selectedProject));if(!p)return;const ups=state.progress.filter(x=>Number(x.project_id)===Number(p.id)).sort((a,b)=>String(b.update_date||'').localeCompare(String(a.update_date||''))||Number(b.id)-Number(a.id));const idea=state.ideas.find(i=>Number(i.id)===Number(p.idea_id));const blockers=ups.filter(u=>String(u.blocker||'').trim());const last=ups[0],due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';const stages=[20,40,60,80,100];const nextAction=ups.find(u=>String(u.next_action||'').trim())?.next_action||'No next action entered yet.';$('#projectDetail').className='project-detail work-detail';$('#projectDetail').innerHTML=`<div class="work-detail-head"><div class="work-title-block"><div class="work-detail-tags"><span class="work-code">${esc(p.project_number)}</span><span class="work-status ${p.status}">${statusLabel}</span>${blockers.length?'<span class="work-status blocked">BLOCKER</span>':''}</div><h2>${esc(p.title)}</h2><p>${esc(p.cycle_label)} · ${esc(p.department_name||'—')}</p></div><div class="work-progress-dial" style="--p:${Number(p.progress||0)*3.6}deg"><div><strong>${Number(p.progress||0)}%</strong><span>complete</span></div></div></div><div class="work-detail-actions">${isVisitor()?'':`<button class="primary-btn" id="openProgressBtn">+ DAILY UPDATE</button><button class="ghost-btn" id="editProjectBtn">Edit project</button><button class="danger-outline-btn" id="deleteProjectBtn">× Delete</button>`}</div><div class="work-fact-grid"><div><span>OWNER</span><strong>${esc(p.owner_name||'—')}</strong></div><div><span>START</span><strong>${fmtDate(p.start_date)}</strong></div><div><span>TARGET</span><strong>${fmtDate(p.end_date)}</strong></div><div><span>TIME STATUS</span><strong>${p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)} days overdue`:due===0?'Due today':`${due} days left`}</strong></div><div><span>UPDATES</span><strong>${ups.length}</strong></div><div><span>BLOCKERS</span><strong>${blockers.length}</strong></div></div><div class="work-stage-rail">${['Problem','Analysis','Design','Trial','Complete'].map((s,i)=>`<div class="work-stage ${Number(p.progress||0)>=stages[i]?'done':''}"><i>${i+1}</i><span>${s}</span></div>`).join('')}</div><div class="work-context-grid"><section class="work-context"><span class="kicker">SOURCE PROBLEM</span><p>${esc(idea?.problem||'Source problem not available.')}</p></section><section class="work-context"><span class="kicker">NEXT ACTION</span><p>${esc(nextAction)}</p></section></div><div class="work-history-head"><div><span class="kicker">DAILY EXECUTION LOG</span><h3>Work history</h3></div><span>${last?`Last update · ${fmtDate(last.update_date)}`:'No updates recorded'}</span></div><div class="work-history">${ups.length?ups.map(u=>`<article class="work-update ${u.blocker?'has-blocker':''}"><div class="work-update-side"><strong>${u.progress_percent}%</strong><span>${fmtDate(u.update_date)}</span></div><div class="work-update-body"><div class="work-update-head"><div><b>${esc(u.user_name)}</b><span>${u.blocker?'BLOCKER LOGGED':'PROGRESS UPDATE'}</span></div>${isVisitor()?'':`<div class="row-actions"><button class="mini-action" data-edit-progress="${u.id}">Edit</button><button class="mini-action danger" data-delete-progress="${u.id}">×</button></div>`}</div><p class="work-done">${esc(u.work_done)}</p><div class="work-note-grid">${u.remarks?`<div><span>Remarks</span><p>${esc(u.remarks)}</p></div>`:''}${u.blocker?`<div class="blocker-note"><span>Blocker</span><p>${esc(u.blocker)}</p></div>`:''}${u.next_action?`<div><span>Next action</span><p>${esc(u.next_action)}</p></div>`:''}</div>${u.attachment_path?`<a class="link" href="${u.attachment_path}" target="_blank">Open attachment ↗</a>`:''}</div></article>`).join(''):'<div class="empty-state">No daily progress update entered yet. Add the first update to start tracking execution.</div>'}</div>`;if($('#openProgressBtn'))$('#openProgressBtn').onclick=()=>openProgress(p);bindRecordActions()}
-function renderSettings(){
-  const visitor=isVisitor();
-  const activeMembers=state.members.filter(m=>Number(m.active)!==0).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
-  const memberCount=activeMembers.filter(m=>m.role!=='visitor').length,visitorCount=activeMembers.filter(m=>m.role==='visitor').length;
-  $('#membersSettings').innerHTML=`<div class="roster-summary"><div><strong>${memberCount}</strong><span>R&D Members</span></div><div><strong>${visitorCount}</strong><span>Visitors</span></div></div>${visitor?'':`<form class="member-add-form" id="addMemberForm"><label><span>Name</span><input id="newMemberName" maxlength="80" placeholder="Enter member name" required spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off"></label><label><span>Access</span><select id="newMemberRole"><option value="member">R&D Member</option><option value="visitor">Admin / Visitor</option></select></label><button class="primary-btn" type="submit">+ Add Login</button></form>`}<div class="roster-list">${activeMembers.length?activeMembers.map((m,i)=>`<div class="roster-slot ${m.role==='visitor'?'visitor-slot':''}"><div class="roster-index">${String(i+1).padStart(2,'0')}</div><div class="roster-edit"><label>LOGIN NAME</label>${visitor?`<strong>${esc(m.name)}</strong>`:`<input type="text" value="${esc(m.name)}" maxlength="80" data-member-name="${m.id}" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">`}</div>${visitor?`<span class="tag ${m.role==='visitor'?'visitor':'member'}">${m.role==='visitor'?'VISITOR':'MEMBER'}</span>`:`<select class="role-select" data-member-role="${m.id}"><option value="member" ${m.role!=='visitor'?'selected':''}>R&D Member</option><option value="visitor" ${m.role==='visitor'?'selected':''}>Visitor</option></select><div class="member-row-actions"><button class="secondary-btn roster-save" type="button" data-save-member="${m.id}">Save</button><button class="danger-outline-btn" type="button" data-delete-member="${m.id}" title="Delete login">×</button></div>`}</div>`).join(''):'<div class="empty-state">No active logins. Add a member to continue.</div>'}</div><p class="storage-note roster-note">Names are unique. Delete removes the login from active access but keeps its ID in the database so old ideas, assignments and progress remain correctly linked. Adding the same name later restores that same login instead of creating a duplicate.</p>`;
-  $('#departmentsSettings').innerHTML=`<div class="dept-fixed-grid">${state.departments.map((d,i)=>`<div class="dept-fixed"><b>${String(i+1).padStart(2,'0')}</b><span>${esc(d.name)}</span><em>LOCKED</em></div>`).join('')}</div>`;
-  const cm=currentMember();if(cm){$('#settingsSignedInName').textContent=cm.name;$('#signedInName').textContent=cm.name;const settingsRole=$('#settingsSignedInRole');if(settingsRole){settingsRole.textContent=cm.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';settingsRole.className='tag '+(cm.role==='visitor'?'visitor':'member')}}
-  const ss=$('#storageStatus');if(ss)ss.textContent=storageStatus();
-  const dbs=$('#databaseStats');if(dbs){const dates=[...state.ideas.map(i=>i.submission_date),...state.progress.map(p=>p.update_date)].filter(Boolean).sort();dbs.innerHTML=`<div><span>Ideas</span><strong>${state.ideas.length}</strong></div><div><span>Weekly projects</span><strong>${state.projects.length}</strong></div><div><span>Progress entries</span><strong>${state.progress.length}</strong></div><div><span>Active logins</span><strong>${activeMembers.length}</strong></div><div><span>Cloud</span><strong>${cloudRuntimeStatus==='live'?'Live':'Offline cache'}</strong></div><div><span>Stored history</span><strong>${dates.length?`${fmtDate(dates[0])} → ${fmtDate(dates.at(-1))}`:'No entries yet'}</strong></div>`}
-  $$('[data-save-member]').forEach(btn=>btn.onclick=async()=>{const id=Number(btn.dataset.saveMember),input=$(`[data-member-name="${id}"]`),role=$(`[data-member-role="${id}"]`);try{btn.disabled=true;await updateMemberLocal(id,{name:input.value,role:role.value});toast('Login updated and saved to Firebase.')}catch(e){toast(e.message,true);renderSettings()}finally{btn.disabled=false}});
-  $$('[data-delete-member]').forEach(btn=>btn.onclick=async()=>{const id=Number(btn.dataset.deleteMember),m=state.members.find(x=>Number(x.id)===id);if(!m)return;if(!confirm(`Delete ${m.name} from active logins? Historical records will be preserved.`))return;try{btn.disabled=true;await deleteMemberLocal(id);toast(`${m.name} removed from active logins.`)}catch(e){toast(e.message,true);renderSettings()}finally{btn.disabled=false}});
-  const addForm=$('#addMemberForm');if(addForm)addForm.onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{await addMemberLocal({name:$('#newMemberName').value,role:$('#newMemberRole').value});toast('New login added and saved to Firebase.')}catch(err){toast(err.message,true)}finally{b.disabled=false}};
-  disableWritingAssist($('#settingsPage'));
+function monthKeyFromDate(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-/);return m?`${m[1]}-${m[2]}`:''}
+function workCycleWeek(cycle){if(!cycle)return 1;const label=String(cycle.label||'').match(/week\s*([1-4])/i);if(label)return Number(label[1]);const day=Number(String(cycle.start_date||'').slice(8,10))||1;return inferredWeekForDay(day)}
+function syncWorkMonthFromDate(value){const key=monthKeyFromDate(value);if(key)state.workMonthKey=key}
+function syncWorkPeriodFromCycle(cycle){if(!cycle)return;const key=monthKeyFromDate(cycle.start_date);if(key)state.workMonthKey=key;state.workWeek=workCycleWeek(cycle)}
+function dailyReferencePeriod(value=today()){
+  const date=/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?String(value):today();
+  const day=Number(date.slice(8,10))||1;
+  return {date,monthKey:monthKeyFromDate(date),week:inferredWeekForDay(day)};
 }
-function safeRenderAnalytics(){
-  try{
-    renderAnalyticsPanel();
-  }catch(err){
-    console.error('Analytics render failed:',err);
-    const host=$('#analyticsOverview');
-    if(host)host.innerHTML='<div class="empty-state">Analytics is temporarily unavailable. Your tracker data and login remain available.</div>';
+function syncPeriodFromDailyReference(){
+  const ref=dailyReferencePeriod(today());
+  state.workMonthKey=ref.monthKey;
+  state.workWeek=ref.week;
+  const cycle=state.cycles.find(c=>monthKeyFromDate(c.start_date)===ref.monthKey&&workCycleWeek(c)===ref.week);
+  if(cycle&&$('#weekSelect'))$('#weekSelect').value=String(cycle.id);
+  return {ref,cycle};
+}
+function ensureWorkPeriod(){
+  if(!state.workMonthKey){
+    const selected=state.cycles.find(c=>Number(c.id)===Number($('#weekSelect')?.value));
+    if(selected)syncWorkPeriodFromCycle(selected);
+    else if($('#ideaDateFilter')?.value)syncWorkMonthFromDate($('#ideaDateFilter').value);
+    else if(state.cycles[0])syncWorkPeriodFromCycle(state.cycles[0]);
+    else syncWorkMonthFromDate(today());
   }
+  if(![1,2,3,4].includes(Number(state.workWeek)))state.workWeek=1;
+}
+function workPeriodLabel(){ensureWorkPeriod();const [y,m]=String(state.workMonthKey||'').split('-');const idx=Number(m)-1;return Number.isInteger(idx)&&idx>=0&&idx<12?`${WEEK_MONTHS[idx]} ${y}`:'Current month'}
+function renderWorkPeriodNav(){ensureWorkPeriod();const monthSelect=$('#workMonthSelect'),weekSelect=$('#workWeekSelect');if(monthSelect){const [yearRaw]=String(state.workMonthKey||'').split('-'),year=Number(yearRaw)||new Date().getFullYear();monthSelect.innerHTML=WEEK_MONTHS.map((name,index)=>{const value=`${year}-${String(index+1).padStart(2,'0')}`;return `<option value="${value}">${name} ${year}</option>`}).join('');monthSelect.value=state.workMonthKey}if(weekSelect)weekSelect.value=String(state.workWeek)}
+function workPeriodProjects(){ensureWorkPeriod();return state.projects.filter(p=>{const cycle=state.cycles.find(c=>Number(c.id)===Number(p.cycle_id));const date=cycle?.start_date||p.start_date;return monthKeyFromDate(date)===state.workMonthKey&&workCycleWeek(cycle||{start_date:date,label:p.cycle_label})===Number(state.workWeek)})}
+function renderWorkSummary(){const host=$('#workSummary');if(!host)return;const periodRows=workPeriodProjects(),total=periodRows.length,active=periodRows.filter(p=>p.status!=='completed').length,done=periodRows.filter(p=>p.status==='completed').length,blocked=periodRows.filter(p=>projectHasBlocker(p.id)&&p.status!=='completed').length,avg=total?Math.round(periodRows.reduce((n,p)=>n+Number(p.progress||0),0)/total):0;host.innerHTML=`<article class="work-stat primary"><span>ACTIVE WORK</span><strong>${active}</strong><small>${total} projects · ${esc(workPeriodLabel())} W${state.workWeek}</small></article><article class="work-stat"><span>AVG COMPLETION</span><strong>${avg}%</strong><small>selected weekly projects</small></article><article class="work-stat"><span>COMPLETED</span><strong>${done}</strong><small>closed weekly priorities</small></article><article class="work-stat ${blocked?'alert':''}"><span>BLOCKED</span><strong>${blocked}</strong><small>${blocked?'needs attention':'no active blockers'}</small></article>`}
+function filteredProjects(){const q=String($('#workSearch')?.value||'').trim().toLowerCase(),status=$('#workStatusFilter')?.value||'';return workPeriodProjects().filter(p=>{const text=`${p.project_number||''} ${p.title||''} ${p.owner_name||''} ${p.department_name||''} ${p.cycle_label||''}`.toLowerCase();if(q&&!text.includes(q))return false;if(status==='blocked')return projectHasBlocker(p.id)&&p.status!=='completed';if(status&&p.status!==status)return false;return true}).sort((a,b)=>{const rank={in_progress:0,assigned:1,completed:2};return (rank[a.status]??3)-(rank[b.status]??3)||String(b.start_date||'').localeCompare(String(a.start_date||''))})}
+function renderProjects(){renderWorkPeriodNav();renderWorkSummary();const list=$('#projectList');if(!list)return;const rows=filteredProjects();const count=$('#workProjectCount');if(count)count.textContent=String(rows.length);if(!state.projects.length){list.innerHTML='<div class="empty-state">No weekly projects yet. Shortlist two ideas in Weekly Tasks to start execution.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='No work has been assigned yet.';return}if(!rows.length){list.innerHTML=`<div class="empty-state">No projects found for ${esc(workPeriodLabel())} · Week ${state.workWeek}.</div>`;$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='Choose another week from the Work Tracking period bar.';return}if(!state.selectedProject||!rows.some(p=>Number(p.id)===Number(state.selectedProject)))state.selectedProject=rows[0].id;list.innerHTML=rows.map(p=>{const last=projectLastUpdate(p.id),blocked=projectHasBlocker(p.id),due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';return `<button class="work-project-card ${Number(p.id)===Number(state.selectedProject)?'active':''}" data-project="${p.id}"><div class="work-project-top"><span>${esc(p.project_number)}</span><em class="work-status ${p.status}">${statusLabel}</em></div><h4>${esc(p.title)}</h4><div class="work-project-meta"><span>${esc(p.owner_name||'Unassigned')}</span><span>${esc(p.department_name||'—')}</span></div><div class="work-progress-row"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><div class="work-project-foot"><span>${last?`Updated ${fmtDate(last.update_date)}`:'No updates yet'}</span><span class="${blocked?'danger-text':''}">${blocked?'● Blocker':p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)}d overdue`:due===0?'Due today':`${due}d left`}</span></div></button>`}).join('');$$('[data-project]').forEach(b=>b.onclick=()=>{state.selectedProject=Number(b.dataset.project);renderProjects()});renderProjectDetail()}
+let trackerSaveTimer=null;
+const TRACKER_VISIBLE_ROWS=12;
+function cleanTrackerRow(row={},fallbackIndex=0){
+  return {
+    row_index:Number.isFinite(Number(row.row_index))?Number(row.row_index):fallbackIndex,
+    manual_extra:row.manual_extra===true,
+    date:String(row.date||'').slice(0,40),
+    stage:String(row.stage||'').slice(0,240),
+    task:String(row.task||'').slice(0,600),
+    status:['in_progress','completed','issue'].includes(String(row.status||''))?String(row.status):'',
+    issue:String(row.issue||'').slice(0,600),
+    next_action:String(row.next_action||'').slice(0,600),
+    remarks:String(row.remarks||'').slice(0,600)
+  };
+}
+function trackerRowHasData(row={}){const r=cleanTrackerRow(row);return r.manual_extra===true||['date','stage','task','status','issue','next_action','remarks'].some(k=>String(r[k]||'').trim())}
+function trackerRowsForProject(p){return Array.isArray(p?.tracker_rows)?p.tracker_rows.map((r,i)=>cleanTrackerRow(r,i)).filter(trackerRowHasData):[]}
+function trackerStatusLabel(value){return value==='completed'?'Completed':value==='issue'?'Issue':value==='in_progress'?'In Progress':''}
+function trackerRowClass(value){return value==='completed'?'done':value==='issue'?'issue':value==='in_progress'?'progress':''}
+function trackerPeriodDates(){
+  ensureWorkPeriod();
+  const [yearRaw,monthRaw]=String(state.workMonthKey||'').split('-');
+  const year=Number(yearRaw),month=Number(monthRaw);
+  const week=Math.max(1,Math.min(4,Number(state.workWeek)||1));
+  if(!Number.isInteger(year)||!Number.isInteger(month)||month<1||month>12)return Array(6).fill('');
+  const startDay=((week-1)*6)+1;
+  const monthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1];
+  return Array.from({length:6},(_,i)=>`${String(startDay+i).padStart(2,'0')}-${monthShort}-${year}`);
+}
+function trackerDerivedProgress(p){
+  const rows=trackerRowsForProject(p).filter(r=>!r.manual_extra&&r.status).sort((a,b)=>Number(a.row_index)-Number(b.row_index)).slice(0,6);
+  const weights={issue:25,in_progress:60,completed:100};
+  const total=rows.reduce((sum,row)=>sum+(weights[row.status]||0),0);
+  return Math.max(0,Math.min(100,Math.round(total/6)));
+}
+function trackerProgressColor(percent){return percent>=60?'#22c55e':percent>=26?'#facc15':'#ef4444'}
+function applyTrackerDerivedProgress(p,{updateDom=true}={}){
+  const progress=trackerDerivedProgress(p);
+  p.progress=progress;
+  p.status=progress>=100?'completed':progress>0?'in_progress':'assigned';
+  p.updated_at=new Date().toISOString();
+  if(updateDom){
+    const dial=$('#trackerProjectProgressDial');
+    if(dial){dial.style.setProperty('--p',`${progress*3.6}deg`);dial.style.setProperty('--ring-color',trackerProgressColor(progress))}
+    const value=$('#trackerProjectProgressValue');if(value)value.textContent=`${progress}%`;
+    const overall=$('#trackerOverallProgress');if(overall)overall.textContent=`${progress}%`;
+    const card=$(`[data-project="${p.id}"]`);
+    if(card){
+      const fill=card.querySelector('.progress-fill');if(fill)fill.style.width=`${progress}%`;
+      const pct=card.querySelector('.work-progress-row b');if(pct)pct.textContent=`${progress}%`;
+      const badge=card.querySelector('.work-status');if(badge){badge.className=`work-status ${p.status}`;badge.textContent=p.status==='completed'?'COMPLETED':p.status==='in_progress'?'IN PROGRESS':'ASSIGNED'}
+    }
+  }
+  return progress;
+}
+function scheduleTrackerSave(p){
+  clearTimeout(trackerSaveTimer);
+  trackerSaveTimer=setTimeout(async()=>{
+    try{
+      p.tracker_rows=trackerRowsForProject(p).filter(trackerRowHasData);
+      applyTrackerDerivedProgress(p,{updateDom:true});
+      queueCloudOps([{collection:'projects',row:p}]);
+      await persistState();
+      void cloudWrite([{collection:'projects',row:p}],{silent:true});
+    }catch(e){toast(e.message||'Unable to save tracker row.',true)}
+  },450);
+}
+function updateManualTrackerSummary(p){
+  const rows=trackerRowsForProject(p);
+  const done=$('#trackerCompletedCount'),active=$('#trackerProgressCount'),issues=$('#trackerIssueCount');
+  if(done)done.textContent=String(rows.filter(r=>r.status==='completed').length);
+  if(active)active.textContent=String(rows.filter(r=>r.status==='in_progress').length);
+  if(issues)issues.textContent=String(rows.filter(r=>r.status==='issue').length);
+}
+function insertManualTrackerRow(p,insertIndex){
+  if(isVisitor())return;
+  const rows=trackerRowsForProject(p)
+    .sort((a,b)=>Number(a.row_index)-Number(b.row_index))
+    .map(r=>({...r}));
+  rows.forEach(r=>{
+    if(Number(r.row_index)>=insertIndex)r.row_index=Number(r.row_index)+1;
+  });
+  rows.push(cleanTrackerRow({manual_extra:true},insertIndex));
+  p.tracker_rows=rows.sort((a,b)=>Number(a.row_index)-Number(b.row_index));
+  p.tracker_row_count=Math.max(6,Number(p.tracker_row_count)||TRACKER_VISIBLE_ROWS)+1;
+  renderProjectDetail();
+  scheduleTrackerSave(p);
+}
+function deleteManualTrackerRow(p,rowIndex){
+  if(isVisitor())return;
+  selectedManualTrackerRow=null;
+  const currentCount=Math.max(6,Number(p.tracker_row_count)||TRACKER_VISIBLE_ROWS);
+  const rows=trackerRowsForProject(p)
+    .filter(r=>Number(r.row_index)!==Number(rowIndex))
+    .map(r=>({...r}));
+  rows.forEach(r=>{if(Number(r.row_index)>Number(rowIndex))r.row_index=Number(r.row_index)-1});
+  p.tracker_rows=rows.sort((a,b)=>Number(a.row_index)-Number(b.row_index));
+  p.tracker_row_count=Math.max(6,currentCount-1);
+  applyTrackerDerivedProgress(p,{updateDom:false});
+  renderProjectDetail();
+  scheduleTrackerSave(p);
+}
+function bindManualTrackerGrid(p){
+  $$('.rnd-manual-row').forEach((tr,domIndex)=>{
+    const rowIndex=Number(tr.dataset.rowIndex);
+    const inputs=[...tr.querySelectorAll('[data-tracker-field]')];
+    const statusEl=tr.querySelector('[data-tracker-field="status"]');
+    const nextActionEl=tr.querySelector('[data-tracker-field="next_action"]');
+    const syncNextActionState=(status)=>{
+      if(!nextActionEl)return;
+      if(status==='completed'){
+        nextActionEl.value='N/A';
+        nextActionEl.disabled=true;
+      }else{
+        if(nextActionEl.value==='N/A')nextActionEl.value='';
+        nextActionEl.disabled=isVisitor();
+      }
+    };
+    syncNextActionState(statusEl?.value||'');
+    if(tr.dataset.manualExtra==='1'){
+      const selectRow=()=>{selectedManualTrackerRow={projectId:Number(p.id),rowIndex};$$('.rnd-manual-row').forEach(x=>x.classList.toggle('row-selected',x===tr))};
+      tr.addEventListener('click',selectRow);tr.addEventListener('focusin',selectRow);
+    }
+    const update=()=>{
+      const rows=trackerRowsForProject(p);
+      let row=rows.find(r=>Number(r.row_index)===rowIndex);
+      if(!row){row=cleanTrackerRow({},rowIndex);rows.push(row)}
+      inputs.forEach(el=>row[el.dataset.trackerField]=String(el.value||''));
+      if(row.status==='completed'){
+        row.next_action='N/A';
+        if(nextActionEl)nextActionEl.value='N/A';
+      }else if(row.next_action==='N/A'){
+        row.next_action='';
+        if(nextActionEl)nextActionEl.value='';
+      }
+      syncNextActionState(row.status);
+      p.tracker_rows=rows.filter(trackerRowHasData);
+      tr.className=`rnd-manual-row ${trackerRowClass(row.status)}`.trim();
+      updateManualTrackerSummary(p);
+      applyTrackerDerivedProgress(p,{updateDom:true});
+      scheduleTrackerSave(p);
+    };
+    inputs.forEach(el=>{el.addEventListener('input',update);el.addEventListener('change',update)});
+  });
+  $$('[data-insert-tracker-row]').forEach(btn=>{
+    btn.onclick=()=>{
+      const insertIndex=Number(btn.dataset.insertTrackerRow);
+      if(Number.isInteger(insertIndex)&&insertIndex>=0)insertManualTrackerRow(p,insertIndex);
+    };
+  });
+  $$('[data-delete-tracker-row]').forEach(btn=>{
+    btn.onclick=()=>{
+      const rowIndex=Number(btn.dataset.deleteTrackerRow);
+      if(Number.isInteger(rowIndex)&&rowIndex>=0)deleteManualTrackerRow(p,rowIndex);
+    };
+  });
+}
+function renderProjectDetail(){
+  const p=state.projects.find(x=>Number(x.id)===Number(state.selectedProject));
+  if(!p)return;
+  const idea=state.ideas.find(i=>Number(i.id)===Number(p.idea_id));
+  const due=daysTo(p.end_date);
+  const heroProgress=applyTrackerDerivedProgress(p,{updateDom:false});
+  const heroRingColor=trackerProgressColor(heroProgress);
+  const storedRows=trackerRowsForProject(p);
+  const highestRow=storedRows.reduce((m,r)=>Math.max(m,Number(r.row_index)||0),-1);
+  const savedRowCount=Math.max(6,Number(p.tracker_row_count)||TRACKER_VISIBLE_ROWS);
+  const visibleCount=Math.max(savedRowCount,highestRow+1,6);
+  const byRow=new Map(storedRows.map(r=>[Number(r.row_index),r]));
+  const rows=Array.from({length:visibleCount},(_,i)=>byRow.get(i)||cleanTrackerRow({},i));
+  const periodDates=trackerPeriodDates();
+  let autoDateSlot=0;
+  rows.forEach(row=>{
+    if(row.manual_extra)return;
+    if(autoDateSlot<6){
+      row.date=periodDates[autoDateSlot]||'';
+      row.auto_date_slot=autoDateSlot;
+      autoDateSlot++;
+    }
+  });
+  const doneCount=storedRows.filter(r=>r.status==='completed').length;
+  const issueCount=storedRows.filter(r=>r.status==='issue').length;
+  const progressCount=storedRows.filter(r=>r.status==='in_progress').length;
+  const daysRemaining=p.status==='completed'?0:(due===null?'—':Math.max(0,due));
+  const readonly=isVisitor()?'disabled':'';
+  $('#projectDetail').className='project-detail work-detail';
+  $('#projectDetail').innerHTML=`
+    <div class="work-detail-head">
+      <div class="work-title-block work-title-simple work-project-labels">
+        <div class="work-project-label-row"><span>Name</span><b>:</b><strong>${esc(p.owner_name||'—')}</strong></div>
+        <div class="work-project-label-row"><span>Project</span><b>:</b><strong>${esc(p.title)}</strong></div>
+        <div class="work-project-label-row"><span>Department</span><b>:</b><strong>${esc(p.department_name||'—')}</strong></div>
+      </div>
+      <div class="work-progress-dial" id="trackerProjectProgressDial" style="--p:${heroProgress*3.6}deg;--ring-color:${heroRingColor}"><div><strong id="trackerProjectProgressValue">${heroProgress}%</strong><span>complete</span></div></div>
+    </div>
+    <div class="rnd-sheet-wrap">
+      <div class="rnd-sheet">
+        <div class="rnd-sheet-title-row">
+          <div class="rnd-sheet-main-title">R&amp;D DAILY PROJECT PROCESS TRACKER</div>
+          <div class="rnd-sheet-brand"><strong>DFAB STAINLESS SYSTEM PVT LTD</strong><span>Research &amp; Development Department&nbsp;&nbsp;|&nbsp;&nbsp;www.dfab.in</span></div>
+        </div>
+        <div class="rnd-sheet-band">PROJECT DETAILS</div>
+        <div class="rnd-project-grid">
+          <div class="sheet-label pn-label">Project Name</div><div class="sheet-value pn-value">${esc(p.title)}</div>
+          <div class="sheet-label id-label">Project ID</div><div class="sheet-value id-value">${esc(p.project_number||String(p.id))}</div>
+          <div class="sheet-label owner-label">Project Owner</div><div class="sheet-value owner-value">${esc(p.owner_name||'—')}</div>
+          <div class="sheet-label start-label">Start Date</div><div class="sheet-value start-value">${fmtDate(p.start_date)}</div>
+          <div class="sheet-label deadline-label">Deadline</div><div class="sheet-value deadline-value">${fmtDate(p.end_date)}</div>
+          <div class="sheet-label days-label">Days Remaining</div><div class="sheet-value days-value">${daysRemaining}</div>
+          <div class="sheet-label dept-label">Department</div><div class="sheet-value dept dept-value">${esc(p.department_name||'R&D')}</div>
+          <div class="sheet-label objective-label">Project Objective / Expected Result</div><div class="sheet-value objective-value">${esc(idea?.proposed_idea||idea?.problem||'—')}</div>
+        </div>
+        <div class="rnd-sheet-band">DAILY STATUS SUMMARY</div>
+        <div class="rnd-summary-grid">
+          <div><span>Completed</span><strong id="trackerCompletedCount">${doneCount}</strong></div>
+          <div><span>In Progress</span><strong id="trackerProgressCount">${progressCount}</strong></div>
+          <div><span>Issues</span><strong id="trackerIssueCount">${issueCount}</strong></div>
+          <div><span>Overall Progress</span><strong id="trackerOverallProgress">${heroProgress}%</strong></div>
+        </div>
+        <div class="rnd-status-legend"><b>Status Colour:</b><span class="done">COMPLETED</span><span class="progress">IN PROGRESS</span><span class="issue">ISSUE</span><em>Fill the cells manually. Status is selected from the dropdown in each row.</em></div>
+        <div class="rnd-daily-table-scroll">
+          <table class="rnd-daily-table rnd-manual-table">
+            <thead><tr><th>Date</th><th>R&amp;D Stage / Milestone</th><th>Daily Task / Target</th><th>Status</th><th>Issue / Reason</th><th>Next Action</th><th>Review / Remarks</th><th class="rnd-delete-head">Delete</th></tr></thead>
+            <tbody>${rows.map((r,i)=>`<tr class="rnd-manual-row ${trackerRowClass(r.status)} ${r.manual_extra?'manual-extra-row':''}" data-row-index="${r.row_index}" data-manual-extra="${r.manual_extra?'1':'0'}" tabindex="${r.manual_extra?'0':'-1'}">
+              <td><input class="rnd-cell-input" data-tracker-field="date" value="${esc(r.date)}" ${(!r.manual_extra&&Number.isInteger(r.auto_date_slot))?'readonly':readonly} aria-label="Date row ${i+1}"></td>
+              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="stage" ${readonly} aria-label="R&D stage row ${i+1}">${esc(r.stage)}</textarea></td>
+              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="task" ${readonly} aria-label="Daily task row ${i+1}">${esc(r.task)}</textarea></td>
+              <td><select class="rnd-cell-select" data-tracker-field="status" ${readonly} aria-label="Status row ${i+1}"><option value="" ${!r.status?'selected':''}></option><option value="in_progress" ${r.status==='in_progress'?'selected':''}>In Progress</option><option value="completed" ${r.status==='completed'?'selected':''}>Completed</option><option value="issue" ${r.status==='issue'?'selected':''}>Issue</option></select></td>
+              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="issue" ${readonly} aria-label="Issue or reason row ${i+1}">${esc(r.issue)}</textarea></td>
+              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="next_action" ${r.status==='completed'?'disabled':readonly} aria-label="Next action row ${i+1}">${esc(r.status==='completed'?'N/A':r.next_action)}</textarea></td>
+              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="remarks" ${readonly} aria-label="Review or remarks row ${i+1}">${esc(r.remarks)}</textarea></td>
+              <td class="rnd-delete-cell"><button type="button" class="rnd-row-delete" data-delete-tracker-row="${r.row_index}" ${isVisitor()?'disabled':''} aria-label="Delete tracker row ${i+1}" title="Delete row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-1 11H8L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg></button></td>
+            </tr>${i<rows.length-1?`<tr class="rnd-insert-row"><td colspan="8"><button type="button" class="rnd-row-add" data-insert-tracker-row="${Number(r.row_index)+1}" ${isVisitor()?'disabled':''} aria-label="Insert blank tracker row below this row">+</button></td></tr>`:''}`).join('')}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  if($('#openProgressBtn'))$('#openProgressBtn').onclick=()=>openProgress(p);
+  bindRecordActions();
+  bindManualTrackerGrid(p);
+}
+
+function analyticsProjectUpdates(projectId){return state.progress.filter(u=>Number(u.project_id)===Number(projectId)).sort((a,b)=>String(a.update_date||'').localeCompare(String(b.update_date||''))||rowStamp(a)-rowStamp(b)||Number(a.id)-Number(b.id))}
+function analyticsLatestForDate(projectId,date){const rows=analyticsProjectUpdates(projectId).filter(u=>u.update_date===date);return rows.at(-1)||null}
+function analyticsProjectStatusText(p){const s=analyticsStatus(p);return s==='in_progress'?'IN PROGRESS':String(s).toUpperCase()}
+function analyticsCsvCell(v){const x=String(v??'').replace(/"/g,'""');return `"${x}"`}
+function exportAnalyticsTracking(){
+  try{
+    const dates=analyticsTrackingDates(state.analyticsRange),projects=analyticsFilteredProjects();
+    const head=['Project No','Project / Idea','Department','Owner','Week','Start','Target','Status','Current Progress',...dates.map(d=>fmtDate(d)),'Latest Work','Latest Remarks','Latest Blocker','Next Action'];
+    const rows=[head];
+    projects.forEach(p=>{const m=analyticsProjectMeta(p),ups=analyticsProjectUpdates(p.id),last=ups.at(-1);rows.push([p.project_number,p.title,m.department,m.owner,m.cycle,p.start_date,p.end_date,analyticsProjectStatusText(p),`${Number(p.progress||0)}%`,...dates.map(d=>{const u=ups.filter(x=>x.update_date===d).at(-1);return u?`${u.progress_percent}%`:''}),last?.work_done||'',last?.remarks||'',last?.blocker||'',last?.next_action||''])});
+    const csv='\ufeff'+rows.map(r=>r.map(analyticsCsvCell).join(',')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`RND_Project_Tracking_${today()}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('Project tracking exported for Excel.');
+  }catch(e){toast(e.message,true)}
+}
+function analyticsFilteredProjects(){
+  const q=String(state.analyticsSearch||'').trim().toLowerCase(),status=String(state.analyticsStatusFilter||''),cycle=String(state.analyticsCycleFilter||'');
+  return state.projects.filter(p=>{const m=analyticsProjectMeta(p),s=analyticsStatus(p);const text=`${p.project_number} ${p.title} ${m.department} ${m.owner} ${m.cycle}`.toLowerCase();return(!q||text.includes(q))&&(!status||s===status)&&(!cycle||String(p.cycle_id)===cycle)}).sort((a,b)=>String(b.start_date||'').localeCompare(String(a.start_date||''))||Number(b.id)-Number(a.id));
+}
+function renderAnalyticsProjectLog(projectId){
+  const host=$('#analyticsProjectLog');if(!host)return;
+  const p=state.projects.find(x=>Number(x.id)===Number(projectId));if(!p){host.innerHTML='<div class="empty-state">Select a project row to inspect its complete daily work log.</div>';return}
+  const m=analyticsProjectMeta(p),ups=analyticsProjectUpdates(p.id).slice().reverse();
+  host.innerHTML=`<div class="track-log-head"><div><span class="kicker">PROJECT DAILY LOG</span><h3>${esc(p.project_number)} · ${esc(p.title)}</h3><p>${esc(m.department)} · ${esc(m.owner)} · ${esc(m.cycle)}</p></div><div class="track-log-current"><span>CURRENT</span><strong>${Number(p.progress||0)}%</strong></div></div><div class="track-log-table-wrap"><table class="track-log-table"><thead><tr><th>Date</th><th>Updated By</th><th>Progress</th><th>Work Done</th><th>Remarks</th><th>Blocker</th><th>Next Action</th></tr></thead><tbody>${ups.length?ups.map(u=>`<tr><td>${fmtDate(u.update_date)}</td><td>${esc(u.user_name||state.members.find(x=>Number(x.id)===Number(u.user_id))?.name||'—')}</td><td><strong>${Number(u.progress_percent||0)}%</strong></td><td>${esc(u.work_done||'—')}</td><td>${esc(u.remarks||'—')}</td><td class="${u.blocker?'track-cell-blocker':''}">${esc(u.blocker||'—')}</td><td>${esc(u.next_action||'—')}</td></tr>`).join(''):'<tr><td colspan="7" class="empty-cell">No progress update has been entered for this project.</td></tr>'}</tbody></table></div>`;
 }
 function renderAnalyticsPanel(){
   const host=$('#analyticsOverview');if(!host)return;
-  const workers=workingMembers(),now=new Date(),todayKey=today();
-  const monthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const monthIdeas=state.ideas.filter(i=>String(i.submission_date||'').startsWith(monthKey));
-  const todayIdeas=state.ideas.filter(i=>i.submission_date===todayKey);
-  const todaySubmitters=new Set(todayIdeas.map(i=>Number(i.submitted_by))).size;
-  const coverage=Math.round(todaySubmitters/Math.max(1,workers.length)*100);
-  const totalProjects=state.projects.length,completed=state.projects.filter(p=>p.status==='completed').length,active=state.projects.filter(p=>p.status!=='completed');
-  const avg=totalProjects?Math.round(state.projects.reduce((n,p)=>n+Number(p.progress||0),0)/totalProjects):0;
-  const blockedProjects=active.filter(p=>projectHasBlocker(p.id));
-  const blockerHealth=Math.round((1-blockedProjects.length/Math.max(1,active.length))*100);
-  const delivery=Math.round((coverage*.35)+(avg*.45)+(blockerHealth*.20));
-  const last7=[];for(let n=6;n>=0;n--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;last7.push({key,label:d.toLocaleDateString('en-IN',{weekday:'short'}),ideas:state.ideas.filter(i=>i.submission_date===key).length,updates:state.progress.filter(u=>u.update_date===key).length})}
-  const maxTrend=Math.max(1,...last7.map(x=>Math.max(x.ideas,x.updates)));
-  const deptData=state.departments.map(d=>({label:d.name,value:state.ideas.filter(i=>Number(i.department_id)===Number(d.id)).length})).sort((a,b)=>b.value-a.value);
-  const teamData=workers.map(m=>({name:m.name,ideas:state.ideas.filter(i=>Number(i.submitted_by)===Number(m.id)).length,updates:state.progress.filter(u=>Number(u.user_id)===Number(m.id)).length,today:todayIdeas.some(i=>Number(i.submitted_by)===Number(m.id))}));
-  const projectRows=[...state.projects].sort((a,b)=>{const rank={in_progress:0,assigned:1,completed:2};return (rank[a.status]??3)-(rank[b.status]??3)||Number(b.progress||0)-Number(a.progress||0)}).slice(0,8);
-  const assignedIdeas=state.ideas.filter(i=>i.status==='assigned').length,submittedIdeas=state.ideas.filter(i=>i.status==='submitted').length;
-  host.innerHTML=`<section class="analytics-command"><div class="analytics-command-copy"><span class="kicker">EXECUTIVE SUMMARY</span><h3>R&D operational health</h3><p>A single management view combining daily idea discipline, project execution and blocker health.</p><div class="analytics-formula">35% submission discipline + 45% execution progress + 20% blocker health</div></div><div class="analytics-command-score" style="--score:${delivery}"><div><strong>${delivery}</strong><span>/ 100</span><small>Operational health</small></div></div></section><div class="analytics-kpi-grid v18"><article class="analytics-kpi-card primary"><span>IDEAS THIS MONTH</span><strong>${monthIdeas.length}</strong><small>${todayIdeas.length} submitted today</small></article><article class="analytics-kpi-card"><span>SUBMISSION COVERAGE</span><strong>${coverage}%</strong><small>${todaySubmitters}/${workers.length} members today</small></article><article class="analytics-kpi-card"><span>EXECUTION</span><strong>${avg}%</strong><small>${active.length} active projects</small></article><article class="analytics-kpi-card ${blockedProjects.length?'warning':''}"><span>BLOCKER HEALTH</span><strong>${blockerHealth}%</strong><small>${blockedProjects.length} active blocked</small></article><article class="analytics-kpi-card"><span>COMPLETED</span><strong>${completed}</strong><small>${totalProjects} projects total</small></article></div><div class="analytics-v18-grid"><section class="analytics-card analytics-span-2"><div class="analytics-card-head"><div><span class="kicker">7-DAY OPERATING RHYTHM</span><h4>Ideas vs progress updates</h4></div><span class="analytics-value-chip">Live activity</span></div><div class="dual-trend">${last7.map(x=>`<div class="dual-day"><div class="dual-bars"><i class="idea" style="height:${Math.max(5,x.ideas/maxTrend*100)}%" title="${x.ideas} ideas"></i><i class="update" style="height:${Math.max(5,x.updates/maxTrend*100)}%" title="${x.updates} updates"></i></div><b>${x.label}</b><small>${x.ideas}I · ${x.updates}U</small></div>`).join('')}</div><div class="chart-legend"><span><i class="idea"></i>Ideas</span><span><i class="update"></i>Progress updates</span></div></section><section class="analytics-card"><div class="analytics-card-head"><div><span class="kicker">IDEA PIPELINE</span><h4>From input to execution</h4></div></div><div class="pipeline-stack"><div><span>Submitted / available</span><strong>${submittedIdeas}</strong></div><div><span>Assigned to weekly work</span><strong>${assignedIdeas}</strong></div><div><span>Projects completed</span><strong>${completed}</strong></div></div></section><section class="analytics-card"><div class="analytics-card-head"><div><span class="kicker">DEPARTMENT DEMAND</span><h4>Problem signals</h4></div></div>${analyticsBars(deptData.slice(0,8),Math.max(1,...deptData.map(x=>x.value)))}</section><section class="analytics-card analytics-span-2"><div class="analytics-card-head"><div><span class="kicker">TEAM CONTRIBUTION</span><h4>Ideas and execution activity</h4></div><span class="analytics-value-chip">${workers.length} active members</span></div><div class="team-analytics-table"><div class="team-analytics-row head"><span>Member</span><span>Today</span><span>Ideas</span><span>Updates</span><span>Activity</span></div>${teamData.map(x=>{const activity=x.ideas+x.updates,max=Math.max(1,...teamData.map(y=>y.ideas+y.updates));return `<div class="team-analytics-row"><strong>${esc(x.name)}</strong><span class="team-today ${x.today?'done':'pending'}">${x.today?'Submitted':'Pending'}</span><b>${x.ideas}</b><b>${x.updates}</b><div class="team-activity"><i style="width:${Math.round(activity/max*100)}%"></i></div></div>`}).join('')}</div></section><section class="analytics-card analytics-span-3"><div class="analytics-card-head"><div><span class="kicker">DELIVERY PORTFOLIO</span><h4>Project health</h4></div><span class="analytics-value-chip">${active.length} active</span></div><div class="portfolio-table"><div class="portfolio-row head"><span>Project</span><span>Owner</span><span>Status</span><span>Progress</span><span>Blocker</span></div>${projectRows.length?projectRows.map(p=>`<div class="portfolio-row"><div><b>${esc(p.project_number)}</b><small>${esc(p.title)}</small></div><span>${esc(p.owner_name||'—')}</span><span class="work-status ${p.status}">${esc(String(p.status||'assigned').replace('_',' '))}</span><div class="portfolio-progress"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><span class="blocker-state ${projectHasBlocker(p.id)?'yes':'no'}">${projectHasBlocker(p.id)?'Attention':'Clear'}</span></div>`).join(''):'<div class="empty-state">No projects yet.</div>'}</div></section></div>`;
+  const dates=analyticsTrackingDates(state.analyticsRange),projects=analyticsFilteredProjects();
+  const active=state.projects.filter(p=>analyticsStatus(p)!=='completed'),completed=state.projects.filter(p=>analyticsStatus(p)==='completed'),blocked=state.projects.filter(p=>analyticsStatus(p)==='blocked');
+  const avg=state.projects.length?Math.round(state.projects.reduce((s,p)=>s+Number(p.progress||0),0)/state.projects.length):0;
+  const cycleOptions=state.cycles.slice().sort((a,b)=>String(b.start_date||'').localeCompare(String(a.start_date||''))).map(c=>`<option value="${c.id}" ${String(state.analyticsCycleFilter||'')===String(c.id)?'selected':''}>${esc(c.label)}</option>`).join('');
+  host.innerHTML=`
+    <section class="track-kpi-strip">
+      <article><span>TOTAL PROJECTS</span><strong>${state.projects.length}</strong><small>${active.length} active</small></article>
+      <article><span>AVERAGE PROGRESS</span><strong>${avg}%</strong><small>Across all projects</small></article>
+      <article><span>COMPLETED</span><strong>${completed.length}</strong><small>${state.projects.length?Math.round(completed.length/state.projects.length*100):0}% completion rate</small></article>
+      <article class="${blocked.length?'warn':''}"><span>BLOCKED</span><strong>${blocked.length}</strong><small>${blocked.length?'Needs attention':'No active blockers'}</small></article>
+      <article><span>DATE COLUMNS</span><strong>${dates.length}</strong><small>${state.analyticsRange==='all'?'Recorded update dates':`${state.analyticsRange} day view`}</small></article>
+    </section>
+    <section class="track-sheet-card">
+      <div class="track-sheet-head"><div><span class="kicker">MASTER TRACK SHEET</span><h3>Project progress by date</h3><p>Each percentage is the latest progress recorded on that date. Hover a cell for work, remarks, blocker and next action.</p></div><div class="track-sheet-tools"><div class="work-search compact"><span>⌕</span><input id="analyticsProjectSearch" value="${esc(state.analyticsSearch||'')}" placeholder="Search project / owner / department" spellcheck="false" data-gramm="false"></div><select id="analyticsCycleFilter"><option value="">All weeks</option>${cycleOptions}</select><select id="analyticsStatusFilter"><option value="">All status</option><option value="active" ${state.analyticsStatusFilter==='active'?'selected':''}>Active</option><option value="blocked" ${state.analyticsStatusFilter==='blocked'?'selected':''}>Blocked</option><option value="overdue" ${state.analyticsStatusFilter==='overdue'?'selected':''}>Overdue</option><option value="completed" ${state.analyticsStatusFilter==='completed'?'selected':''}>Completed</option></select></div></div>
+      <div class="track-sheet-scroll"><table class="track-sheet-table"><thead><tr><th class="sticky-col c1">Project No</th><th class="sticky-col c2">Project / Idea</th><th class="sticky-col c3">Owner</th><th>Dept</th><th>Week</th><th>Start</th><th>Target</th><th>Status</th><th>Current</th>${dates.map(d=>`<th class="date-head"><b>${new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</b><small>${new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short'})}</small></th>`).join('')}</tr></thead><tbody>${projects.length?projects.map(p=>{const m=analyticsProjectMeta(p),ups=analyticsProjectUpdates(p.id),status=analyticsStatus(p);return `<tr data-analytics-project="${p.id}" class="track-project-row ${Number(state.analyticsProjectId)===Number(p.id)?'selected':''}"><td class="sticky-col c1"><strong>${esc(p.project_number)}</strong></td><td class="sticky-col c2"><b>${esc(p.title)}</b><small>${esc(m.idea?.problem||'')}</small></td><td class="sticky-col c3">${esc(m.owner)}</td><td>${esc(m.department)}</td><td>${esc(m.cycle)}</td><td>${fmtDate(p.start_date)}</td><td>${fmtDate(p.end_date)}</td><td><span class="sheet-status ${status}">${analyticsProjectStatusText(p)}</span></td><td><span class="sheet-current"><b>${Number(p.progress||0)}%</b><i><em style="width:${Math.max(0,Math.min(100,Number(p.progress||0)))}%"></em></i></span></td>${dates.map(d=>{const u=ups.filter(x=>x.update_date===d).at(-1);if(!u)return '<td class="progress-cell empty">—</td>';const prev=ups.filter(x=>x.update_date<d).at(-1),delta=Number(u.progress_percent||0)-Number(prev?.progress_percent||0),tip=[u.work_done,u.remarks&&`Remarks: ${u.remarks}`,u.blocker&&`Blocker: ${u.blocker}`,u.next_action&&`Next: ${u.next_action}`].filter(Boolean).join(' | ');return `<td class="progress-cell ${u.blocker?'has-blocker':''}" title="${esc(tip)}"><b>${Number(u.progress_percent||0)}%</b>${delta>0?`<small>+${delta}</small>`:''}${u.blocker?'<span>!</span>':''}</td>`}).join('')}</tr>`}).join(''):`<tr><td colspan="${9+dates.length}" class="empty-cell">No projects match the selected filters.</td></tr>`}</tbody></table></div>
+      <div class="track-sheet-legend"><span><i class="recorded"></i>Progress entered</span><span><i class="blocked"></i>Blocker entered</span><span><b>—</b>No update for that date</span><em>${projects.length} project${projects.length===1?'':'s'} shown</em></div>
+    </section>
+    <section class="track-log-card" id="analyticsProjectLog"></section>`;
+  $('#analyticsProjectSearch')?.addEventListener('input',e=>{state.analyticsSearch=e.target.value;clearTimeout(window.__analyticsSearchTimer);window.__analyticsSearchTimer=setTimeout(renderAnalyticsPanel,120)});
+  $('#analyticsStatusFilter')?.addEventListener('change',e=>{state.analyticsStatusFilter=e.target.value;renderAnalyticsPanel()});
+  $('#analyticsCycleFilter')?.addEventListener('change',e=>{state.analyticsCycleFilter=e.target.value;renderAnalyticsPanel()});
+  $$('[data-analytics-project]').forEach(row=>row.addEventListener('click',()=>{state.analyticsProjectId=Number(row.dataset.analyticsProject);$$('[data-analytics-project]').forEach(r=>r.classList.toggle('selected',r===row));renderAnalyticsProjectLog(state.analyticsProjectId)}));
+  if(!state.analyticsProjectId||!state.projects.some(p=>Number(p.id)===Number(state.analyticsProjectId)))state.analyticsProjectId=projects[0]?.id||null;
+  renderAnalyticsProjectLog(state.analyticsProjectId);
+  const exp=$('#exportTrackingBtn');if(exp)exp.onclick=exportAnalyticsTracking;
 }
 function analyticsBars(items,maxValue,labelKey='label',valueKey='value',suffix=''){
   const max=Math.max(1,Number(maxValue)||Math.max(0,...items.map(x=>Number(x[valueKey]||0))));
@@ -443,15 +860,71 @@ function bindRecordActions(){
   const dp=$('#deleteProjectBtn');if(dp)dp.onclick=()=>{const p=state.projects.find(x=>x.id===state.selectedProject);if(!p)return;if(!confirm(`Delete ${p.project_number}? Its progress history will be removed and the linked idea will return to Submitted.`))return;runMutationButton(dp,async()=>{await deleteProjectLocal(p.id);state.selectedProject=null},'Project deleted.')};
 }
 function openIdeaEdit(id){const i=state.ideas.find(x=>x.id===id);if(!i)return;$('#ideaForm').dataset.editId=id;$('#ideaDialogTitle').textContent='Edit Daily Idea';$('#ideaMember').value=i.submitted_by;$('#ideaDepartment').value=i.department_id;$('#ideaProblem').value=i.problem;$('#ideaProposal').value=i.proposed_idea;$('#ideaBenefit').value=i.expected_benefit||'';$('#ideaPriority').value=i.priority;$('#ideaDate').value=i.submission_date;$('#ideaDialog').showModal()}
-function openCycleEdit(id){const c=state.cycles.find(x=>x.id===id);if(!c)return;$('#weekForm').dataset.editId=id;$('#weekDialogTitle').textContent='Edit Working Week';$('#weekLabel').value=c.label;$('#weekStart').value=c.start_date;$('#weekEnd').value=c.end_date;$('#weekDialog').showModal()}
+const WEEK_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const weekPickerState={year:new Date().getFullYear(),month:new Date().getMonth()};
+function isoLocalDate(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
+function monthWeekDates(year,month,week){
+  const w=Math.min(4,Math.max(1,Number(week)||1));
+  const startDay=(w-1)*7+1;
+  const lastDay=new Date(year,month+1,0).getDate();
+  const endDay=w===4?lastDay:Math.min(startDay+6,lastDay);
+  return {start:isoLocalDate(year,month,startDay),end:isoLocalDate(year,month,endDay)};
+}
+function inferredWeekForDay(day){return day<=7?1:day<=14?2:day<=21?3:4}
+function renderWeekMonthPicker(){
+  const grid=$('#weekMonthGrid');if(!grid)return;
+  $('#weekYearLabel').textContent=String(weekPickerState.year);
+  grid.innerHTML=WEEK_MONTHS.map((name,index)=>`<button type="button" class="month-option ${index===weekPickerState.month?'active':''}" data-week-month="${index}" aria-pressed="${index===weekPickerState.month}">${name.slice(0,3).toUpperCase()}</button>`).join('');
+  grid.querySelectorAll('[data-week-month]').forEach(btn=>btn.onclick=()=>{weekPickerState.month=Number(btn.dataset.weekMonth);renderWeekMonthPicker();updateWeekPeriodFields()});
+  $('#weekMonthDisplay').value=`${WEEK_MONTHS[weekPickerState.month]} ${weekPickerState.year}`;
+}
+function updateWeekPeriodFields(){
+  const week=Number($('#weekNumber')?.value||1);
+  const dates=monthWeekDates(weekPickerState.year,weekPickerState.month,week);
+  $('#weekMonthDisplay').value=`${WEEK_MONTHS[weekPickerState.month]} ${weekPickerState.year}`;
+  $('#weekStart').value=dates.start;$('#weekEnd').value=dates.end;
+}
+function setupWeekPeriodPicker(date=new Date()){
+  weekPickerState.year=date.getFullYear();weekPickerState.month=date.getMonth();
+  const week=inferredWeekForDay(date.getDate());
+  $('#weekNumber').value=String(week);renderWeekMonthPicker();updateWeekPeriodFields();
+}
+function setupWeekPickerFromCycle(c){
+  const source=c?.start_date?new Date(`${c.start_date}T00:00:00`):new Date();
+  weekPickerState.year=source.getFullYear();weekPickerState.month=source.getMonth();
+  $('#weekNumber').value=String(inferredWeekForDay(source.getDate()));renderWeekMonthPicker();updateWeekPeriodFields();
+}
+function openCycleEdit(id){const c=state.cycles.find(x=>x.id===id);if(!c)return;$('#weekForm').dataset.editId=id;$('#weekDialogTitle').textContent='Edit Working Week';setupWeekPickerFromCycle(c);$('#weekDialog').showModal()}
 function openProgressEdit(id){const u=state.progress.find(x=>x.id===id);if(!u)return;const p=state.projects.find(x=>x.id===u.project_id);$('#progressForm').dataset.editId=id;$('#progressForm').dataset.projectId=u.project_id;$('#progressDialogTitle').textContent=(p?.project_number||'Project')+' — Edit Update';$('#progressMember').value=u.user_id;$('#progressDate').value=u.update_date;$('#progressPercent').value=u.progress_percent;$('#progressWork').value=u.work_done;$('#progressRemarks').value=u.remarks||'';$('#progressBlocker').value=u.blocker||'';$('#progressNext').value=u.next_action||'';$('#progressDialog').showModal()}
 function openProjectEdit(id){const p=state.projects.find(x=>x.id===Number(id));if(!p)return;$('#projectEditId').value=p.id;$('#projectEditTitle').value=p.title;$('#projectEditOwner').innerHTML=workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');$('#projectEditOwner').value=p.owner_id;$('#projectEditStart').value=p.start_date;$('#projectEditEnd').value=p.end_date;$('#projectEditDialog').showModal()}
-function showPage(name){state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',reports:'Analytics',settings:'Settings'};$('#pageTitle').textContent=titles[name];$('#sidebar').classList.remove('open');renderPage(name)}
+function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
   $('#loginForm').onsubmit=async e=>{e.preventDefault();const name=$('#loginName').value.trim();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';try{const result=findLogin(name);if(result.matched){persistLogin(result.member);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.member.name}.`);return}$('#loginMessage').textContent=result.error||'Name not found.';if(result.suggestion){$('#loginSuggestion').innerHTML=`<div class="suggestion-box"><span>Did you mean <b>${esc(result.suggestion.name)}</b>?</span><button type="button" class="secondary-btn" id="useSuggestionBtn">Yes, use this name</button></div>`;$('#useSuggestionBtn').onclick=()=>{persistLogin(result.suggestion);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.suggestion.name}.`)}}}catch(err){$('#loginMessage').textContent=err.message}};
+  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;if(!window.rndCloud?.enabled){toast('Team chat is waiting for Firebase connection.',true);return}try{send.disabled=true;await window.rndCloud.sendChatMessage({member_id:m.id,text});input.value='';input.focus()}catch(err){toast(err?.message||'Unable to send chat message.',true)}finally{send.disabled=false}});
+  $('#teamChatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#teamChatForm')?.requestSubmit()}});
+  $('#excelFormulaBar')?.addEventListener('input',e=>{const {row,col}=excelActiveCell,cell=excelCellElement(row,col);if(!cell)return;cell.textContent=e.target.value;excelCommitCell(row,col,e.target.value)});
+  $('#excelFormulaBar')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();excelSelectCell(excelActiveCell.row+1,excelActiveCell.col,true)}});
+  $('#excelClearCellBtn')?.addEventListener('click',excelClearCell);
+  $('#excelClearRowBtn')?.addEventListener('click',excelClearRow);
+  $('#excelExportCsvBtn')?.addEventListener('click',exportExcelCsv);
+  $('#reloadLiveSheetBtn')?.addEventListener('click',()=>{
+    const frame=$('#liveGoogleSheetFrame');
+    if(frame){const src=frame.src;frame.src='about:blank';setTimeout(()=>frame.src=src,60)}
+  });
+  $('#excelAddSheetBtn')?.addEventListener('click',addExcelSheet);
+  $('#excelFillColor')?.addEventListener('input',e=>applyExcelCellColor('b',e.target.value));
+  $('#excelClearFillBtn')?.addEventListener('click',()=>applyExcelCellColor('b',''));
+  $('#excelTextColor')?.addEventListener('input',e=>applyExcelCellColor('t',e.target.value));
+  $('#excelTabColor')?.addEventListener('input',e=>saveExcelLayoutPatch({color:e.target.value}));
+  $('#excelTabWidth')?.addEventListener('input',e=>{const s=excelActiveSheet();if(!s)return;s.tab_width=Number(e.target.value)||120;renderExcelSheetTabs()});
+  $('#excelTabWidth')?.addEventListener('change',e=>saveExcelLayoutPatch({tab_width:Number(e.target.value)||120}));
   $('#exportDbBtn').onclick=()=>{exportDatabase();toast('Database backup downloaded.');};
   $('#importDbInput').onchange=async e=>{try{await importDatabaseFile(e.target.files?.[0]);toast('Database restored successfully.');e.target.value='';await load()}catch(err){toast(err.message,true)}};
   $('#requestStorageBtn').onclick=async()=>{const ok=await requestDurableStorage();toast(ok?'Persistent browser storage enabled.':'Browser kept standard storage mode.',!ok);renderSettings()};;
-  $('#logoutBtn').onclick=()=>{clearLogin();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';showLogin()};
-  $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');$('#quickIdeaBtn').onclick=()=>{requestNotificationsFromGesture();openIdea()};$('#newIdeaBtn').onclick=()=>{requestNotificationsFromGesture();openIdea()};$('#newWeekBtn').onclick=()=>{if(isVisitor())return toast('Admin visitors are view-only.',true);delete $('#weekForm').dataset.editId;$('#weekForm').reset();$('#weekDialogTitle').textContent='Create Working Week';$('#weekDialog').showModal()};$$('[data-close]').forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close).close());['#ideaSearch','#ideaPersonFilter','#ideaDeptFilter','#ideaDateFilter'].forEach(s=>$(s).addEventListener('input',renderIdeas));['#workSearch','#workStatusFilter'].forEach(s=>$(s)?.addEventListener('input',renderProjects));$('#clearWorkFilters')?.addEventListener('click',()=>{if($('#workSearch'))$('#workSearch').value='';if($('#workStatusFilter'))$('#workStatusFilter').value='';renderProjects()});$('#clearIdeaFilters').onclick=()=>{$('#ideaSearch').value='';$('#ideaPersonFilter').value='';$('#ideaDeptFilter').value='';$('#ideaDateFilter').value='';renderIdeas()};$('#weekSelect').onchange=renderWeekly;$$('.report-tab').forEach(b=>b.onclick=()=>{$$('.report-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.reportType=b.dataset.report;renderReportControls()});$('#ideaForm').onsubmit=async e=>{e.preventDefault();const submitBtn=e.submitter||e.target.querySelector('button[type="submit"],button:not([type])');if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='SUBMITTING…'}try{const attachment=await fileData($('#ideaAttachment'));const payload={submitted_by:Number($('#ideaMember').value),department_id:Number($('#ideaDepartment').value),problem:$('#ideaProblem').value,proposed_idea:$('#ideaProposal').value,expected_benefit:$('#ideaBenefit').value,priority:$('#ideaPriority').value,submission_date:$('#ideaDate').value,attachment};const editId=Number(e.target.dataset.editId)||0;const row=editId?await updateIdeaLocal(editId,payload):await createIdeaLocal(payload);delete e.target.dataset.editId;$('#ideaDialog').close();e.target.reset();disableWritingAssist(e.target);scheduleRender();toast(editId?`${row.idea_number} updated.`:(row.cloud_saved?`${row.idea_number} saved to Firebase and dashboard updated.`:`${row.idea_number} saved locally · Firebase sync pending.`),!editId&&!row.cloud_saved)}catch(err){toast(err.message,true)}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Submit Idea'}}};$('#weekForm').onsubmit=async e=>{e.preventDefault();try{const payload={label:$('#weekLabel').value,start_date:$('#weekStart').value,end_date:$('#weekEnd').value};const editId=Number(e.target.dataset.editId)||0;if(editId)await updateCycleLocal(editId,payload);else await createCycleLocal(payload);delete e.target.dataset.editId;$('#weekDialog').close();e.target.reset();toast(editId?'Working week updated.':'Working week created.');scheduleRender()}catch(err){toast(err.message,true)}};$('#projectEditForm').onsubmit=async e=>{e.preventDefault();try{await updateProjectLocal(Number($('#projectEditId').value),{title:$('#projectEditTitle').value,owner_id:Number($('#projectEditOwner').value),start_date:$('#projectEditStart').value,end_date:$('#projectEditEnd').value});$('#projectEditDialog').close();toast('Project updated.')}catch(err){toast(err.message,true)}};$('#progressForm').onsubmit=async e=>{e.preventDefault();try{const attachment=await fileData($('#progressAttachment'));const payload={user_id:Number($('#progressMember').value),update_date:$('#progressDate').value,progress_percent:Number($('#progressPercent').value),work_done:$('#progressWork').value,remarks:$('#progressRemarks').value,blocker:$('#progressBlocker').value,next_action:$('#progressNext').value,attachment};const editId=Number(e.target.dataset.editId)||0;if(editId)await updateProgressLocal(editId,payload);else await addProgressLocal(Number(e.target.dataset.projectId),payload);delete e.target.dataset.editId;$('#progressDialog').close();e.target.reset();toast(editId?'Progress update edited.':'Progress update saved.');scheduleRender()}catch(err){toast(err.message,true)}}}
+  $('#logoutBtn').onclick=()=>{stopTeamChat();stopMasterSheet();clearLogin();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';showLogin()};
+  $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));
+  const toggleSidebar=()=>{const sidebar=$('#sidebar'),shell=$('#appShell'),mobile=window.matchMedia('(max-width:980px)').matches;if(mobile){sidebar.classList.toggle('open');$('#menuBtn')?.setAttribute('aria-expanded',sidebar.classList.contains('open')?'true':'false');return}const closed=shell.classList.toggle('sidebar-collapsed');localStorage.setItem(SIDEBAR_CLOSED_KEY,closed?'1':'0');$('#menuBtn')?.setAttribute('aria-expanded',closed?'false':'true')};
+  $('#menuBtn').onclick=toggleSidebar;$('#sidebarCloseBtn')?.addEventListener('click',toggleSidebar);
+  if(!window.matchMedia('(max-width:980px)').matches&&localStorage.getItem(SIDEBAR_CLOSED_KEY)==='1'){$('#appShell').classList.add('sidebar-collapsed');$('#menuBtn')?.setAttribute('aria-expanded','false')}
+  window.addEventListener('keydown',e=>{if((e.key!=='Backspace'&&e.key!=='Delete')||!selectedManualTrackerRow||state.page!=='progress'||isVisitor())return;const p=state.projects.find(x=>Number(x.id)===Number(selectedManualTrackerRow.projectId));const row=p?.tracker_rows?.find(r=>Number(r.row_index)===Number(selectedManualTrackerRow.rowIndex));if(!p||!row?.manual_extra)return;const target=e.target,editing=target&&/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);if(editing&&String(target.value||'').length>0)return;e.preventDefault();deleteManualTrackerRow(p,selectedManualTrackerRow.rowIndex);toast('Added tracker row deleted.')});$('#quickIdeaBtn')?.addEventListener('click',()=>{requestNotificationsFromGesture();openIdea()});$('#newIdeaBtn').onclick=()=>{requestNotificationsFromGesture();openIdea()};$('#newWeekBtn').onclick=()=>{if(isVisitor())return toast('Admin visitors are view-only.',true);delete $('#weekForm').dataset.editId;$('#weekForm').reset();$('#weekDialogTitle').textContent='Create Working Week';setupWeekPeriodPicker(new Date());$('#weekDialog').showModal()};$('#weekNumber').addEventListener('change',updateWeekPeriodFields);$('#weekPrevYear').onclick=()=>{weekPickerState.year--;renderWeekMonthPicker();updateWeekPeriodFields()};$('#weekNextYear').onclick=()=>{weekPickerState.year++;renderWeekMonthPicker();updateWeekPeriodFields()};$$('[data-close]').forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close).close());['#ideaSearch','#ideaPersonFilter','#ideaDeptFilter'].forEach(s=>$(s).addEventListener('input',renderIdeas));$('#ideaDateFilter').addEventListener('input',()=>{syncIdeaDateDisplay();syncWorkMonthFromDate($('#ideaDateFilter').value);renderIdeas()});['#workSearch','#workStatusFilter'].forEach(s=>$(s)?.addEventListener('input',renderProjects));$('#workMonthSelect')?.addEventListener('change',()=>{const value=$('#workMonthSelect').value;if(/^\d{4}-\d{2}$/.test(value))state.workMonthKey=value;state.selectedProject=null;renderProjects()});$('#workWeekSelect')?.addEventListener('change',()=>{state.workWeek=Number($('#workWeekSelect').value)||1;state.selectedProject=null;renderProjects()});$('#clearWorkFilters')?.addEventListener('click',()=>{if($('#workSearch'))$('#workSearch').value='';if($('#workStatusFilter'))$('#workStatusFilter').value='';renderProjects()});$('#clearIdeaFilters').onclick=()=>{$('#ideaSearch').value='';$('#ideaPersonFilter').value='';$('#ideaDeptFilter').value='';$('#ideaDateFilter').value='';syncIdeaDateDisplay();renderIdeas()};$('#weekSelect').onchange=()=>{const c=state.cycles.find(x=>Number(x.id)===Number($('#weekSelect').value));if(c)syncWorkPeriodFromCycle(c);renderWeekly()};$$('.report-tab').forEach(b=>b.onclick=()=>{$$('.report-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.reportType=b.dataset.report;renderReportControls()});$$('[data-analytics-range]').forEach(b=>b.onclick=()=>{$$('[data-analytics-range]').forEach(x=>x.classList.toggle('active',x===b));state.analyticsRange=b.dataset.analyticsRange;renderAnalyticsPanel()});$('#ideaForm').onsubmit=async e=>{e.preventDefault();const submitBtn=e.submitter||e.target.querySelector('button[type="submit"],button:not([type])');if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='SUBMITTING…'}try{const attachment=await fileData($('#ideaAttachment'));const payload={submitted_by:Number($('#ideaMember').value),department_id:Number($('#ideaDepartment').value),problem:$('#ideaProblem').value,proposed_idea:$('#ideaProposal').value,expected_benefit:$('#ideaBenefit').value,priority:$('#ideaPriority').value,submission_date:$('#ideaDate').value,attachment};const editId=Number(e.target.dataset.editId)||0;const row=editId?await updateIdeaLocal(editId,payload):await createIdeaLocal(payload);delete e.target.dataset.editId;$('#ideaDialog').close();e.target.reset();disableWritingAssist(e.target);scheduleRender();toast(editId?`${row.idea_number} updated.`:(row.cloud_saved?`${row.idea_number} saved to Firebase and dashboard updated.`:`${row.idea_number} saved locally · Firebase sync pending.`),!editId&&!row.cloud_saved)}catch(err){toast(err.message,true)}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Submit Idea'}}};$('#weekForm').onsubmit=async e=>{e.preventDefault();try{const week=Number($('#weekNumber').value);const payload={label:`${WEEK_MONTHS[weekPickerState.month]} - Week ${week}`,start_date:$('#weekStart').value,end_date:$('#weekEnd').value};state.workMonthKey=monthKeyFromDate(payload.start_date);state.workWeek=week;const editId=Number(e.target.dataset.editId)||0;if(editId)await updateCycleLocal(editId,payload);else await createCycleLocal(payload);delete e.target.dataset.editId;$('#weekDialog').close();e.target.reset();toast(editId?'Working week updated.':'Working week created.');scheduleRender()}catch(err){toast(err.message,true)}};$('#projectEditForm').onsubmit=async e=>{e.preventDefault();try{await updateProjectLocal(Number($('#projectEditId').value),{title:$('#projectEditTitle').value,owner_id:Number($('#projectEditOwner').value),start_date:$('#projectEditStart').value,end_date:$('#projectEditEnd').value});$('#projectEditDialog').close();toast('Project updated.')}catch(err){toast(err.message,true)}};$('#progressForm').onsubmit=async e=>{e.preventDefault();try{const attachment=await fileData($('#progressAttachment'));const payload={user_id:Number($('#progressMember').value),update_date:$('#progressDate').value,progress_percent:Number($('#progressPercent').value),work_done:$('#progressWork').value,remarks:$('#progressRemarks').value,blocker:$('#progressBlocker').value,next_action:$('#progressNext').value,attachment};const editId=Number(e.target.dataset.editId)||0;if(editId)await updateProgressLocal(editId,payload);else await addProgressLocal(Number(e.target.dataset.projectId),payload);delete e.target.dataset.editId;$('#progressDialog').close();e.target.reset();toast(editId?'Progress update edited.':'Progress update saved.');scheduleRender()}catch(err){toast(err.message,true)}}}
 disableWritingAssist();new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)disableWritingAssist(n)}))).observe(document.documentElement,{childList:true,subtree:true});bind();load().catch(e=>{console.error('App startup failed',e);const saved=storedLogin();const member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;if(member){persistLogin(member);showApp();toast('Loaded saved session. Cloud sync will retry automatically.',true)}else{showLogin();$('#loginMessage').textContent=e?.message||'Unable to start the app.'}});
