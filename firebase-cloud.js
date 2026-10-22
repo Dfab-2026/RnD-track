@@ -1,9 +1,9 @@
 (function(){
-  const COLLECTIONS=['members','ideas','cycles','projects','progress'];
+  const COLLECTIONS=['members','departments','ideas','cycles','projects','progress'];
   let db=null, auth=null, ready=false, unsubscribers=[], reconnectTimer=null;
   let lastError=null, authUid=null, persistenceReady=false;
   const WRITE_RETRY_DELAYS=[350,900,1800,3500];
-  const remoteCache={members:[],ideas:[],cycles:[],projects:[],progress:[]};
+  const remoteCache={members:[],departments:[],ideas:[],cycles:[],projects:[],progress:[]};
   const cfg=()=>window.RND_FIREBASE_CONFIG||{};
   const configured=()=>Boolean(
     cfg().apiKey && !String(cfg().apiKey).startsWith('PASTE_') &&
@@ -34,6 +34,7 @@
     if(updated!==undefined) common.u=updated;
     switch(collection){
       case 'members': return compact({n:r.name,r:r.role==='visitor'?'v':'m',a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
+      case 'departments': return compact({n:r.name,a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
       case 'ideas': return compact({n:r.idea_number,s:Number(r.submitted_by),d:Number(r.department_id),p:r.problem,i:r.proposed_idea,b:r.expected_benefit,q:r.priority,t:r.submission_date,x:r.status,f:attachmentMeta(r.attachment),...common});
       case 'cycles': return compact({l:r.label,s:r.start_date,e:r.end_date,x:r.status,...common});
       case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks})).filter(x=>Object.keys(x).length);return compact({c:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,z:Number(r.tracker_row_count)||undefined,...common})};
@@ -64,6 +65,7 @@
     if(created)common.created_at=created;if(updated)common.updated_at=updated;
     switch(collection){
       case 'members': return {...common,name:d.n||'',role:d.r==='v'?'visitor':'member',active:d.a===0?0:1,sort_order:Number(d.o)||0};
+      case 'departments': return {...common,name:d.n||'',active:d.a===0?0:1,sort_order:Number(d.o)||0};
       case 'ideas': return {...common,idea_number:d.n||'',submitted_by:Number(d.s),department_id:Number(d.d),problem:d.p||'',proposed_idea:d.i||'',expected_benefit:d.b||'',priority:d.q||'Medium',submission_date:d.t||'',status:d.x||'submitted',...(d.f?{attachment:{name:d.f.n||'',type:d.f.t||'',size:Number(d.f.s)||0}}:{})};
       case 'cycles': return {...common,label:d.l||'',start_date:d.s||'',end_date:d.e||'',status:d.x||'active'};
       case 'projects': return {...common,cycle_id:Number(d.c),idea_id:Number(d.i),project_number:d.n||'',title:d.t||'',owner_id:Number(d.o),start_date:d.s||'',end_date:d.e||'',progress:Number(d.p)||0,status:d.x||'assigned',tracker_row_count:Number(d.z)||undefined,tracker_rows:Array.isArray(d.g)?d.g.map((x,idx)=>({row_index:Number.isFinite(Number(x.o))?Number(x.o):idx,manual_extra:Number(x.q)===1,date:x.d||'',stage:x.s||'',task:x.t||'',status:x.x||'',issue:x.i||'',next_action:x.n||'',remarks:x.r||''})):[]};
@@ -73,7 +75,7 @@
   }
   const errText=e=>{if(!e)return'Unknown Firebase error';const code=e.code?String(e.code):'';const msg=e.message?String(e.message):String(e);return code?`${code}: ${msg}`:msg};
   function sortedRows(rows){return [...rows].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}))}
-  function makeSnapshot(){return {members:sortedRows(remoteCache.members),departments:[],ideas:sortedRows(remoteCache.ideas),cycles:sortedRows(remoteCache.cycles),projects:sortedRows(remoteCache.projects),progress:sortedRows(remoteCache.progress),schema_version:15,updated_at:new Date().toISOString()}}
+  function makeSnapshot(){return {members:sortedRows(remoteCache.members),departments:sortedRows(remoteCache.departments),ideas:sortedRows(remoteCache.ideas),cycles:sortedRows(remoteCache.cycles),projects:sortedRows(remoteCache.projects),progress:sortedRows(remoteCache.progress),schema_version:15,updated_at:new Date().toISOString()}}
   function status(){return {configured:configured(),sdk:Boolean(window.firebase),authenticated:Boolean(authUid),uid:authUid,connected:ready,persistent_cache:persistenceReady,projectId:cfg().projectId||'',error:lastError?errText(lastError):'',schema:'compact-v4-durable-sync'}}
   function waitForAuthUser(timeoutMs=15000){return new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('Firebase Auth timed out. Check Anonymous sign-in and network access.'))},timeoutMs);const off=auth.onAuthStateChanged(user=>{if(done||!user)return;done=true;clearTimeout(timer);off();resolve(user)},err=>{if(done)return;done=true;clearTimeout(timer);off();reject(err)})})}
 
@@ -174,16 +176,31 @@
 
   function decodeChat(doc){
     const d=doc.data?doc.data():doc||{};
-    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0};
+    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||'')};
   }
   async function sendChatMessage(payload){
     if(!ready)await init(true);
     const text=String(payload?.text||'').trim();
     if(!text)throw new Error('Enter a message.');
     if(text.length>1000)throw new Error('Message is too long.');
-    const row=compact({m:Number(payload?.member_id)||0,t:text,c:Date.now()});
+    const row=compact({m:Number(payload?.member_id)||0,t:text,c:Date.now(),a:String(authUid||'')});
+    if(!row.a)throw new Error('Chat identity is not ready. Reconnect and try again.');
     const ref=await withWriteRetry(()=>db.collection('team_chat').add(row),'Chat save');
-    return {id:ref.id,member_id:Number(row.m)||0,name:'',role:'member',text,created_at:Number(row.c)||Date.now()};
+    try{await flushPendingWrites()}catch{}
+    return {id:ref.id,member_id:Number(row.m)||0,name:'',role:'member',text,created_at:Number(row.c)||Date.now(),auth_uid:String(row.a||'')};
+  }
+  async function deleteChatMessage(id){
+    if(!ready)await init(true);
+    id=String(id||'').trim();
+    if(!id)throw new Error('Message id is missing.');
+    const ref=db.collection('team_chat').doc(id);
+    const snap=await ref.get();
+    if(!snap.exists)return true;
+    const data=snap.data()||{};
+    if(!data.a||String(data.a)!==String(authUid||''))throw new Error('You can delete only your own newer messages.');
+    await withWriteRetry(()=>ref.delete(),'Chat delete');
+    try{await flushPendingWrites()}catch{}
+    return true;
   }
   function watchChat(onChange,onStatus){
     if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
@@ -218,5 +235,5 @@
   if(typeof window!=='undefined'){window.addEventListener('online',()=>{flushPendingWrites().catch(()=>{})});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingWrites().catch(()=>{})})}
 
   async function test(){try{const r=await init(true);if(!r.enabled)return{ok:false,message:r.reason||'Firebase is not configured.',details:status()};await db.collection('members').limit(1).get({source:'server'});return{ok:true,message:`Firebase connected · Auth OK · Firestore OK · compact schema · ${cfg().projectId}`,details:status()}}catch(e){lastError=e;return{ok:false,message:errText(e),details:status()}}}
-  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();

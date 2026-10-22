@@ -11,6 +11,7 @@ const DB_VERSION=2;
 const STORE='app';
 const SNAPSHOT_KEY='snapshot';
 const defaultMembers=['Kabil','Abinaya','Gautham','Akash'];
+const DEFAULT_ADMIN_NAME='Pramod';
 const DEFAULT_VISITOR_NAME='Admin';
 const defaultDepartments=['Production','NPD','R&D','Marketing','Purchase','Accounts','Quality','RFQ'];
 function openDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,DB_VERSION);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE);if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta')};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
@@ -19,8 +20,8 @@ async function writeSnapshot(data){const db=await openDb();return new Promise((r
 function seedSnapshot(){
   const now=new Date().toISOString();
   const members=defaultMembers.map((name,i)=>({id:i+1,name,role:'member',active:1,sort_order:i+1,created_at:now,updated_at:now}));
-  members.push({id:5,name:DEFAULT_VISITOR_NAME,role:'visitor',active:1,sort_order:5,created_at:now,updated_at:now});
-  return {members,departments:defaultDepartments.map((name,i)=>({id:i+1,name,active:1,sort_order:i+1})),ideas:[],cycles:[],projects:[],progress:[]}
+  members.push({id:5,name:DEFAULT_ADMIN_NAME,role:'visitor',active:1,sort_order:5,created_at:now,updated_at:now});
+  return {members,departments:defaultDepartments.map((name,i)=>({id:i+1,name,active:1,sort_order:i+1,created_at:now,updated_at:now})),ideas:[],cycles:[],projects:[],progress:[]}
 }
 function canonicalizeMembers(snap){
   const now=new Date().toISOString();
@@ -55,7 +56,7 @@ function canonicalizeMembers(snap){
   return snap;
 }
 function migrateSnapshot(data){
-  const snap=data||seedSnapshot();
+  const snap=data||seedSnapshot(),now=new Date().toISOString();
   snap.members=Array.isArray(snap.members)?snap.members:[];
   snap.departments=Array.isArray(snap.departments)?snap.departments:[];
   snap.ideas=Array.isArray(snap.ideas)?snap.ideas:[];
@@ -63,13 +64,16 @@ function migrateSnapshot(data){
   snap.projects=Array.isArray(snap.projects)?snap.projects:[];
   snap.progress=Array.isArray(snap.progress)?snap.progress:[];
   canonicalizeMembers(snap);
-  defaultDepartments.forEach((name,i)=>{
-    if(snap.departments[i]){snap.departments[i].name=name;snap.departments[i].active=1;snap.departments[i].sort_order=i+1}
-    else snap.departments.push({id:i+1,name,active:1,sort_order:i+1});
-  });
-  snap.departments=snap.departments.slice(0,8);
-  snap.schema_version=20;
-  snap.updated_at=new Date().toISOString();
+  if(!snap.members.some(m=>normalizeName(m.name)===normalizeName(DEFAULT_ADMIN_NAME))){
+    snap.members.push({id:nextId(),name:DEFAULT_ADMIN_NAME,role:'visitor',active:1,sort_order:Math.max(0,...snap.members.map(m=>Number(m.sort_order)||0))+1,created_at:now,updated_at:now});
+  }
+  const seen=new Set();
+  snap.departments=(snap.departments.length?snap.departments:defaultDepartments.map((name,i)=>({id:i+1,name,active:1,sort_order:i+1,created_at:now,updated_at:now})))
+    .map((d,i)=>({id:Number(d.id)||i+1,name:String(d.name||'').trim().replace(/\s+/g,' '),active:Number(d.active)===0?0:1,sort_order:Number(d.sort_order)||i+1,created_at:d.created_at||now,updated_at:d.updated_at||d.created_at||now}))
+    .filter(d=>d.name&&(!seen.has(normalizeName(d.name))&&seen.add(normalizeName(d.name))))
+    .sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id);
+  snap.schema_version=22;
+  snap.updated_at=now;
   return snap;
 }
 function rowStamp(row){const v=row?.updated_at||row?.created_at||'';const n=Date.parse(v);return Number.isFinite(n)?n:0}
@@ -83,7 +87,7 @@ function mergeSnapshots(local,remote){
   const l=migrateSnapshot(local||seedSnapshot()),r=migrateSnapshot(remote||{});
   return migrateSnapshot({
     members:mergeById(l.members,r.members),
-    departments:defaultDepartments.map((name,i)=>({id:i+1,name,active:1,sort_order:i+1})),
+    departments:mergeById(l.departments,r.departments),
     ideas:mergeById(l.ideas,r.ideas),
     cycles:mergeById(l.cycles,r.cycles),
     projects:mergeById(l.projects,r.projects),
@@ -104,14 +108,100 @@ function disableWritingAssist(root=document){
 }
 async function requestDurableStorage(){try{if(navigator.storage?.persist){const granted=await navigator.storage.persist();localStorage.setItem('rnd_storage_persisted',granted?'1':'0');return granted}}catch{}return false}
 function storageStatus(){return localStorage.getItem('rnd_storage_persisted')==='1'?'Persistent storage enabled':'Standard browser storage'}
+
+const THEME_COLOR_KEY='rnd_theme_mode';
+const THEME_COLORS=['light','dark'];
+function applyThemeColor(name){
+  const theme=THEME_COLORS.includes(name)?name:'light';
+  document.documentElement.dataset.themeColor=theme;
+  try{localStorage.setItem(THEME_COLOR_KEY,theme)}catch{}
+  $$('.theme-swatch').forEach(b=>b.classList.toggle('active',b.dataset.themeColor===theme));
+  return theme;
+}
+function initThemeColor(){
+  let saved='light';
+  try{
+    saved=localStorage.getItem(THEME_COLOR_KEY)||'light';
+    if(!THEME_COLORS.includes(saved)){
+      const legacy=localStorage.getItem('rnd_theme_color');
+      saved=legacy==='slate'?'dark':'light';
+    }
+  }catch{}
+  applyThemeColor(saved);
+}
+
 function notificationsEnabled(){return ('Notification' in window)&&Notification.permission==='granted'}
 async function enableNotifications(){if(!('Notification' in window))return false;if(Notification.permission==='granted')return true;if(Notification.permission==='denied')return false;const permission=await Notification.requestPermission();return permission==='granted'}
 function requestNotificationsFromGesture(){if(!('Notification' in window)||Notification.permission!=='default')return;enableNotifications().then(ok=>{if(ok){notifyUser('R&D Track notifications','Chrome notifications are enabled for this tracker.');maybeDailyReminder()}}).catch(()=>{})}
 function notifyUser(title,body){if(!notificationsEnabled())return;try{new Notification(title,{body,tag:'rnd-track-'+title.replace(/\s+/g,'-').toLowerCase()})}catch{}}
 function maybeDailyReminder(){const m=currentMember();if(!m||m.role==='visitor'||!notificationsEnabled())return;const key=`rnd_reminder_${m.id}_${today()}`;if(localStorage.getItem(key))return;const submitted=state.ideas.some(i=>Number(i.submitted_by)===Number(m.id)&&i.submission_date===today());if(!submitted){notifyUser('R&D Track · Daily Idea','Your daily idea is still pending for today.');localStorage.setItem(key,'1')}}
-function rawSnapshot(){return {schema_version:21,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0,created_at,updated_at})=>({id,name,role,active,sort_order,created_at,updated_at})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
+function localIsoDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
+function trackerDateToIso(v){const m=String(v||'').match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);if(!m)return String(v||'');const months={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return `${m[3]}-${months[m[2]]||'01'}-${m[1]}`}
+function projectPendingForDate(p,date){
+  if(!p||p.status==='completed'||date<p.start_date||date>p.end_date)return null;
+  const rows=trackerRowsForProject(p),row=rows.find(r=>trackerDateToIso(r.date)===date);
+  if(row?.status==='completed')return null;
+  return {project:p,row,date,task:String(row?.task||row?.stage||p.title||'Weekly task').trim(),status:row?.status||'pending'};
+}
+function pendingTaskSummary(){
+  const m=currentMember(),d0=new Date(),d1=new Date();d1.setDate(d1.getDate()-1);
+  const todayKey=localIsoDate(d0),yesterdayKey=localIsoDate(d1);
+  const all=state.projects.filter(p=>p.status!=='completed');
+  const own=all.filter(p=>Number(p.owner_id)===Number(m?.id));
+  const other=all.filter(p=>Number(p.owner_id)!==Number(m?.id));
+  const pack=source=>({
+    today:source.map(p=>projectPendingForDate(p,todayKey)).filter(Boolean),
+    yesterday:source.map(p=>projectPendingForDate(p,yesterdayKey)).filter(Boolean)
+  });
+  return {own:pack(own),other:pack(other),todayKey,yesterdayKey};
+}
+function pendingOwnerName(item){return state.members.find(m=>Number(m.id)===Number(item?.project?.owner_id))?.name||item?.project?.owner_name||'Unknown'}
+function notificationItemHtml(x,label){return `<button type="button" class="notification-item ${label==='Mine'?'mine':''}" data-pending-go="progress" data-pending-project="${Number(x.project?.id)||0}"><div class="notification-item-main"><div class="notification-item-top"><span class="notification-owner">${esc(label==='Mine'?'MY TASK':pendingOwnerName(x))}</span><span class="notification-date">${esc(fmtDate(x.date))}</span></div><strong>${esc(x.task)}</strong><small>${esc(x.project.title||x.project.project_number||'Weekly project')}</small></div><span class="pending-status">${x.status==='issue'?'ISSUE':x.status==='in_progress'?'IN PROGRESS':'PENDING'}</span></button>`}
+function currentTaskAlertCount(){
+  if(!currentMember())return 0;
+  const data=pendingTaskSummary();
+  return data.own.yesterday.length+data.own.today.length+data.other.yesterday.length+data.other.today.length;
+}
+function updateUnifiedNotificationBadge(){
+  const badge=$('#notificationBellBadge');if(!badge)return;
+  const total=currentTaskAlertCount()+Number(teamChatUnread||0);
+  badge.textContent=String(Math.min(total,99));
+  badge.classList.toggle('hidden',total<=0);
+  badge.title=`${currentTaskAlertCount()} task alert${currentTaskAlertCount()===1?'':'s'} · ${teamChatUnread} unread chat`;
+}
+function renderNotificationCenter(){
+  const panel=$('#notificationPanelContent');if(!panel||!currentMember())return;
+  const data=pendingTaskSummary();
+  const mine=[...data.own.yesterday,...data.own.today];
+  const team=[...data.other.yesterday,...data.other.today];
+  panel.innerHTML=`<section class="notification-group"><div class="notification-group-title"><span>MY PENDING</span><b>${mine.length}</b></div>${mine.length?mine.map(x=>notificationItemHtml(x,'Mine')).join(''):'<div class="notification-empty">No pending tasks for you.</div>'}</section><section class="notification-group"><div class="notification-group-title"><span>TEAM PENDING</span><b>${team.length}</b></div>${team.length?team.map(x=>notificationItemHtml(x,'Team')).join(''):'<div class="notification-empty">No pending tasks from other members.</div>'}</section><section class="notification-group notification-chat-group"><div class="notification-group-title"><span>TEAM CHAT</span><b>${teamChatUnread}</b></div><button type="button" class="notification-chat-link" id="notificationChatLink"><span>${teamChatUnread?`${teamChatUnread} unread message${teamChatUnread===1?'':'s'}`:'No unread messages'}</span><b>OPEN CHAT →</b></button></section>`;
+  bindPendingNavigation(panel);
+  $('#notificationChatLink')?.addEventListener('click',()=>{showPage('chat');$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
+  updateUnifiedNotificationBadge();
+}
+let pendingPopupShownThisOpen=false;
+function renderPendingTaskPopup(){
+  const dialog=$('#pendingTaskDialog'),host=$('#pendingTaskContent'),m=currentMember();
+  if(!dialog||!host||!m)return;
+  const items=dashboardPendingItems();
+  if(!items.length)return;
+  host.innerHTML=`<section class="pending-day single"><div class="pending-day-head"><div><span>MY PENDING WORK</span><strong>${esc(m.name)}</strong></div><b>${items.length}</b></div>${items.map(x=>`<button type="button" class="pending-task-item pending-popup-link" data-pending-go="${esc(x.page)}" data-pending-project="${Number(x.projectId)||0}"><div><strong>${esc(x.page==='ideas'?'DAILY IDEA':'WORK TRACKING')}</strong><h4>${esc(x.label)}</h4><p>${esc(x.detail||'Pending item')}</p></div><span class="pending-status">PENDING</span></button>`).join('')}</section>`;
+  $('#pendingTaskTotal').textContent=String(items.length);
+  $('#pendingNotificationBtn').classList.toggle('hidden',!('Notification' in window)||Notification.permission==='granted');
+  host.querySelectorAll('[data-pending-go]').forEach(el=>el.onclick=()=>{dialog.close();goToPendingItem(el.dataset.pendingGo,Number(el.dataset.pendingProject)||0)});
+  if(!dialog.open)dialog.showModal();
+  if(notificationsEnabled())notifyUser('R&D Track · My Pending',`${items.length} pending item${items.length===1?'':'s'} need your attention.`);
+}
+function maybeShowPendingTaskPopup(){
+  if(pendingPopupShownThisOpen)return;
+  if(!currentMember())return;
+  if(!dashboardPendingItems().length)return;
+  pendingPopupShownThisOpen=true;
+  setTimeout(()=>renderPendingTaskPopup(),450);
+}
+function rawSnapshot(){return {schema_version:22,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0,created_at,updated_at})=>({id,name,role,active,sort_order,created_at,updated_at})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
 function exportDatabase(){const payload=JSON.stringify(rawSnapshot(),null,2);const blob=new Blob([payload],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`RND-TRACK-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
-async function importDatabaseFile(file){if(!file)throw new Error('Choose a backup file.');let parsed;try{parsed=JSON.parse(await file.text())}catch{throw new Error('Invalid backup file.')}if(!parsed||!Array.isArray(parsed.members)||!Array.isArray(parsed.ideas)||!Array.isArray(parsed.projects))throw new Error('This file is not a valid R&D Track backup.');const migrated=migrateSnapshot(parsed);await writeSnapshot(migrated);if(window.rndCloud?.enabled){try{await window.rndCloud.syncSnapshot(migrated);clearPendingCloudOps()}catch(e){queueCloudOps(['members','ideas','cycles','projects','progress'].flatMap(collection=>(migrated[collection]||[]).map(row=>({collection,row}))))}}return true}
+async function importDatabaseFile(file){if(!file)throw new Error('Choose a backup file.');let parsed;try{parsed=JSON.parse(await file.text())}catch{throw new Error('Invalid backup file.')}if(!parsed||!Array.isArray(parsed.members)||!Array.isArray(parsed.ideas)||!Array.isArray(parsed.projects))throw new Error('This file is not a valid R&D Track backup.');const migrated=migrateSnapshot(parsed);await writeSnapshot(migrated);if(window.rndCloud?.enabled){try{await window.rndCloud.syncSnapshot(migrated);clearPendingCloudOps()}catch(e){queueCloudOps(['members','departments','ideas','cycles','projects','progress'].flatMap(collection=>(migrated[collection]||[]).map(row=>({collection,row}))))}}return true}
 const nextId=()=>Math.floor(Date.now()*1000+(crypto.getRandomValues(new Uint32Array(1))[0]%1000));
 function enrich(data){const members=(data.members||[]).map(m=>({...m,role:m.role==='visitor'?'visitor':'member'})),departments=data.departments||[],ideas=(data.ideas||[]).map(i=>({...i,submitted_by_name:members.find(m=>m.id===i.submitted_by)?.name||'Unknown',department_name:departments.find(d=>d.id===i.department_id)?.name||'Unknown',attachment_path:i.attachment?.data||''}));const projects=(data.projects||[]).map(p=>{const idea=ideas.find(i=>i.id===p.idea_id);return {...p,owner_name:members.find(m=>m.id===p.owner_id)?.name||'—',cycle_label:(data.cycles||[]).find(c=>c.id===p.cycle_id)?.label||'—',department_name:idea?.department_name||'—'}});const progress=(data.progress||[]).map(u=>({...u,user_name:members.find(m=>m.id===u.user_id)?.name||'Unknown',attachment_path:u.attachment?.data||''}));return {members,departments,ideas:ideas.sort((a,b)=>b.id-a.id),cycles:[...(data.cycles||[])].sort((a,b)=>b.start_date.localeCompare(a.start_date)||b.id-a.id),projects:projects.sort((a,b)=>b.id-a.id),progress}}
 function normalizeName(s){return String(s||'').toLowerCase().trim().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ')}
@@ -156,8 +246,8 @@ function scheduleRender(full=false){if(renderQueued)return;renderQueued=true;req
 function pendingDeleteSet(){return new Set(pendingCloudDeletes().map(x=>`${x.collection}:${x.id}`))}
 function reconcileRemoteSnapshot(remote,local){
   const base=migrateSnapshot(remote||{}),cached=migrateSnapshot(local||seedSnapshot()),deleted=pendingDeleteSet(),pending=pendingCloudOps();
-  const out={members:[],departments:defaultDepartments.map((name,i)=>({id:i+1,name,active:1,sort_order:i+1})),ideas:[],cycles:[],projects:[],progress:[]};
-  for(const collection of ['members','ideas','cycles','projects','progress']){
+  const out={members:[],departments:[],ideas:[],cycles:[],projects:[],progress:[]};
+  for(const collection of ['members','departments','ideas','cycles','projects','progress']){
     const map=new Map();
     for(const row of (base[collection]||[])){
       if(deleted.has(`${collection}:${row.id}`))continue;
@@ -183,7 +273,6 @@ async function persistThenSync(writes=[],deletes=[]){
 }
 async function refreshFromStorage(){let snap=await readSnapshot();if(!snap)snap=seedSnapshot();snap=migrateSnapshot(snap);await writeSnapshot(snap);const ui={page:state.page,selectedProject:state.selectedProject,reportType:state.reportType};Object.assign(state,enrich(snap),ui)}
 async function updateMemberLocal(id,{name,role}){
-  if(isVisitor())throw new Error('Admin visitors have view-only access.');
   const m=state.members.find(x=>Number(x.id)===Number(id));if(!m||Number(m.active)===0)throw new Error('Login not found.');
   name=String(name||'').trim().replace(/\s+/g,' ');role=role==='visitor'?'visitor':'member';
   if(name.length<2||name.length>80)throw new Error('Enter a valid name between 2 and 80 characters.');
@@ -194,7 +283,6 @@ async function updateMemberLocal(id,{name,role}){
   await persistThenSync([{collection:'members',row:m}]);return m;
 }
 async function addMemberLocal({name,role}){
-  if(isVisitor())throw new Error('Admin visitors have view-only access.');
   name=String(name||'').trim().replace(/\s+/g,' ');role=role==='visitor'?'visitor':'member';
   if(name.length<2||name.length>80)throw new Error('Enter a valid name between 2 and 80 characters.');
   const normalized=normalizeName(name);const existing=state.members.find(x=>normalizeName(x.name)===normalized);
@@ -206,13 +294,37 @@ async function addMemberLocal({name,role}){
   await persistThenSync([{collection:'members',row}]);return row;
 }
 async function deleteMemberLocal(id){
-  if(isVisitor())throw new Error('Admin visitors have view-only access.');
   const m=state.members.find(x=>Number(x.id)===Number(id));if(!m||Number(m.active)===0)throw new Error('Login not found.');
   if(Number(m.id)===activeUser())throw new Error('You cannot delete the login you are currently using. Log in with another member first.');
   m.active=0;m.updated_at=new Date().toISOString();
   await persistThenSync([{collection:'members',row:m}]);return true;
 }
-async function updateDepartmentLocal(){throw new Error('Department master is locked and cannot be edited.')}
+async function updateDepartmentLocal(id,name){
+  const d=state.departments.find(x=>Number(x.id)===Number(id));if(!d||Number(d.active)===0)throw new Error('Department not found.');
+  name=String(name||'').trim().replace(/\s+/g,' ');
+  if(name.length<2||name.length>60)throw new Error('Department name must be 2–60 characters.');
+  if(state.departments.some(x=>Number(x.id)!==Number(d.id)&&Number(x.active)!==0&&normalizeName(x.name)===normalizeName(name)))throw new Error('That department already exists.');
+  d.name=name;d.updated_at=new Date().toISOString();
+  state.ideas.forEach(i=>{if(Number(i.department_id)===Number(d.id))i.department_name=name});
+  state.projects.forEach(p=>{const idea=state.ideas.find(i=>Number(i.id)===Number(p.idea_id));if(Number(idea?.department_id)===Number(d.id))p.department_name=name});
+  await persistThenSync([{collection:'departments',row:d}]);return d;
+}
+async function addDepartmentLocal(name){
+  name=String(name||'').trim().replace(/\s+/g,' ');
+  if(name.length<2||name.length>60)throw new Error('Department name must be 2–60 characters.');
+  const existing=state.departments.find(x=>normalizeName(x.name)===normalizeName(name));
+  if(existing&&Number(existing.active)!==0)throw new Error('That department already exists.');
+  const now=new Date().toISOString();let row;
+  if(existing){existing.active=1;existing.updated_at=now;existing.sort_order=Math.max(0,...state.departments.map(x=>Number(x.sort_order)||0))+1;row=existing}
+  else{row={id:nextId(),name,active:1,sort_order:Math.max(0,...state.departments.map(x=>Number(x.sort_order)||0))+1,created_at:now,updated_at:now};state.departments.push(row)}
+  await persistThenSync([{collection:'departments',row}]);return row;
+}
+async function deleteDepartmentLocal(id){
+  const d=state.departments.find(x=>Number(x.id)===Number(id));if(!d||Number(d.active)===0)throw new Error('Department not found.');
+  const inUse=state.ideas.some(i=>Number(i.department_id)===Number(d.id));
+  if(inUse)throw new Error('This department is already used in idea history. Rename it instead of deleting it.');
+  d.active=0;d.updated_at=new Date().toISOString();await persistThenSync([{collection:'departments',row:d}]);return true;
+}
 async function createIdeaLocal(b){if(isVisitor())throw new Error('Admin visitors do not submit ideas.');const member=state.members.find(m=>Number(m.id)===Number(b.submitted_by)),dep=state.departments.find(d=>Number(d.id)===Number(b.department_id));const problem=String(b.problem||'').trim(),proposal=String(b.proposed_idea||'').trim();if(!member||!dep||!problem||!proposal)throw new Error('Submitted by, department, problem and idea are required.');if(problem.length>1200||proposal.length>1600)throw new Error('Problem or proposed solution is too long.');const date=b.submission_date||today(),seq=state.ideas.filter(i=>i.submission_date===date).length+1,now=new Date().toISOString();const row={id:nextId(state.ideas),idea_number:`IDEA-${date.replaceAll('-','')}-${String(seq).padStart(2,'0')}`,submitted_by:Number(member.id),department_id:Number(dep.id),problem,proposed_idea:proposal,expected_benefit:String(b.expected_benefit||'').trim(),priority:['Low','Medium','High','Critical'].includes(b.priority)?b.priority:'Medium',submission_date:date,status:'submitted',attachment:b.attachment||null,created_at:now,updated_at:now};state.ideas.unshift({...row,submitted_by_name:member.name,department_name:dep.name,attachment_path:row.attachment?.data||''});await persistThenSync([{collection:'ideas',row}]);notifyUser('Idea submitted',`${member.name} submitted ${row.idea_number} for ${dep.name}.`);return {...row,cloud_saved:Boolean(window.rndCloud?.enabled)}}
 async function createCycleLocal(b){if(isVisitor())throw new Error('Admin visitors have view-only access.');const start=b.start_date,end=b.end_date,label=String(b.label||'').trim();if(!start||!end||start>end)throw new Error('Valid start and end dates are required.');if(!label)throw new Error('Week label is required.');if(label.length>80)throw new Error('Week label must be 80 characters or less.');if(state.cycles.some(c=>!(c.end_date<start||c.start_date>end)))throw new Error('A weekly cycle already overlaps these dates.');const now=new Date().toISOString(),row={id:nextId(state.cycles),label,start_date:start,end_date:end,status:'active',created_at:now,updated_at:now};state.cycles.unshift(row);await persistThenSync([{collection:'cycles',row}]);return row}
 async function assignWeekLocal(cycleId,ideaIds,ownerIds){if(isVisitor())throw new Error('Admin visitors have view-only access.');const cycle=state.cycles.find(c=>c.id===Number(cycleId)),ids=[...new Set((ideaIds||[]).map(Number))];if(!cycle)throw new Error('Weekly cycle not found.');if(ids.length!==2)throw new Error('Exactly 2 ideas must be selected for a weekly assignment.');if(state.projects.some(p=>p.cycle_id===cycle.id))throw new Error('This week already has its two assigned projects.');const ideas=ids.map(id=>state.ideas.find(i=>Number(i.id)===Number(id)&&String(i.status||'submitted').toLowerCase()==='submitted'&&!state.projects.some(p=>Number(p.idea_id)===Number(i.id))));if(ideas.some(x=>!x))throw new Error('Only submitted ideas that are not already assigned can be selected.');const now=new Date().toISOString(),ops=[];ids.forEach((id,idx)=>{const idea=ideas[idx],owner=workingMembers().find(m=>m.id===Number(ownerIds?.[idx]))||workingMembers()[0];if(!owner)throw new Error('Add at least one R&D Member before assigning projects.');const raw={id:nextId(state.projects),cycle_id:cycle.id,idea_id:id,project_number:`RND-${cycle.start_date.slice(0,4)}-W${String(cycle.id).slice(-4)}-${idx+1}`,title:idea.proposed_idea.slice(0,140),owner_id:owner.id,start_date:cycle.start_date,end_date:cycle.end_date,progress:0,status:'assigned',created_at:now,updated_at:now};state.projects.unshift({...raw,owner_name:owner.name,cycle_label:cycle.label,department_name:idea.department_name});idea.status='assigned';idea.updated_at=now;ops.push({collection:'projects',row:raw},{collection:'ideas',row:idea})});cycle.updated_at=now;await persistThenSync(ops);notifyUser('Weekly tasks assigned',`${cycle.label}: 2 R&D tasks are now active.`);return true}
@@ -267,7 +379,14 @@ function storedLogin(){try{return JSON.parse(localStorage.getItem('rndLoggedInMe
 function activeUser(){return Number(storedLogin()?.id)||0}
 function currentMember(){return state.members.find(m=>Number(m.id)===activeUser()&&Number(m.active)!==0)||null}
 
-let teamChatMessages=[],teamChatStop=null,teamChatStarted=false,teamChatOpen=false,teamChatUnread=0;
+let teamChatMessages=[],teamChatStop=null,teamChatStarted=false,teamChatOpen=false,teamChatUnread=0,teamChatInitialSync=true;
+function chatSeenKey(){return `rnd_chat_seen_${activeUser()||0}`}
+function chatLastSeen(){try{return Number(localStorage.getItem(chatSeenKey())||0)}catch{return 0}}
+function markTeamChatSeen(){
+  const latest=Math.max(0,...teamChatMessages.map(x=>Number(x.created_at)||0));
+  if(latest)try{localStorage.setItem(chatSeenKey(),String(latest))}catch{}
+  teamChatUnread=0;updateTeamChatUnread();
+}
 function chatTime(ms){
   const d=new Date(Number(ms)||Date.now());
   const same=d.toDateString()===new Date().toDateString();
@@ -281,40 +400,59 @@ function updateTeamChatIdentity(){
 }
 function renderTeamChat(){
   const host=$('#teamChatMessages');if(!host)return;
-  const me=currentMember();
+  const me=currentMember(),authUid=window.rndCloud?.status?.()?.uid||'';
   if(!teamChatMessages.length){host.innerHTML='<div class="team-chat-empty">No messages yet. Start the team discussion.</div>';return}
   host.innerHTML=teamChatMessages.map(msg=>{
     const own=me&&Number(msg.member_id)===Number(me.id);
+    const deletable=own&&msg.auth_uid&&authUid&&String(msg.auth_uid)===String(authUid);
     const savedMember=state.members.find(m=>Number(m.id)===Number(msg.member_id));
     const senderName=String(savedMember?.name||msg.name||'Unknown');
     const senderRole=savedMember?.role||msg.role||'member';
     const initial=senderName.trim().charAt(0).toUpperCase()||'?';
-    return `<article class="team-chat-message ${own?'own':''}"><div class="team-chat-avatar" title="${esc(senderName)}">${esc(initial)}</div><div class="team-chat-bubble"><div class="team-chat-meta"><b>${esc(senderName)}</b><span>${senderRole==='visitor'?'VISITOR':'R&D MEMBER'}</span><time>${esc(chatTime(msg.created_at))}</time></div><p>${esc(msg.text).replace(/\n/g,'<br>')}</p></div></article>`;
+    return `<article class="team-chat-message ${own?'own':''}" data-chat-id="${esc(msg.id)}"><div class="team-chat-avatar" title="${esc(senderName)}">${esc(initial)}</div><div class="team-chat-bubble"><div class="team-chat-meta"><b>${esc(senderName)}</b><span>${senderRole==='visitor'?'VISITOR':'R&D MEMBER'}</span><time>${esc(chatTime(msg.created_at))}</time></div><p>${esc(msg.text).replace(/\n/g,'<br>')}</p><div class="team-chat-actions"><button type="button" data-chat-copy="${esc(msg.id)}">Copy</button>${deletable?`<button type="button" class="danger" data-chat-delete="${esc(msg.id)}">Delete</button>`:''}</div></div></article>`;
   }).join('');
+  host.querySelectorAll('[data-chat-copy]').forEach(btn=>btn.onclick=async()=>{const msg=teamChatMessages.find(x=>String(x.id)===String(btn.dataset.chatCopy));if(!msg)return;try{await navigator.clipboard.writeText(msg.text);toast('Message copied.')}catch{toast('Unable to copy message.',true)}});
+  host.querySelectorAll('[data-chat-delete]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.chatDelete;if(!id)return;if(!confirm('Delete this message?'))return;try{btn.disabled=true;await window.rndCloud.deleteChatMessage(id);teamChatMessages=teamChatMessages.filter(x=>String(x.id)!==String(id));renderTeamChat();toast('Message deleted.')}catch(err){toast(err?.message||'Unable to delete message.',true)}finally{btn.disabled=false}});
   if(teamChatOpen)requestAnimationFrame(()=>{host.scrollTop=host.scrollHeight});
 }
 function setTeamChatStatus(text,ok=true){const el=$('#teamChatStatus');if(el){el.textContent=text;el.classList.toggle('offline',!ok)}const send=$('#teamChatSend');if(send)send.disabled=!ok}
-function updateTeamChatUnread(){const badge=$('#teamChatUnread');if(!badge)return;badge.textContent=String(teamChatUnread);badge.classList.toggle('hidden',teamChatUnread<=0)}
+function updateTeamChatUnread(){const badge=$('#teamChatUnread');if(badge){badge.textContent=String(teamChatUnread);badge.classList.toggle('hidden',teamChatUnread<=0)}updateUnifiedNotificationBadge()}
 function setTeamChatOpen(open){
   teamChatOpen=Boolean(open);
-  if(teamChatOpen){teamChatUnread=0;updateTeamChatUnread();const host=$('#teamChatMessages');requestAnimationFrame(()=>{if(host)host.scrollTop=host.scrollHeight});setTimeout(()=>$('#teamChatInput')?.focus(),80)}
+  if(teamChatOpen){markTeamChatSeen();const host=$('#teamChatMessages');requestAnimationFrame(()=>{if(host)host.scrollTop=host.scrollHeight});setTimeout(()=>$('#teamChatInput')?.focus(),80)}
 }
 function startTeamChat(){
   updateTeamChatIdentity();
   if(!currentMember()||!window.rndCloud?.enabled||typeof window.rndCloud.watchChat!=='function'){setTeamChatStatus(cloudRuntimeStatus==='offline'?'Chat offline · reconnecting…':'Connecting to Firebase…',false);return}
   if(teamChatStarted)return;
   teamChatStarted=true;setTeamChatStatus('Live · shared with everyone',true);
+  teamChatInitialSync=true;
   teamChatStop=window.rndCloud.watchChat(rows=>{
-    const oldLast=teamChatMessages.at(-1)?.id||'';
+    const me=currentMember(),previousIds=new Set(teamChatMessages.map(x=>String(x.id)));
     teamChatMessages=Array.isArray(rows)?rows:[];
-    const newLast=teamChatMessages.at(-1)?.id||'';
-    if(oldLast&&newLast&&oldLast!==newLast&&!teamChatOpen)teamChatUnread++;
+    if(teamChatOpen){
+      markTeamChatSeen();
+    }else{
+      const seen=chatLastSeen();
+      if(teamChatInitialSync){
+        if(seen>0)teamChatUnread=teamChatMessages.filter(x=>Number(x.created_at)>seen&&Number(x.member_id)!==Number(me?.id)).length;
+        else{
+          const latest=Math.max(0,...teamChatMessages.map(x=>Number(x.created_at)||0));
+          if(latest)try{localStorage.setItem(chatSeenKey(),String(latest))}catch{}
+          teamChatUnread=0;
+        }
+        teamChatInitialSync=false;
+      }else{
+        const newlyArrived=teamChatMessages.filter(x=>!previousIds.has(String(x.id))&&Number(x.member_id)!==Number(me?.id));
+        teamChatUnread+=newlyArrived.length;
+      }
+    }
     renderTeamChat();updateTeamChatUnread();
   },status=>{if(status?.connected)setTeamChatStatus('Live · shared with everyone',true);else setTeamChatStatus('Chat offline · reconnecting…',false)});
 }
 function stopTeamChat(){
   if(typeof teamChatStop==='function'){try{teamChatStop()}catch{}};
-  window.rndCloud?.stopChat?.();teamChatStop=null;teamChatStarted=false;teamChatMessages=[];teamChatUnread=0;updateTeamChatUnread();renderTeamChat();setTeamChatOpen(false);
+  window.rndCloud?.stopChat?.();teamChatStop=null;teamChatStarted=false;teamChatInitialSync=true;teamChatMessages=[];teamChatUnread=0;updateTeamChatUnread();renderTeamChat();setTeamChatOpen(false);
 }
 
 
@@ -372,13 +510,22 @@ function workingMembers(){return state.members.filter(m=>m.role!=='visitor'&&Num
 function persistLogin(member){localStorage.setItem('rndLoggedInMember',JSON.stringify({id:member.id,name:member.name,role:member.role||'member'}));localStorage.setItem('rndActiveUser',String(member.id))}
 function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.removeItem('rndActiveUser')}
 function showLogin(){document.querySelector('#appShell').classList.add('app-locked');document.querySelector('#loginGate').classList.remove('hidden');document.querySelector('#loginName').focus()}
-function showApp(){const member=currentMember();if(!member){showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');document.querySelector('#signedInName').textContent=member.name;document.querySelector('#settingsSignedInName').textContent=member.name;const avatar=$('#signedInAvatar');if(avatar)avatar.textContent=(member.name||'R').trim().charAt(0).toUpperCase();const badge=$('#signedInRole');if(badge){badge.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';badge.className='user-role-badge '+(member.role==='visitor'?'visitor':'member')}try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);updateTeamChatIdentity();setTimeout(startTeamChat,120)}
+function updateCompactProfile(){
+  const member=currentMember();if(!member)return;
+  const initial=(member.name||'R').trim().charAt(0).toUpperCase()||'R';
+  const initialEl=$('#profileQuickInitial'),avatar=$('#profileQuickAvatar'),name=$('#profileQuickName'),role=$('#profileQuickRole');
+  if(initialEl)initialEl.textContent=initial;if(avatar)avatar.textContent=initial;if(name)name.textContent=member.name;
+  if(role)role.textContent=member.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';
+  const settingsName=$('#settingsSignedInName');if(settingsName)settingsName.textContent=member.name;
+}
+function showApp(){const member=currentMember();if(!member){showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');updateCompactProfile();try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);maybeShowPendingTaskPopup();updateTeamChatIdentity();setTimeout(startTeamChat,120)}
 let cloudRuntimeStatus='connecting', cloudRuntimeMessage='';
 function setCloudRuntimeStatus(status,message=''){
   cloudRuntimeStatus=status;
   if(message) cloudRuntimeMessage=String(message);
-  const top=$('#liveCloudBadge');
-  if(top){top.textContent=status==='live'?'CLOUD LIVE':status==='offline'?'CLOUD OFFLINE':'CLOUD CONNECTING';top.className='cloud-live-badge '+status;top.title=cloudRuntimeMessage||'';}
+  const dot=$('#profileCloudDot'),cloudText=$('#profileQuickCloud');
+  if(dot){dot.className='profile-cloud-dot '+status;dot.title=status==='live'?'Cloud online':status==='offline'?'Cloud offline':'Cloud connecting';}
+  if(cloudText){cloudText.textContent=status==='live'?'Online':status==='offline'?'Offline':'Connecting';cloudText.className=status==='live'?'cloud-good':status==='offline'?'cloud-warn':'';}
   const cs=$('#cloudStatus');
   if(cs){cs.textContent=status==='live'?'Connected · shared Firebase database':status==='offline'?(cloudRuntimeMessage||'Firebase offline · local cache active'):'Connecting to Firebase…';cs.className=status==='live'?'cloud-good':'cloud-warn';}
   const ce=$('#cloudErrorDetail');if(ce){ce.textContent=status==='offline'?(cloudRuntimeMessage||'No Firebase error detail available.'):' ';ce.classList.toggle('hidden',status!=='offline');}
@@ -389,7 +536,7 @@ function cloudIsEmpty(s){return !s||['members','departments','ideas','cycles','p
 let lastRemoteSignature='';
 async function applyRemoteSnapshot(remote){
   if(!remote)return;
-  const signature=JSON.stringify(['members','ideas','cycles','projects','progress'].map(k=>(remote[k]||[]).map(r=>[r.id,r.updated_at||r.created_at||'',r.status||'',r.progress??'',r.name||'',r.problem||'',r.work_done||''])));
+  const signature=JSON.stringify(['members','departments','ideas','cycles','projects','progress'].map(k=>(remote[k]||[]).map(r=>[r.id,r.updated_at||r.created_at||'',r.status||'',r.progress??'',r.name||'',r.problem||'',r.work_done||''])));
   if(signature===lastRemoteSignature){setCloudRuntimeStatus('live');return}
   lastRemoteSignature=signature;
   const local=await readSnapshot()||seedSnapshot();
@@ -463,11 +610,72 @@ async function load(){
   member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
   if(member){persistLogin(member);showApp()}else showLogin();
 }
-function renderAll(){populateSelects();applyRoleAccess();renderDashboard();renderIdeas();renderWeekly();renderProjects();renderMasterSheet();renderSettings();safeRenderAnalytics();renderReportControls();bindRecordActions()}
+function renderSettings(){
+  const deptHost=$('#departmentsSettings'),memberHost=$('#membersSettings');
+  const visitor=false;
+  if(deptHost){
+    const active=state.departments.filter(d=>Number(d.active)!==0).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    deptHost.innerHTML=`<div class="roster-summary department-roster-summary"><div><strong>${active.length}</strong><span>Active Departments</span></div><div><strong>EDIT</strong><span>Department Master</span></div></div><form class="member-add-form department-member-form" id="departmentAddForm"><label><span>Department Name</span><input id="newDepartmentName" maxlength="60" placeholder="Department name" ${visitor?'disabled':''}></label><button class="secondary-btn" type="submit" ${visitor?'disabled':''}>Add Department</button></form><div class="roster-list department-roster-list">${active.length?active.map((d,i)=>`<div class="roster-slot department-roster-slot" data-dept-row="${d.id}"><span class="roster-index">${String(i+1).padStart(2,'0')}</span><div class="roster-edit"><label>DEPARTMENT</label><input data-dept-name="${d.id}" value="${esc(d.name)}" maxlength="60" ${visitor?'disabled':''}></div><div class="member-row-actions department-actions"><button class="ghost-btn" type="button" data-save-dept="${d.id}" ${visitor?'disabled':''}>Save</button><button class="danger-outline-btn" type="button" data-delete-dept="${d.id}" ${visitor?'disabled':''}>×</button></div></div>`).join(''):'<div class="empty-state">No active departments.</div>'}</div>`;
+  }
+  if(memberHost){
+    const rows=state.members.filter(m=>Number(m.active)!==0).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    const members=rows.filter(m=>m.role!=='visitor').length,admins=rows.filter(m=>m.role==='visitor').length;
+    memberHost.innerHTML=`<div class="roster-summary"><div><strong>${members}</strong><span>R&D Members</span></div><div><strong>${admins}</strong><span>Admins / Visitors</span></div></div><form class="member-add-form" id="memberAddForm"><label><span>Name</span><input id="newMemberName" maxlength="80" placeholder="Member name" ${visitor?'disabled':''}></label><label><span>Access</span><select id="newMemberRole" ${visitor?'disabled':''}><option value="member">R&D Member</option><option value="visitor">Admin / Visitor</option></select></label><button class="secondary-btn" type="submit" ${visitor?'disabled':''}>Add Login</button></form><div class="roster-list">${rows.map((m,i)=>`<div class="roster-slot ${m.role==='visitor'?'visitor-slot':''}"><span class="roster-index">${String(i+1).padStart(2,'0')}</span><div class="roster-edit"><label>NAME</label><input data-member-name="${m.id}" value="${esc(m.name)}" maxlength="80" ${visitor?'disabled':''}></div><select class="role-select" data-member-role="${m.id}" ${visitor?'disabled':''}><option value="member" ${m.role!=='visitor'?'selected':''}>R&D Member</option><option value="visitor" ${m.role==='visitor'?'selected':''}>Admin / Visitor</option></select><div class="member-row-actions"><button class="ghost-btn" type="button" data-save-member="${m.id}" ${visitor?'disabled':''}>Save</button><button class="danger-outline-btn" type="button" data-delete-member="${m.id}" ${visitor?'disabled':''}>×</button></div></div>`).join('')}</div>`;
+  }
+  const dbStats=$('#databaseStats');if(dbStats)dbStats.innerHTML=`<div><span>Members</span><strong>${state.members.filter(m=>Number(m.active)!==0).length}</strong></div><div><span>Departments</span><strong>${state.departments.filter(d=>Number(d.active)!==0).length}</strong></div><div><span>Ideas</span><strong>${state.ideas.length}</strong></div><div><span>Projects</span><strong>${state.projects.length}</strong></div>`;
+  const ss=$('#storageStatus');if(ss)ss.textContent=storageStatus();
+  const m=currentMember();if($('#settingsSignedInName'))$('#settingsSignedInName').textContent=m?.name||'—';if($('#settingsSignedInRole')){$('#settingsSignedInRole').textContent=m?.role==='visitor'?'ADMIN · VISITOR':'R&D MEMBER';$('#settingsSignedInRole').className='tag '+(m?.role==='visitor'?'visitor':'member')}
+  const notif=$('#notificationStatus');if(notif)notif.textContent=!('Notification' in window)?'Not supported':Notification.permission==='granted'?'Enabled':Notification.permission==='denied'?'Blocked in browser':'Not enabled';
+  bindSettingsActions();
+}
+function bindSettingsActions(){
+  $('#departmentAddForm')?.addEventListener('submit',async e=>{e.preventDefault();try{await addDepartmentLocal($('#newDepartmentName').value);toast('Department added.');renderSettings();populateSelects()}catch(err){toast(err.message,true)}});
+  $('#memberAddForm')?.addEventListener('submit',async e=>{e.preventDefault();try{await addMemberLocal({name:$('#newMemberName').value,role:$('#newMemberRole').value});toast('Login added.');renderSettings();populateSelects()}catch(err){toast(err.message,true)}});
+  $$('[data-save-dept]').forEach(b=>b.onclick=async()=>{try{await updateDepartmentLocal(Number(b.dataset.saveDept),$(`[data-dept-name="${b.dataset.saveDept}"]`).value);toast('Department saved.');renderSettings();populateSelects()}catch(err){toast(err.message,true)}});
+  $$('[data-delete-dept]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this department?'))return;try{await deleteDepartmentLocal(Number(b.dataset.deleteDept));toast('Department removed.');renderSettings();populateSelects()}catch(err){toast(err.message,true)}});
+  $$('[data-save-member]').forEach(b=>b.onclick=async()=>{try{const id=Number(b.dataset.saveMember);await updateMemberLocal(id,{name:$(`[data-member-name="${id}"]`).value,role:$(`[data-member-role="${id}"]`).value});toast('Login saved.');renderSettings();populateSelects();showApp()}catch(err){toast(err.message,true)}});
+  $$('[data-delete-member]').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this login?'))return;try{await deleteMemberLocal(Number(b.dataset.deleteMember));toast('Login removed.');renderSettings();populateSelects()}catch(err){toast(err.message,true)}});
+}
+function renderAll(){populateSelects();applyRoleAccess();renderDashboard();renderIdeas();renderWeekly();renderProjects();renderMasterSheet();renderSettings();renderNotificationCenter();maybeShowPendingTaskPopup();safeRenderAnalytics();renderReportControls();bindRecordActions()}
 
-function populateSelects(){const workers=workingMembers();const opts=workers.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');['#ideaMember','#progressMember'].forEach(sel=>{const el=$(sel);const val=el.value||activeUser();el.innerHTML=opts;el.value=workers.some(m=>m.id===Number(val))?val:(workers[0]?.id||'')});const filterMembers=state.members.filter(m=>Number(m.active)!==0||state.ideas.some(i=>Number(i.submitted_by)===Number(m.id))||state.progress.some(p=>Number(p.user_id)===Number(m.id)));const allOpts=filterMembers.map(m=>`<option value="${m.id}">${esc(m.name)}${Number(m.active)===0?' · Archived':m.role==='visitor'?' · Visitor':''}</option>`).join('');$('#ideaPersonFilter').innerHTML='<option value="">All people</option>'+allOpts;const deps=state.departments.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');$('#ideaDepartment').innerHTML=deps;$('#ideaDeptFilter').innerHTML='<option value="">All departments</option>'+deps;$('#weekSelect').innerHTML=state.cycles.length?state.cycles.map(c=>`<option value="${c.id}">${esc(c.label)} · ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</option>`).join(''):'<option value="">No week created</option>'}
+function populateSelects(){const workers=workingMembers();const opts=workers.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');['#ideaMember','#progressMember'].forEach(sel=>{const el=$(sel);const val=el.value||activeUser();el.innerHTML=opts;el.value=workers.some(m=>m.id===Number(val))?val:(workers[0]?.id||'')});const filterMembers=state.members.filter(m=>Number(m.active)!==0||state.ideas.some(i=>Number(i.submitted_by)===Number(m.id))||state.progress.some(p=>Number(p.user_id)===Number(m.id)));const allOpts=filterMembers.map(m=>`<option value="${m.id}">${esc(m.name)}${Number(m.active)===0?' · Archived':m.role==='visitor'?' · Visitor':''}</option>`).join('');$('#ideaPersonFilter').innerHTML='<option value="">All people</option>'+allOpts;const deps=state.departments.filter(d=>Number(d.active)!==0).map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');$('#ideaDepartment').innerHTML=deps;$('#ideaDeptFilter').innerHTML='<option value="">All departments</option>'+deps;$('#weekSelect').innerHTML=state.cycles.length?state.cycles.map(c=>`<option value="${c.id}">${esc(c.label)} · ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</option>`).join(''):'<option value="">No week created</option>'}
 
-function renderDashboard(){const t=today();$('#todayLabel').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();const workers=workingMembers();const todays=state.ideas.filter(i=>i.submission_date===t);const completed=state.projects.filter(p=>p.status==='completed').length;const active=state.projects.filter(p=>p.status!=='completed');const avg=active.length?Math.round(active.reduce((a,p)=>a+p.progress,0)/active.length):0;const workerIds=new Set(workers.map(m=>m.id));const submitters=new Set(todays.filter(i=>workerIds.has(Number(i.submitted_by))).map(i=>Number(i.submitted_by)));$('#dashboardMetrics').innerHTML=`<div class="metric accent dashboard-nav" data-go="ideas" role="button" tabindex="0" aria-label="Open Daily Ideas"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric dashboard-nav" data-go="weekly" role="button" tabindex="0" aria-label="Open Weekly Tasks"><span class="m-label">ACTIVE WEEK TASKS</span><strong>${active.length}</strong><small>execution items</small></div><div class="metric dashboard-nav" data-go="progress" role="button" tabindex="0" aria-label="Open Work Tracking"><span class="m-label">AVERAGE PROGRESS</span><strong>${avg}%</strong><small>active projects</small></div><div class="metric"><span class="m-label">COMPLETED TOTAL</span><strong>${completed}</strong><small>weekly projects</small></div>`;$$('#dashboardMetrics .dashboard-nav').forEach(card=>{card.onclick=()=>showPage(card.dataset.go);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showPage(card.dataset.go)}}});$('#todayActivity').innerHTML=`<div class="activity-grid">${workers.map(m=>{const n=todays.filter(i=>Number(i.submitted_by)===Number(m.id)).length;return `<div class="activity-person"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">${n?`${n} idea${n>1?'s':''} submitted`:'No entry yet'}</div></div><span class="status-dot ${n?'done':''}">${n?'✓ Submitted':'Pending'}</span></div>`}).join('')}${state.members.filter(m=>m.role==='visitor'&&Number(m.active)!==0).map(m=>`<div class="activity-person visitor-row"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">Admin visitor · no idea required</div></div><span class="tag visitor">VISITOR</span></div>`).join('')}</div>`;const latest=state.cycles.find(c=>state.projects.some(p=>p.cycle_id===c.id))||state.cycles[0];const ps=latest?state.projects.filter(p=>p.cycle_id===latest.id):[];$('#weeklyFocus').innerHTML=latest?`<div class="muted" style="font-size:12px;margin-bottom:10px">${esc(latest.label)} · ${fmtDate(latest.start_date)} – ${fmtDate(latest.end_date)}</div>${ps.length?ps.map(p=>`<div class="focus-project"><div class="focus-title"><span>${esc(p.title)}</span><span>${p.progress}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${p.progress}%"></div></div></div>`).join(''):'<div class="empty-state">No tasks assigned for this week yet.</div>'}`:'<div class="empty-state">Create your first working week.</div>'}
+
+function dashboardPendingItems(){
+  const m=currentMember();if(!m)return[];
+  const items=[],todayKey=today();
+  const dailySubmitted=state.ideas.some(i=>Number(i.submitted_by)===Number(m.id)&&i.submission_date===todayKey);
+  if(m.role!=='visitor'&&!dailySubmitted)items.push({label:'Daily Idea',detail:'Today · idea not submitted',page:'ideas',priority:1});
+  const data=pendingTaskSummary();
+  [...data.own.yesterday,...data.own.today].forEach((x,idx)=>items.push({label:x.task||x.project?.title||'Work task',detail:`${x.date===data.yesterdayKey?'Yesterday':'Today'} · ${x.project?.title||x.project?.project_number||'Work Tracking'}`,page:'progress',projectId:Number(x.project?.id)||0,priority:x.date===data.yesterdayKey?0:2}));
+  return items.sort((a,b)=>a.priority-b.priority);
+}
+function goToPendingItem(page,projectId=0){
+  if(page==='progress'&&projectId){
+    const p=state.projects.find(x=>Number(x.id)===Number(projectId));state.selectedProject=Number(projectId);
+    if(p?.start_date){state.workMonthKey=monthKeyFromDate(p.start_date);const day=Number(String(p.start_date).slice(8,10))||1;state.workWeek=day<=6?1:day<=12?2:day<=18?3:4}
+  }
+  showPage(page||'dashboard');
+  if(page==='progress'&&projectId){state.selectedProject=Number(projectId);renderProjects()}
+}
+function bindPendingNavigation(scope=document){scope.querySelectorAll?.('[data-pending-go]').forEach(el=>{el.onclick=()=>goToPendingItem(el.dataset.pendingGo,Number(el.dataset.pendingProject)||0)})}
+
+function renderDashboard(){
+  const t=today();$('#todayLabel').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  const workers=workingMembers(),todays=state.ideas.filter(i=>i.submission_date===t),completed=state.projects.filter(p=>p.status==='completed').length,active=state.projects.filter(p=>p.status!=='completed');
+  const avg=active.length?Math.round(active.reduce((a,p)=>a+p.progress,0)/active.length):0,workerIds=new Set(workers.map(m=>m.id)),submitters=new Set(todays.filter(i=>workerIds.has(Number(i.submitted_by))).map(i=>Number(i.submitted_by)));
+  const myPending=dashboardPendingItems();
+  const pendingLines=myPending.length?myPending.slice(0,5).map(x=>`<button type="button" class="dashboard-pending-line" data-pending-go="${esc(x.page)}" data-pending-project="${Number(x.projectId)||0}"><span>${esc(x.label)}</span><small>${esc(x.detail)}</small><b>→</b></button>`).join(''):'<div class="dashboard-pending-empty">No pending items for you.</div>';
+  $('#dashboardMetrics').innerHTML=`<div class="metric accent dashboard-nav" data-go="ideas" role="button" tabindex="0"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric dashboard-nav" data-go="weekly" role="button" tabindex="0"><span class="m-label">ACTIVE WEEK TASKS</span><strong>${active.length}</strong><small>execution items</small></div><div class="metric dashboard-nav" data-go="progress" role="button" tabindex="0"><span class="m-label">AVERAGE PROGRESS</span><strong>${avg}%</strong><small>active projects</small></div><div class="metric"><span class="m-label">COMPLETED TOTAL</span><strong>${completed}</strong><small>weekly projects</small></div>`;
+  const pendingBtn=$('#dashboardPendingBtn'),pendingCount=$('#dashboardPendingCount');
+  if(pendingBtn){pendingBtn.classList.toggle('has-pending',myPending.length>0);pendingBtn.classList.toggle('is-clear',myPending.length===0)}
+  if(pendingCount)pendingCount.textContent=String(myPending.length);
+  $$('#dashboardMetrics .dashboard-nav').forEach(card=>{card.onclick=()=>showPage(card.dataset.go);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showPage(card.dataset.go)}}});
+  const heroPending=$('#dashboardPendingBtn');if(heroPending&&!heroPending.dataset.bound){heroPending.dataset.bound='1';heroPending.addEventListener('click',()=>{renderNotificationCenter();$('#notificationPanel')?.classList.remove('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','true')})}
+  $('#todayActivity').innerHTML=`<div class="activity-grid">${workers.map(m=>{const n=todays.filter(i=>Number(i.submitted_by)===Number(m.id)).length;return `<div class="activity-person"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">${n?`${n} idea${n>1?'s':''} submitted`:'No entry yet'}</div></div><span class="status-dot ${n?'done':''}">${n?'✓ Submitted':'Pending'}</span></div>`}).join('')}</div>`;
+  const latest=state.cycles.find(c=>state.projects.some(p=>p.cycle_id===c.id))||state.cycles[0],ps=latest?state.projects.filter(p=>p.cycle_id===latest.id):[];
+  $('#weeklyFocus').innerHTML=latest?`<div class="muted" style="font-size:12px;margin-bottom:10px">${esc(latest.label)} · ${fmtDate(latest.start_date)} – ${fmtDate(latest.end_date)}</div>${ps.length?ps.map(p=>`<div class="focus-project"><div class="focus-title"><span>${esc(p.title)}</span><span>${p.progress}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${p.progress}%"></div></div></div>`).join(''):'<div class="empty-state">No tasks assigned for this week yet.</div>'}`:'<div class="empty-state">Create your first working week.</div>';
+}
 
 function renderIdeas(){const q=$('#ideaSearch').value.toLowerCase().trim(), person=Number($('#ideaPersonFilter').value)||0, dep=Number($('#ideaDeptFilter').value)||0, date=$('#ideaDateFilter').value;const rows=state.ideas.filter(i=>(!q||[i.problem,i.proposed_idea,i.department_name,i.submitted_by_name,i.idea_number].join(' ').toLowerCase().includes(q))&&(!person||i.submitted_by===person)&&(!dep||i.department_id===dep)&&(!date||i.submission_date===date));$('#ideasTable').innerHTML=rows.length?rows.map(i=>`<tr><td>${fmtDate(i.submission_date)}</td><td><b>${esc(i.idea_number)}</b>${i.attachment_path?`<div class="sub"><a class="link" href="${i.attachment_path}" target="_blank">Attachment ↗</a></div>`:''}</td><td>${esc(i.submitted_by_name)}</td><td>${esc(i.department_name)}</td><td>${esc(i.problem)}</td><td>${esc(i.proposed_idea)}</td><td><span class="tag ${i.priority.toLowerCase()}">${esc(i.priority)}</span></td><td><span class="tag ${i.status}">${esc(i.status)}</span></td><td>${isVisitor()?'—':`<div class="row-actions"><button class="mini-action" data-edit-idea="${i.id}" title="Edit idea">Edit</button><button class="mini-action danger" data-delete-idea="${i.id}" title="Delete idea">×</button></div>`}</td></tr>`).join(''):'<tr><td colspan="9" class="empty-state">No ideas match the selected filters.</td></tr>'}
 function renderWeekly(){
@@ -496,13 +704,39 @@ function renderWeekly(){
   const backlog=Math.max(0,candidates.length-thisWeek);
   const ideaCards=candidates.map(i=>{const inWeek=i.submission_date>=c.start_date&&i.submission_date<=c.end_date;return `<label class="idea-choice weekly-idea-card"><input type="checkbox" class="ideaPick" value="${i.id}"><div class="weekly-idea-main"><div class="weekly-idea-top"><b>${esc(i.proposed_idea)}</b><span class="weekly-source ${inWeek?'current':'backlog'}">${inWeek?'THIS WEEK':'BACKLOG'}</span></div><div class="weekly-idea-meta"><span>${esc(i.idea_number)}</span><span>${fmtDate(i.submission_date)}</span><span>${esc(i.submitted_by_name)}</span><span>${esc(i.department_name)}</span></div><p>${esc(i.problem)}</p></div></label>`}).join('');
   if(isVisitor()){
-    $('#weeklySetup').innerHTML=`<section class="panel"><div class="panel-head"><div><span class="kicker">AVAILABLE IDEA BACKLOG</span><h3>${esc(c.label)}</h3><p class="muted weekly-subcopy">All submitted, unassigned ideas are eligible. Week dates define execution, not submission date.</p></div><span class="tag visitor">ADMIN · VISITOR</span></div><div class="weekly-backlog-stats"><span><b>${candidates.length}</b> available</span><span><b>${thisWeek}</b> this week</span><span><b>${backlog}</b> backlog</span></div><div class="visitor-readonly">View only: this account can review ideas but cannot shortlist or assign work.</div><div class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available.</div>'}</div></section>`;
+    $('#weeklySetup').innerHTML=`<section class="panel weekly-backlog-panel visitor-weekly-panel"><div class="panel-head weekly-compact-head"><div><span class="kicker">IDEA BACKLOG</span><h3>${esc(c.label)}</h3><p class="muted weekly-subcopy">Search submitted ideas available for this week.</p></div><span class="tag visitor">ADMIN · VISITOR</span></div><div class="weekly-search-box"><span>⌕</span><input id="weeklyIdeaSearch" type="search" placeholder="Search idea, problem, member or department..." autocomplete="off" spellcheck="false"></div><div class="visitor-readonly">View only: review available ideas here.</div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available.</div>'}</div></section>`;
+    bindWeeklySearch();
     return;
   }
-  $('#weeklySetup').innerHTML=`<div class="weekly-assignment-shell"><section class="panel weekly-backlog-panel"><div class="panel-head"><div><span class="kicker">AVAILABLE IDEA BACKLOG</span><h3>Select exactly 2 priorities</h3><p class="muted weekly-subcopy">All submitted, unassigned ideas are shown here. The selected week controls the project start/end dates.</p></div><div class="panel-actions"><button class="mini-action" data-edit-cycle="${c.id}">Edit week</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button></div></div><div class="weekly-backlog-stats"><span><b>${candidates.length}</b> available</span><span><b>${thisWeek}</b> submitted this week</span><span><b>${backlog}</b> older backlog</span></div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available. Submit an idea first.</div>'}</div></section><aside class="weekly-rule-card"><span class="kicker">WEEKLY RULE</span><div class="weekly-rule-count"><span id="pickCount">0</span><small>/ 2</small></div><p>Choose exactly two ideas. Each becomes a tracked weekly project for ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}.</p><div id="ownerPickers" class="weekly-owner-pickers"></div><button class="primary-btn" id="assignWeekBtn" disabled>Create Weekly Assignment</button></aside></div>`;
+  $('#weeklySetup').innerHTML=`<div class="weekly-assignment-shell premium-weekly-shell"><section class="panel weekly-backlog-panel"><div class="panel-head weekly-compact-head"><div><span class="kicker">IDEA BACKLOG</span><h3>Choose 2 priorities</h3><p class="muted weekly-subcopy">Search and select the two ideas you want to execute this week.</p></div><div class="panel-actions"><button class="mini-action" data-edit-cycle="${c.id}">Edit week</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button></div></div><div class="weekly-search-box"><span>⌕</span><input id="weeklyIdeaSearch" type="search" placeholder="Search idea, problem, member or department..." autocomplete="off" spellcheck="false"></div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available. Submit an idea first.</div>'}</div></section><aside class="weekly-rule-card premium-weekly-rule"><div class="weekly-rule-top"><span class="kicker">WEEKLY SELECTION</span><strong>${esc(c.label)}</strong></div><div class="weekly-rule-count"><span id="pickCount">0</span><small>/ 2</small></div><p class="weekly-rule-range">${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</p><p class="weekly-rule-help">Select exactly two ideas, then assign the responsible owner.</p><div id="ownerPickers" class="weekly-owner-pickers"></div><button class="primary-btn" id="assignWeekBtn" disabled>Create Weekly Assignment</button></aside></div>`;
   bindWeeklyPicks();
 }
-function bindWeeklyPicks(){$$('.ideaPick').forEach(cb=>cb.addEventListener('change',()=>{const picks=$$('.ideaPick:checked');if(picks.length>2){cb.checked=false;toast('Only 2 ideas can be selected.',true)}const now=$$('.ideaPick:checked');$$('.idea-choice').forEach(x=>x.classList.toggle('selected',x.querySelector('input').checked));$('#pickCount').textContent=now.length;$('#assignWeekBtn').disabled=now.length!==2;$('#ownerPickers').innerHTML=now.map((x,i)=>{const idea=state.ideas.find(a=>a.id===Number(x.value));return `<div class="owner-row"><span style="font-size:12px">0${i+1} ${esc(idea.proposed_idea.slice(0,42))}</span><select class="ownerSelect">${workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div>`}).join('')}));$('#assignWeekBtn')?.addEventListener('click',assignWeek)}
+function bindWeeklySearch(){
+  const input=$('#weeklyIdeaSearch');if(!input)return;
+  input.addEventListener('input',()=>{
+    const q=input.value.trim().toLowerCase();
+    $$('#candidateIdeas .weekly-idea-card').forEach(card=>{
+      const hay=(card.textContent||'').toLowerCase();
+      card.classList.toggle('weekly-search-hidden',Boolean(q)&&!hay.includes(q));
+    });
+  });
+}
+function bindWeeklyPicks(){
+  bindWeeklySearch();
+  $$('.ideaPick').forEach(cb=>cb.addEventListener('change',()=>{
+    const picks=$$('.ideaPick:checked');
+    if(picks.length>2){cb.checked=false;toast('Only 2 ideas can be selected.',true)}
+    const now=$$('.ideaPick:checked');
+    $$('.idea-choice').forEach(x=>x.classList.toggle('selected',x.querySelector('input').checked));
+    $('#pickCount').textContent=now.length;
+    $('#assignWeekBtn').disabled=now.length!==2;
+    $('#ownerPickers').innerHTML=now.map((x,i)=>{
+      const idea=state.ideas.find(a=>a.id===Number(x.value));
+      return `<div class="owner-row"><span style="font-size:12px">0${i+1} ${esc(idea.proposed_idea.slice(0,42))}</span><select class="ownerSelect">${workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></div>`
+    }).join('')
+  }));
+  $('#assignWeekBtn')?.addEventListener('click',assignWeek)
+}
 async function assignWeek(){try{const ids=$$('.ideaPick:checked').map(x=>Number(x.value));if(ids.length!==2)return;const owners=$$('.ownerSelect').map(x=>Number(x.value));await assignWeekLocal(Number($('#weekSelect').value),ids,owners);toast('Two weekly projects assigned.');scheduleRender()}catch(e){toast(e.message,true)}}
 function projectHasBlocker(projectId){return state.progress.some(u=>Number(u.project_id)===Number(projectId)&&String(u.blocker||'').trim())}
 function projectLastUpdate(projectId){return state.progress.filter(u=>Number(u.project_id)===Number(projectId)).sort((a,b)=>String(b.update_date||'').localeCompare(String(a.update_date||''))||Number(b.id)-Number(a.id))[0]||null}
@@ -900,7 +1134,7 @@ function openProjectEdit(id){const p=state.projects.find(x=>x.id===Number(id));i
 function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
   $('#loginForm').onsubmit=async e=>{e.preventDefault();const name=$('#loginName').value.trim();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';try{const result=findLogin(name);if(result.matched){persistLogin(result.member);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.member.name}.`);return}$('#loginMessage').textContent=result.error||'Name not found.';if(result.suggestion){$('#loginSuggestion').innerHTML=`<div class="suggestion-box"><span>Did you mean <b>${esc(result.suggestion.name)}</b>?</span><button type="button" class="secondary-btn" id="useSuggestionBtn">Yes, use this name</button></div>`;$('#useSuggestionBtn').onclick=()=>{persistLogin(result.suggestion);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.suggestion.name}.`)}}}catch(err){$('#loginMessage').textContent=err.message}};
-  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;if(!window.rndCloud?.enabled){toast('Team chat is waiting for Firebase connection.',true);return}try{send.disabled=true;await window.rndCloud.sendChatMessage({member_id:m.id,text});input.value='';input.focus()}catch(err){toast(err?.message||'Unable to send chat message.',true)}finally{send.disabled=false}});
+  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';try{if(send){send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending message…',true);if(!window.rndCloud?.enabled){const r=await window.rndCloud?.reconnect?.();if(!r?.ok&&!window.rndCloud?.enabled)throw new Error('Firebase is offline. Message was not sent.')}const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text});input.value='';input.focus();if(saved&&!teamChatMessages.some(x=>String(x.id)===String(saved.id))){teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat()}setTeamChatStatus('Live · shared with everyone',true)}catch(err){setTeamChatStatus('Chat offline · reconnecting…',false);toast(err?.message||'Unable to send chat message.',true);setTimeout(()=>startTeamChat(),1200)}finally{if(send){send.disabled=false;send.textContent=oldLabel}}});
   $('#teamChatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#teamChatForm')?.requestSubmit()}});
   $('#excelFormulaBar')?.addEventListener('input',e=>{const {row,col}=excelActiveCell,cell=excelCellElement(row,col);if(!cell)return;cell.textContent=e.target.value;excelCommitCell(row,col,e.target.value)});
   $('#excelFormulaBar')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();excelSelectCell(excelActiveCell.row+1,excelActiveCell.col,true)}});
@@ -921,6 +1155,13 @@ function bind(){
   $('#exportDbBtn').onclick=()=>{exportDatabase();toast('Database backup downloaded.');};
   $('#importDbInput').onchange=async e=>{try{await importDatabaseFile(e.target.files?.[0]);toast('Database restored successfully.');e.target.value='';await load()}catch(err){toast(err.message,true)}};
   $('#requestStorageBtn').onclick=async()=>{const ok=await requestDurableStorage();toast(ok?'Persistent browser storage enabled.':'Browser kept standard storage mode.',!ok);renderSettings()};;
+  $('#enableNotificationsBtn')?.addEventListener('click',async()=>{const ok=await enableNotifications();toast(ok?'Chrome notifications enabled.':'Notification permission was not granted.',!ok);if(ok){renderSettings();renderPendingTaskPopup()}});
+  $('#pendingNotificationBtn')?.addEventListener('click',async()=>{const ok=await enableNotifications();toast(ok?'Chrome notifications enabled.':'Notification permission was not granted.',!ok);if(ok)renderPendingTaskPopup()});
+  $('#notificationBellBtn')?.addEventListener('click',()=>{const panel=$('#notificationPanel'),btn=$('#notificationBellBtn');renderNotificationCenter();const open=panel.classList.contains('hidden');panel.classList.toggle('hidden',!open);btn.setAttribute('aria-expanded',open?'true':'false');$('#profileQuickPanel')?.classList.add('hidden');$('#profileQuickBtn')?.setAttribute('aria-expanded','false')});
+  $('#closeNotificationPanel')?.addEventListener('click',()=>{$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
+  $('#profileQuickBtn')?.addEventListener('click',()=>{updateCompactProfile();const panel=$('#profileQuickPanel'),btn=$('#profileQuickBtn');const open=panel.classList.contains('hidden');panel.classList.toggle('hidden',!open);btn.setAttribute('aria-expanded',open?'true':'false');$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
+  $('#profileSettingsBtn')?.addEventListener('click',()=>{$('#profileQuickPanel')?.classList.add('hidden');$('#profileQuickBtn')?.setAttribute('aria-expanded','false');showPage('settings')});
+  document.addEventListener('click',e=>{const notif=e.target.closest?.('.notification-center-wrap'),profile=e.target.closest?.('.profile-quick-wrap');if(!notif){$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')}if(!profile){$('#profileQuickPanel')?.classList.add('hidden');$('#profileQuickBtn')?.setAttribute('aria-expanded','false')}});
   $('#logoutBtn').onclick=()=>{stopTeamChat();stopMasterSheet();clearLogin();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';showLogin()};
   $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));
   const toggleSidebar=()=>{const sidebar=$('#sidebar'),shell=$('#appShell'),mobile=window.matchMedia('(max-width:980px)').matches;if(mobile){sidebar.classList.toggle('open');$('#menuBtn')?.setAttribute('aria-expanded',sidebar.classList.contains('open')?'true':'false');return}const closed=shell.classList.toggle('sidebar-collapsed');localStorage.setItem(SIDEBAR_CLOSED_KEY,closed?'1':'0');$('#menuBtn')?.setAttribute('aria-expanded',closed?'false':'true')};
