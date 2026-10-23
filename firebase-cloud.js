@@ -1,6 +1,6 @@
 (function(){
   const COLLECTIONS=['members','departments','ideas','cycles','projects','progress'];
-  let db=null, auth=null, ready=false, unsubscribers=[], reconnectTimer=null;
+  let db=null, auth=null, ready=false, initPromise=null, unsubscribers=[], reconnectTimer=null;
   let lastError=null, authUid=null, persistenceReady=false;
   const WRITE_RETRY_DELAYS=[350,900,1800,3500];
   const remoteCache={members:[],departments:[],ideas:[],cycles:[],projects:[],progress:[]};
@@ -101,7 +101,7 @@
     try{const ref=db.collection(collection).doc(String(id)),snap=await ref.get();if(!snap.exists)return;await db.collection('activity_logs').add({a:'delete_backup',c:String(collection).slice(0,40),d:String(id).slice(0,120),t:Date.now(),u:String(authUid).slice(0,128),v:snap.data()||{}})}catch(e){console.warn('Delete backup skipped',collection,id,e)}
   }
 
-  async function init(force=false){
+  async function initCore(force=false){
     if(ready&&!force)return{enabled:true,user:authUid};lastError=null;
     if(!configured()){const e=new Error('Firebase config is missing or still contains placeholder values in firebase-config.js.');e.code='config/missing';lastError=e;return{enabled:false,reason:e.message,error:e}}
     if(!window.firebase){const e=new Error('Firebase SDK did not load from gstatic.com. Check internet/firewall/content blocker.');e.code='sdk/not-loaded';lastError=e;throw e}
@@ -116,6 +116,13 @@
       await db.collection('members').limit(1).get({source:'server'});ready=true;return{enabled:true,user:authUid};
     }catch(e){ready=false;lastError=e;console.error('Firebase init failed',e);throw e}
   }
+  async function init(force=false){
+    if(ready&&!force)return{enabled:true,user:authUid};
+    if(initPromise)return initPromise;
+    initPromise=initCore(force);
+    try{return await initPromise}finally{initPromise=null}
+  }
+
   async function loadSnapshot(){
     if(!ready)return null;
     try{
@@ -180,11 +187,11 @@
     return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||''),reply_id:String(d.ri||''),reply_member_id:Number(d.rm)||0,reply_text:String(d.rt||'')};
   }
   async function sendChatMessage(payload){
-    if(!ready)await init(true);
+    if(!ready)await init(false);
     let user=auth?.currentUser;
-    if(!user&&auth&&typeof auth.signInAnonymously==='function'){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}
+    if(!user){await init(true);user=auth?.currentUser}
     if(!user)user=await waitForAuthUser();
-    if(!user)throw new Error('Firebase chat authentication is still connecting. Please tap Send again.');
+    if(!user)throw new Error('Firebase chat authentication is not ready. Please retry.');
     await user.getIdToken(true);authUid=user.uid;
     const text=String(payload?.text||'').trim();
     if(!text)throw new Error('Enter a message.');
@@ -221,19 +228,23 @@
   }
   function watchChat(onChange,onStatus){
     if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
-    if(!ready||typeof onChange!=='function')return()=>{};
-    const ref=db.collection('team_chat');
-    chatUnsubscriber=ref.onSnapshot(qs=>{
-      const rows=qs.docs.map(decodeChat).filter(x=>x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
-      ready=true;lastError=null;
-      if(typeof onStatus==='function')onStatus({connected:true,error:'',message:'Live'});
-      onChange(rows);
-    },async e=>{
-      lastError=e;
-      if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});
-      try{const user=auth?.currentUser;if(user)await user.getIdToken(true)}catch{}
-    });
-    return()=>{if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}};
+    let stopped=false,retryTimer=null;
+    const fail=e=>{lastError=e;if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});if(!stopped){clearTimeout(retryTimer);retryTimer=setTimeout(connect,1400)}};
+    const connect=async()=>{
+      if(stopped||typeof onChange!=='function')return;
+      try{
+        if(!ready)await init(false);
+        if(!auth?.currentUser)await init(true);
+        if(!auth?.currentUser)throw new Error('Firebase chat authentication is not ready.');
+        if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
+        chatUnsubscriber=db.collection('team_chat').onSnapshot(qs=>{
+          const rows=qs.docs.map(decodeChat).filter(x=>x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
+          ready=true;lastError=null;if(typeof onStatus==='function')onStatus({connected:true,error:'',message:'Live'});onChange(rows);
+        },fail);
+      }catch(e){fail(e)}
+    };
+    connect();
+    return()=>{stopped=true;clearTimeout(retryTimer);if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}};
   }
   function stopChat(){if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}}
 

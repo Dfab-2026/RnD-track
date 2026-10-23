@@ -445,7 +445,7 @@ async function purgePreviousMonthChats(){
 }
 function startTeamChat(){
   updateTeamChatIdentity();
-  if(!currentMember()||!window.rndCloud?.enabled||typeof window.rndCloud.watchChat!=='function'){setTeamChatStatus(cloudRuntimeStatus==='offline'?'Chat offline · reconnecting…':'Connecting to Firebase…',false);return}
+  if(!currentMember()||typeof window.rndCloud?.watchChat!=='function'){setTeamChatStatus('Connecting to Firebase…',false);return}
   if(teamChatStarted)return;
   teamChatStarted=true;setTeamChatStatus('Live · shared with everyone',true);
   teamChatInitialSync=true;
