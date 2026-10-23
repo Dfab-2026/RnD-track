@@ -23,18 +23,7 @@ service cloud.firestore {
     match /master_sheet/{rowId} { allow read, create, update, delete: if isSignedIn(); }
 
     match /team_chat/{messageId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn()
-                    && request.resource.data.keys().hasOnly(['m','t','c','a'])
-                    && request.resource.data.keys().hasAll(['m','t','c','a'])
-                    && request.resource.data.a == request.auth.uid
-                    && request.resource.data.t is string
-                    && request.resource.data.t.size() > 0
-                    && request.resource.data.t.size() <= 1000;
-      allow update: if false;
-      allow delete: if isSignedIn()
-                    && resource.data.a is string
-                    && resource.data.a == request.auth.uid;
+      allow read, write: if false;
     }
 
     match /notifications/{document=**} { allow read, write: if isSignedIn(); }

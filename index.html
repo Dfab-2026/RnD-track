@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=74.0.0" />
+  <link rel="stylesheet" href="styles.css?v=89.0.0" />
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
   <section class="login-gate" id="loginGate" aria-label="R&D member login">
@@ -28,7 +28,7 @@
 
   <div class="app-shell app-locked" id="appShell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="brand-mark">R</span><div class="brand-copy"><strong>R&D TRACK</strong><small>IDEA → IMPACT</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button></div>
+      <div class="brand"><span class="brand-mark">R</span><div class="brand-copy"><strong>R&D TRACK</strong><small>IDEA → IMPACT</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button><button class="brand-mini-toggle" id="menuBtn" type="button" aria-label="Toggle navigation" aria-expanded="true">‹</button></div>
       <nav id="nav">
         <button class="nav-btn active" data-page="dashboard"><span>01</span> Dashboard</button>
         <button class="nav-btn" data-page="ideas"><span>02</span> Daily Ideas</button>
@@ -43,7 +43,7 @@
 
     <main class="main">
       <header class="topbar">
-        <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Toggle navigation" aria-expanded="true">☰</button>
+        
         <div><div class="eyebrow" id="pageEyebrow">R&D OPERATIONS</div><h1 id="pageTitle">Dashboard</h1></div>
         <div class="top-actions compact-top-actions">
           <div class="notification-center-wrap header-tool-wrap">
@@ -84,7 +84,7 @@
         </div>
         <div class="metric-grid" id="dashboardMetrics"></div>
         <div class="dashboard-grid">
-          <section class="panel wide"><div class="panel-head"><div><span class="kicker">TODAY</span><h3>Idea Activity</h3></div><button class="ghost-btn" data-go="ideas">Open register →</button></div><div id="todayActivity"></div></section>
+          <section class="panel wide"><div class="panel-head dashboard-idea-head"><div><span class="kicker">TODAY</span><h3>Idea Activity</h3></div><div id="dashboardCelebrationSlot" class="dashboard-celebration-slot"></div><button class="ghost-btn" data-go="ideas">Open register →</button></div><div id="todayActivity"></div></section>
           <section class="panel"><div class="panel-head"><div><span class="kicker">CURRENT</span><h3>Weekly Focus</h3></div></div><div id="weeklyFocus"></div></section>
         </div>
       </section>
@@ -97,7 +97,7 @@
 
       <section class="page" id="weeklyPage">
         <div class="week-selector weekly-working-row weekly-working-row-primary">
-          <label class="working-week-field"><span>WORKING WEEK</span><select id="weekSelect"></select></label>
+          <label class="working-week-field"><span>WORKING WEEK</span><span class="working-week-control"><select id="weekSelect"></select><button id="deleteSelectedWeekBtn" class="week-select-delete" type="button" aria-label="Delete selected week" title="Delete selected week">×</button></span></label>
           <button class="secondary-btn weekly-create-btn" id="newWeekBtn" type="button">+ CREATE WEEK</button>
         </div>
         <div id="weeklySetup"></div>
@@ -116,11 +116,11 @@
 
 
       <section class="page" id="chatPage">
-        <div class="section-toolbar chat-page-toolbar"><div><span class="kicker">LIVE DISCUSSION</span><h2>Team Chat</h2><p>Shared R&D discussion for everyone signed in to this workspace.</p></div><div class="chat-live-state"><span class="signal"></span><div><b>COMMON CHAT</b><small id="teamChatStatus">Connecting to Firebase…</small></div></div></div>
+        <div class="section-toolbar chat-page-toolbar"><p>Shared R&amp;D discussion for everyone signed in to this workspace.</p></div>
         <section class="team-chat-page-shell" aria-label="R&D team chat">
           <div id="teamChatMessages" class="team-chat-messages team-chat-page-messages" role="log" aria-live="polite" aria-relevant="additions"><div class="team-chat-empty">No messages yet. Start the team discussion.</div></div>
           <form id="teamChatForm" class="team-chat-composer team-chat-page-composer">
-            <div class="team-chat-me" id="teamChatIdentity"><span class="team-chat-mini-avatar">R</span><span>Signed in profile</span></div>
+            <div class="team-chat-composer-head"><div class="team-chat-me" id="teamChatIdentity"><span class="team-chat-mini-avatar">R</span><span>Signed in profile</span></div><small id="teamChatStatus" class="team-chat-inline-status">Connecting to Firebase…</small></div>
             <div class="team-chat-compose-row"><textarea id="teamChatInput" maxlength="1000" rows="2" placeholder="Write a message to the team…" aria-label="Team chat message" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></textarea><button id="teamChatSend" class="team-chat-send" type="submit">Send</button></div>
           </form>
         </section>
@@ -179,12 +179,13 @@
 
   <dialog id="projectEditDialog" class="modal small"><form method="dialog" id="projectEditForm"><input type="hidden" id="projectEditId"><div class="modal-head"><div><span class="kicker">PROJECT</span><h2>Edit Weekly Project</h2></div><button type="button" class="icon-btn" data-close="projectEditDialog">×</button></div><div class="form-grid one"><label>Project Title<input id="projectEditTitle" maxlength="140" required spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></label><label>Owner<select id="projectEditOwner" required></select></label><label>Start Date<input type="date" id="projectEditStart" required></label><label>End Date<input type="date" id="projectEditEnd" required></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="projectEditDialog">Cancel</button><button class="primary-btn">Save Project</button></div></form></dialog>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <button id="sidebarReopenBtn" class="sidebar-reopen-btn" type="button" aria-label="Open navigation">›</button>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-  <script defer src="firebase-config.js?v=22.0.0"></script>
-  <script defer src="firebase-cloud.js?v=64.0.0"></script>
-  <script defer src="app.js?v=74.0.0"></script>
+  <script defer src="firebase-config.js?v=90.0.0"></script>
+  <script defer src="firebase-cloud.js?v=90.0.0"></script>
+  <script defer src="app.js?v=89.0.0"></script>
 </body>
 </html>
