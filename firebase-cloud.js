@@ -1,6 +1,6 @@
 (function(){
   const COLLECTIONS=['members','departments','ideas','cycles','projects','progress'];
-  let db=null, auth=null, ready=false, initPromise=null, unsubscribers=[], reconnectTimer=null;
+  let db=null, auth=null, ready=false, unsubscribers=[], reconnectTimer=null;
   let lastError=null, authUid=null, persistenceReady=false;
   const WRITE_RETRY_DELAYS=[350,900,1800,3500];
   const remoteCache={members:[],departments:[],ideas:[],cycles:[],projects:[],progress:[]};
@@ -101,7 +101,7 @@
     try{const ref=db.collection(collection).doc(String(id)),snap=await ref.get();if(!snap.exists)return;await db.collection('activity_logs').add({a:'delete_backup',c:String(collection).slice(0,40),d:String(id).slice(0,120),t:Date.now(),u:String(authUid).slice(0,128),v:snap.data()||{}})}catch(e){console.warn('Delete backup skipped',collection,id,e)}
   }
 
-  async function initCore(force=false){
+  async function init(force=false){
     if(ready&&!force)return{enabled:true,user:authUid};lastError=null;
     if(!configured()){const e=new Error('Firebase config is missing or still contains placeholder values in firebase-config.js.');e.code='config/missing';lastError=e;return{enabled:false,reason:e.message,error:e}}
     if(!window.firebase){const e=new Error('Firebase SDK did not load from gstatic.com. Check internet/firewall/content blocker.');e.code='sdk/not-loaded';lastError=e;throw e}
@@ -111,18 +111,10 @@
       try{db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true})}catch(e){if(!/already been started|settings can no longer/i.test(String(e?.message||'')))console.warn('Firestore settings',e)}
       await enableDurablePersistence();
       try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Auth persistence',e)}
-      if(!auth||typeof auth.signInAnonymously!=='function'){const e=new Error('Firebase Authentication is still loading. Please retry in a moment.');e.code='auth/not-ready';throw e}
       let user=auth.currentUser;if(!user){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}if(!user)user=await waitForAuthUser();authUid=user?.uid||null;if(!authUid)throw new Error('Anonymous Firebase authentication did not return a user.');
       await db.collection('members').limit(1).get({source:'server'});ready=true;return{enabled:true,user:authUid};
     }catch(e){ready=false;lastError=e;console.error('Firebase init failed',e);throw e}
   }
-  async function init(force=false){
-    if(ready&&!force)return{enabled:true,user:authUid};
-    if(initPromise)return initPromise;
-    initPromise=initCore(force);
-    try{return await initPromise}finally{initPromise=null}
-  }
-
   async function loadSnapshot(){
     if(!ready)return null;
     try{
@@ -184,24 +176,27 @@
 
   function decodeChat(doc){
     const d=doc.data?doc.data():doc||{};
-    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||''),reply_id:String(d.ri||''),reply_member_id:Number(d.rm)||0,reply_text:String(d.rt||'')};
+    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||'')};
   }
   async function sendChatMessage(payload){
-    if(!ready)await init(false);
+    if(!ready)await init(true);
     let user=auth?.currentUser;
-    if(!user){await init(true);user=auth?.currentUser}
+    if(!user){
+      const credential=await auth.signInAnonymously();
+      user=credential?.user||auth.currentUser;
+    }
     if(!user)user=await waitForAuthUser();
-    if(!user)throw new Error('Firebase chat authentication is not ready. Please retry.');
-    await user.getIdToken(true);authUid=user.uid;
+    if(!user)throw new Error('Firebase Anonymous Authentication is not connected.');
+    await user.getIdToken(true);
+    authUid=user.uid;
     const text=String(payload?.text||'').trim();
     if(!text)throw new Error('Enter a message.');
     if(text.length>1000)throw new Error('Message is too long.');
     const row={m:Number(payload?.member_id)||0,t:text,c:Date.now(),a:String(user.uid)};
-    if(payload?.reply_id){row.ri=String(payload.reply_id).slice(0,120);row.rm=Number(payload.reply_member_id)||0;row.rt=String(payload.reply_text||'').slice(0,180)};
     const ref=db.collection('team_chat').doc();
     await withWriteRetry(()=>ref.set(row),'Team chat send');
     await flushPendingWrites().catch(()=>false);
-    return {id:ref.id,member_id:row.m,name:'',role:'member',text:row.t,created_at:row.c,auth_uid:row.a,reply_id:row.ri||'',reply_member_id:row.rm||0,reply_text:row.rt||''};
+    return {id:ref.id,member_id:row.m,name:'',role:'member',text:row.t,created_at:row.c,auth_uid:row.a};
   }
   async function deleteChatMessage(id){
     if(!ready)await init(true);
@@ -216,35 +211,21 @@
     try{await flushPendingWrites()}catch{}
     return true;
   }
-  async function purgeOldChatMessages(cutoffMs){
-    if(!ready)await init(true);
-    let user=auth?.currentUser;if(!user)user=await waitForAuthUser();if(!user)throw new Error('Firebase chat authentication is not ready.');
-    const cutoff=Number(cutoffMs)||0;if(!cutoff)return 0;
-    const snap=await db.collection('team_chat').where('c','<',cutoff).get();if(snap.empty)return 0;
-    let refs=[],deleted=0;
-    for(const doc of snap.docs){refs.push(doc.ref);if(refs.length===400){const b=db.batch();refs.forEach(r=>b.delete(r));await b.commit();deleted+=refs.length;refs=[]}}
-    if(refs.length){const b=db.batch();refs.forEach(r=>b.delete(r));await b.commit();deleted+=refs.length}
-    return deleted;
-  }
   function watchChat(onChange,onStatus){
     if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
-    let stopped=false,retryTimer=null;
-    const fail=e=>{lastError=e;if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});if(!stopped){clearTimeout(retryTimer);retryTimer=setTimeout(connect,1400)}};
-    const connect=async()=>{
-      if(stopped||typeof onChange!=='function')return;
-      try{
-        if(!ready)await init(false);
-        if(!auth?.currentUser)await init(true);
-        if(!auth?.currentUser)throw new Error('Firebase chat authentication is not ready.');
-        if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
-        chatUnsubscriber=db.collection('team_chat').onSnapshot(qs=>{
-          const rows=qs.docs.map(decodeChat).filter(x=>x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
-          ready=true;lastError=null;if(typeof onStatus==='function')onStatus({connected:true,error:'',message:'Live'});onChange(rows);
-        },fail);
-      }catch(e){fail(e)}
+    if(!ready||typeof onChange!=='function')return()=>{};
+    const emit=qs=>{
+      const rows=qs.docs.map(decodeChat).filter(x=>x&&x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
+      lastError=null;
+      if(typeof onStatus==='function')onStatus({connected:true,error:'',message:'Live'});
+      onChange(rows);
     };
-    connect();
-    return()=>{stopped=true;clearTimeout(retryTimer);if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}};
+    const fail=e=>{
+      lastError=e;
+      if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});
+    };
+    try{chatUnsubscriber=db.collection('team_chat').onSnapshot(emit,fail)}catch(e){fail(e)}
+    return()=>{if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}};
   }
   function stopChat(){if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}}
 
@@ -266,5 +247,5 @@
   if(typeof window!=='undefined'){window.addEventListener('online',()=>{flushPendingWrites().catch(()=>{})});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingWrites().catch(()=>{})})}
 
   async function test(){try{const r=await init(true);if(!r.enabled)return{ok:false,message:r.reason||'Firebase is not configured.',details:status()};await db.collection('members').limit(1).get({source:'server'});return{ok:true,message:`Firebase connected · Auth OK · Firestore OK · compact schema · ${cfg().projectId}`,details:status()}}catch(e){lastError=e;return{ok:false,message:errText(e),details:status()}}}
-  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,purgeOldChatMessages,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();

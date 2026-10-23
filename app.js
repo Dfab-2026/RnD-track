@@ -403,15 +403,6 @@ function updateTeamChatIdentity(){
   const initial=(m.name||'R').trim().charAt(0).toUpperCase();
   host.innerHTML=`<span class="team-chat-mini-avatar">${esc(initial)}</span><span><b>${esc(m.name)}</b><small>${m.role==='visitor'?'VISITOR':'R&D MEMBER'}</small></span>`;
 }
-let teamChatReplyTarget=null;
-function clearTeamChatReply(){teamChatReplyTarget=null;const bar=$('#teamChatReplyBar');if(bar){bar.classList.add('hidden');bar.innerHTML=''}}
-function setTeamChatReply(id){
-  const msg=teamChatMessages.find(x=>String(x.id)===String(id));if(!msg)return;
-  const member=state.members.find(m=>Number(m.id)===Number(msg.member_id));
-  teamChatReplyTarget={id:String(msg.id),member_id:Number(msg.member_id)||0,text:String(msg.text||''),name:String(member?.name||msg.name||'Member')};
-  const bar=$('#teamChatReplyBar');if(bar){bar.classList.remove('hidden');bar.innerHTML=`<div><b>Replying to ${esc(teamChatReplyTarget.name)}</b><span>${esc(teamChatReplyTarget.text.slice(0,120))}</span></div><button type="button" id="cancelChatReply">×</button>`;$('#cancelChatReply').onclick=clearTeamChatReply}
-  $('#teamChatInput')?.focus();
-}
 function renderTeamChat(){
   const host=$('#teamChatMessages');if(!host)return;
   const me=currentMember(),authUid=window.rndCloud?.status?.()?.uid||'';
@@ -423,9 +414,8 @@ function renderTeamChat(){
     const senderName=String(savedMember?.name||msg.name||'Unknown');
     const senderRole=savedMember?.role||msg.role||'member';
     const initial=senderName.trim().charAt(0).toUpperCase()||'?';
-    return `<article class="team-chat-message ${own?'own':''}" data-chat-id="${esc(msg.id)}"><div class="team-chat-avatar" title="${esc(senderName)}">${esc(initial)}</div><div class="team-chat-bubble"><div class="team-chat-meta"><b>${esc(senderName)}</b><span>${senderRole==='visitor'?'VISITOR':'R&D MEMBER'}</span><time>${esc(chatTime(msg.created_at))}</time></div>${msg.reply_id?`<div class="team-chat-reply-quote"><b>↩ Reply</b><span>${esc(msg.reply_text||'Message')}</span></div>`:''}<p>${esc(msg.text).replace(/\n/g,'<br>')}</p><div class="team-chat-actions"><button type="button" data-chat-reply="${esc(msg.id)}">Reply</button><button type="button" data-chat-copy="${esc(msg.id)}">Copy</button>${deletable?`<button type="button" class="danger" data-chat-delete="${esc(msg.id)}">Delete</button>`:''}</div></div></article>`;
+    return `<article class="team-chat-message ${own?'own':''}" data-chat-id="${esc(msg.id)}"><div class="team-chat-avatar" title="${esc(senderName)}">${esc(initial)}</div><div class="team-chat-bubble"><div class="team-chat-meta"><b>${esc(senderName)}</b><span>${senderRole==='visitor'?'VISITOR':'R&D MEMBER'}</span><time>${esc(chatTime(msg.created_at))}</time></div><p>${esc(msg.text).replace(/\n/g,'<br>')}</p><div class="team-chat-actions"><button type="button" data-chat-copy="${esc(msg.id)}">Copy</button>${deletable?`<button type="button" class="danger" data-chat-delete="${esc(msg.id)}">Delete</button>`:''}</div></div></article>`;
   }).join('');
-  host.querySelectorAll('[data-chat-reply]').forEach(btn=>btn.onclick=()=>setTeamChatReply(btn.dataset.chatReply));
   host.querySelectorAll('[data-chat-copy]').forEach(btn=>btn.onclick=async()=>{const msg=teamChatMessages.find(x=>String(x.id)===String(btn.dataset.chatCopy));if(!msg)return;try{await navigator.clipboard.writeText(msg.text);toast('Message copied.')}catch{toast('Unable to copy message.',true)}});
   host.querySelectorAll('[data-chat-delete]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.chatDelete;if(!id)return;if(!confirm('Delete this message?'))return;try{btn.disabled=true;await window.rndCloud.deleteChatMessage(id);teamChatMessages=teamChatMessages.filter(x=>String(x.id)!==String(id));renderTeamChat();toast('Message deleted.')}catch(err){toast(err?.message||'Unable to delete message.',true)}finally{btn.disabled=false}});
   if(teamChatOpen)requestAnimationFrame(()=>{host.scrollTop=host.scrollHeight});
@@ -436,25 +426,15 @@ function setTeamChatOpen(open){
   teamChatOpen=Boolean(open);
   if(teamChatOpen){markTeamChatSeen();const host=$('#teamChatMessages');requestAnimationFrame(()=>{if(host)host.scrollTop=host.scrollHeight});setTimeout(()=>$('#teamChatInput')?.focus(),80)}
 }
-async function purgePreviousMonthChats(){
-  if(!window.rndCloud?.purgeOldChatMessages)return;
-  const now=new Date(),key=`rnd_chat_purged_${now.getFullYear()}_${now.getMonth()+1}`;
-  try{if(localStorage.getItem(key)==='1')return}catch{}
-  const cutoff=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-  try{await window.rndCloud.purgeOldChatMessages(cutoff);try{localStorage.setItem(key,'1')}catch{}}catch(e){console.warn('Old chat cleanup skipped',e)}
-}
 function startTeamChat(){
   updateTeamChatIdentity();
-  if(!currentMember()||typeof window.rndCloud?.watchChat!=='function'){setTeamChatStatus('Connecting to Firebase…',false);return}
+  if(!currentMember()||!window.rndCloud?.enabled||typeof window.rndCloud.watchChat!=='function'){setTeamChatStatus(cloudRuntimeStatus==='offline'?'Chat offline · reconnecting…':'Connecting to Firebase…',false);return}
   if(teamChatStarted)return;
   teamChatStarted=true;setTeamChatStatus('Live · shared with everyone',true);
   teamChatInitialSync=true;
   teamChatStop=window.rndCloud.watchChat(rows=>{
     const me=currentMember(),previousIds=new Set(teamChatMessages.map(x=>String(x.id)));
-    const remoteRows=Array.isArray(rows)?rows:[];
-    const remoteIds=new Set(remoteRows.map(x=>String(x.id)));
-    const localFresh=teamChatMessages.filter(x=>x?.id&&!remoteIds.has(String(x.id))&&Date.now()-Number(x.created_at||0)<30000);
-    teamChatMessages=[...remoteRows,...localFresh].sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
+    teamChatMessages=Array.isArray(rows)?rows:[];
     if(teamChatOpen){
       markTeamChatSeen();
     }else{
@@ -473,7 +453,7 @@ function startTeamChat(){
       }
     }
     renderTeamChat();updateTeamChatUnread();
-  },status=>{if(status?.connected){setTeamChatStatus('Live · shared with everyone',true);purgePreviousMonthChats()}else setTeamChatStatus('Chat offline · reconnecting…',false)});
+  },status=>{if(status?.connected)setTeamChatStatus('Live · shared with everyone',true);else setTeamChatStatus('Chat offline · reconnecting…',false)});
 }
 function stopTeamChat(){
   if(typeof teamChatStop==='function'){try{teamChatStop()}catch{}};
@@ -1218,7 +1198,7 @@ function openProjectEdit(id){const p=state.projects.find(x=>x.id===Number(id));i
 function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
   $('#loginForm').onsubmit=async e=>{e.preventDefault();const name=$('#loginName').value.trim();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';try{const result=findLogin(name);if(result.matched){persistLogin(result.member);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.member.name}.`);return}$('#loginMessage').textContent=result.error||'Name not found.';if(result.suggestion){$('#loginSuggestion').innerHTML=`<div class="suggestion-box"><span>Did you mean <b>${esc(result.suggestion.name)}</b>?</span><button type="button" class="secondary-btn" id="useSuggestionBtn">Yes, use this name</button></div>`;$('#useSuggestionBtn').onclick=()=>{persistLogin(result.suggestion);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.suggestion.name}.`)}}}catch(err){$('#loginMessage').textContent=err.message}};
-  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';input.value='';input.focus();try{if(send){send.dataset.sending='1';send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending…',true);const reply=teamChatReplyTarget?{reply_id:teamChatReplyTarget.id,reply_member_id:teamChatReplyTarget.member_id,reply_text:teamChatReplyTarget.text}:{};const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text,...reply});if(saved){const at=teamChatMessages.findIndex(x=>String(x.id)===String(saved.id));if(at>=0)teamChatMessages[at]={...teamChatMessages[at],...saved};else teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat();requestAnimationFrame(()=>{const host=$('#teamChatMessages');if(host)host.scrollTop=host.scrollHeight})}clearTeamChatReply();setTeamChatStatus('Live · shared with everyone',true)}catch(err){const alreadySent=teamChatMessages.some(x=>Number(x.member_id)===Number(m.id)&&String(x.text||'')===text&&Date.now()-Number(x.created_at||0)<12000);if(alreadySent){clearTeamChatReply();setTeamChatStatus('Live · message sent',true)}else{input.value=text;input.focus();setTeamChatStatus('Chat connection problem · tap Send to retry',false);toast(err?.message||'Unable to send chat message.',true)}}finally{if(send){delete send.dataset.sending;send.disabled=false;send.textContent=oldLabel}}});
+  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';input.value='';input.focus();try{if(send){send.dataset.sending='1';send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending…',true);const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text});if(saved&&!teamChatMessages.some(x=>String(x.id)===String(saved.id))){teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat()}setTeamChatStatus('Live · shared with everyone',true)}catch(err){input.value=text;input.focus();setTeamChatStatus('Chat connection problem · tap Send to retry',false);toast(err?.message||'Unable to send chat message.',true)}finally{if(send){delete send.dataset.sending;send.disabled=false;send.textContent=oldLabel}}});
   $('#teamChatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#teamChatForm')?.requestSubmit()}});
   $('#excelFormulaBar')?.addEventListener('input',e=>{const {row,col}=excelActiveCell,cell=excelCellElement(row,col);if(!cell)return;cell.textContent=e.target.value;excelCommitCell(row,col,e.target.value)});
   $('#excelFormulaBar')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();excelSelectCell(excelActiveCell.row+1,excelActiveCell.col,true)}});
