@@ -103,15 +103,15 @@
 
   async function init(force=false){
     if(ready&&!force)return{enabled:true,user:authUid};lastError=null;
-    if(!configured()){const e=new Error('Firebase Web App config is missing. Run SETUP-FIREBASE.bat once in the project folder, then refresh the site.');e.code='config/missing';lastError=e;return{enabled:false,reason:e.message,error:e}}
+    if(!configured()){const e=new Error('Firebase config is missing or still contains placeholder values in firebase-config.js.');e.code='config/missing';lastError=e;return{enabled:false,reason:e.message,error:e}}
     if(!window.firebase){const e=new Error('Firebase SDK did not load from gstatic.com. Check internet/firewall/content blocker.');e.code='sdk/not-loaded';lastError=e;throw e}
     try{
       if(!firebase.apps.length)firebase.initializeApp(cfg());
-      try{localStorage.setItem('rnd_firebase_config',JSON.stringify(cfg()))}catch{}
       auth=firebase.auth();db=firebase.firestore();
       try{db.settings({experimentalAutoDetectLongPolling:true,ignoreUndefinedProperties:true})}catch(e){if(!/already been started|settings can no longer/i.test(String(e?.message||'')))console.warn('Firestore settings',e)}
       await enableDurablePersistence();
       try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Auth persistence',e)}
+      if(!auth||typeof auth.signInAnonymously!=='function'){const e=new Error('Firebase Authentication is still loading. Please retry in a moment.');e.code='auth/not-ready';throw e}
       let user=auth.currentUser;if(!user){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}if(!user)user=await waitForAuthUser();authUid=user?.uid||null;if(!authUid)throw new Error('Anonymous Firebase authentication did not return a user.');
       await db.collection('members').limit(1).get({source:'server'});ready=true;return{enabled:true,user:authUid};
     }catch(e){ready=false;lastError=e;console.error('Firebase init failed',e);throw e}
@@ -175,72 +175,63 @@
   }
   async function reconnect(onChange,onStatus){clearTimeout(reconnectTimer);try{const r=await init(true);if(!r.enabled)throw r.error||new Error(r.reason||'Firebase not enabled');const snapshot=await loadSnapshot();if(typeof onChange==='function'&&snapshot)onChange(snapshot);if(typeof onStatus==='function')onStatus({connected:true});if(typeof onChange==='function')watch(onChange,onStatus);return{ok:true,status:status()}}catch(e){if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});reconnectTimer=setTimeout(()=>reconnect(onChange,onStatus),15000);return{ok:false,error:errText(e),status:status()}}}
 
-  const CHAT_DOC='team_chat_v2';
-  const CHAT_LIMIT=80;
-  function decodeChatRow(d){
-    d=d||{};
-    return {id:String(d.i||''),member_id:Number(d.m)||0,name:'',role:'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||'')};
-  }
-  function compactChatRows(data){
-    const rows=Array.isArray(data?.m)?data.m:[];
-    return rows.map(decodeChatRow).filter(x=>x.id&&x.text).sort((a,b)=>a.created_at-b.created_at).slice(-CHAT_LIMIT);
-  }
-  async function ensureChatAuth(){
-    if(!ready)await init(true);
-    let user=auth?.currentUser;
-    if(!user){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}
-    if(!user)user=await waitForAuthUser();
-    if(!user)throw new Error('Firebase Anonymous Authentication is not connected.');
-    await user.getIdToken(true);
-    authUid=user.uid;
-    return user;
+  function decodeChat(doc){
+    const d=doc.data?doc.data():doc||{};
+    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||''),reply_id:String(d.ri||''),reply_member_id:Number(d.rm)||0,reply_text:String(d.rt||'')};
   }
   async function sendChatMessage(payload){
-    const user=await ensureChatAuth();
+    if(!ready)await init(true);
+    let user=auth?.currentUser;
+    if(!user&&auth&&typeof auth.signInAnonymously==='function'){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}
+    if(!user)user=await waitForAuthUser();
+    if(!user)throw new Error('Firebase chat authentication is still connecting. Please tap Send again.');
+    await user.getIdToken(true);authUid=user.uid;
     const text=String(payload?.text||'').trim();
     if(!text)throw new Error('Enter a message.');
     if(text.length>1000)throw new Error('Message is too long.');
-    const now=Date.now(),id=`${now.toString(36)}_${Math.random().toString(36).slice(2,8)}`;
-    const row={i:id,m:Number(payload?.member_id)||0,t:text,c:now,a:String(user.uid)};
-    const ref=db.collection('app_meta').doc(CHAT_DOC);
-    await withWriteRetry(()=>db.runTransaction(async tx=>{
-      const snap=await tx.get(ref),data=snap.exists?(snap.data()||{}):{},rows=Array.isArray(data.m)?data.m:[];
-      const next=[...rows.filter(x=>x&&x.i&&x.t),row].slice(-CHAT_LIMIT);
-      tx.set(ref,{v:2,m:next,u:now},{merge:false});
-    }),'Team chat send');
+    const row={m:Number(payload?.member_id)||0,t:text,c:Date.now(),a:String(user.uid)};
+    if(payload?.reply_id){row.ri=String(payload.reply_id).slice(0,120);row.rm=Number(payload.reply_member_id)||0;row.rt=String(payload.reply_text||'').slice(0,180)};
+    const ref=db.collection('team_chat').doc();
+    await withWriteRetry(()=>ref.set(row),'Team chat send');
     await flushPendingWrites().catch(()=>false);
-    const verifySnap=await ref.get({source:'server'});
-    const verified=verifySnap.exists&&(Array.isArray(verifySnap.data()?.m)?verifySnap.data().m:[]).some(x=>String(x?.i||'')===id);
-    if(!verified)throw new Error('Message was not confirmed in Firebase. Please retry.');
-    return decodeChatRow(row);
+    return {id:ref.id,member_id:row.m,name:'',role:'member',text:row.t,created_at:row.c,auth_uid:row.a,reply_id:row.ri||'',reply_member_id:row.rm||0,reply_text:row.rt||''};
   }
   async function deleteChatMessage(id){
-    const user=await ensureChatAuth();
+    if(!ready)await init(true);
     id=String(id||'').trim();
     if(!id)throw new Error('Message id is missing.');
-    const ref=db.collection('app_meta').doc(CHAT_DOC);
-    await withWriteRetry(()=>db.runTransaction(async tx=>{
-      const snap=await tx.get(ref);
-      if(!snap.exists)return;
-      const data=snap.data()||{},rows=Array.isArray(data.m)?data.m:[],target=rows.find(x=>String(x?.i||'')===id);
-      if(target&&String(target.a||'')!==String(user.uid))throw new Error('You can delete only your own messages.');
-      tx.set(ref,{v:2,m:rows.filter(x=>String(x?.i||'')!==id).slice(-CHAT_LIMIT),u:Date.now()},{merge:false});
-    }),'Chat delete');
-    await flushPendingWrites().catch(()=>false);
+    const ref=db.collection('team_chat').doc(id);
+    const snap=await ref.get();
+    if(!snap.exists)return true;
+    const data=snap.data()||{};
+    if(!data.a||String(data.a)!==String(authUid||''))throw new Error('You can delete only your own newer messages.');
+    await withWriteRetry(()=>ref.delete(),'Chat delete');
+    try{await flushPendingWrites()}catch{}
     return true;
+  }
+  async function purgeOldChatMessages(cutoffMs){
+    if(!ready)await init(true);
+    let user=auth?.currentUser;if(!user)user=await waitForAuthUser();if(!user)throw new Error('Firebase chat authentication is not ready.');
+    const cutoff=Number(cutoffMs)||0;if(!cutoff)return 0;
+    const snap=await db.collection('team_chat').where('c','<',cutoff).get();if(snap.empty)return 0;
+    let refs=[],deleted=0;
+    for(const doc of snap.docs){refs.push(doc.ref);if(refs.length===400){const b=db.batch();refs.forEach(r=>b.delete(r));await b.commit();deleted+=refs.length;refs=[]}}
+    if(refs.length){const b=db.batch();refs.forEach(r=>b.delete(r));await b.commit();deleted+=refs.length}
+    return deleted;
   }
   function watchChat(onChange,onStatus){
     if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
     if(!ready||typeof onChange!=='function')return()=>{};
-    const ref=db.collection('app_meta').doc(CHAT_DOC);
-    chatUnsubscriber=ref.onSnapshot(snap=>{
+    const ref=db.collection('team_chat');
+    chatUnsubscriber=ref.onSnapshot(qs=>{
+      const rows=qs.docs.map(decodeChat).filter(x=>x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
       ready=true;lastError=null;
       if(typeof onStatus==='function')onStatus({connected:true,error:'',message:'Live'});
-      onChange(snap.exists?compactChatRows(snap.data()||{}):[]);
+      onChange(rows);
     },async e=>{
       lastError=e;
       if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});
-      try{await ensureChatAuth()}catch{}
+      try{const user=auth?.currentUser;if(user)await user.getIdToken(true)}catch{}
     });
     return()=>{if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}};
   }
@@ -264,5 +255,5 @@
   if(typeof window!=='undefined'){window.addEventListener('online',()=>{flushPendingWrites().catch(()=>{})});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingWrites().catch(()=>{})})}
 
   async function test(){try{const r=await init(true);if(!r.enabled)return{ok:false,message:r.reason||'Firebase is not configured.',details:status()};await db.collection('members').limit(1).get({source:'server'});return{ok:true,message:`Firebase connected · Auth OK · Firestore OK · compact schema · ${cfg().projectId}`,details:status()}}catch(e){lastError=e;return{ok:false,message:errText(e),details:status()}}}
-  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,purgeOldChatMessages,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();

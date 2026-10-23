@@ -2066,97 +2066,222 @@ body.sidebar-collapsed .sidebar-rail-toggle i{transform:rotate(180deg)}
 #chatPage #teamChatInput{width:100%!important;min-height:48px!important;max-height:92px!important;overflow-y:auto!important;resize:none!important}
 #chatPage #teamChatSend{height:48px!important;min-width:92px!important}
 
-/* v88 — delete selected Working Week directly from dropdown */
-.working-week-control{
-  min-width:0!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) 38px!important;
-  gap:7px!important;
-  align-items:center!important;
-}
-#weeklyPage .working-week-control #weekSelect{
-  max-width:none!important;
-  margin:0!important;
-}
-.week-select-delete{
-  width:38px!important;height:40px!important;padding:0!important;margin:0!important;
-  display:grid!important;place-items:center!important;
-  border:1px solid #efc5c5!important;border-radius:10px!important;
-  background:#fff7f7!important;color:#c52d2d!important;
-  font-size:20px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;
-  transition:transform .16s ease,background .16s ease,border-color .16s ease!important;
-}
-.week-select-delete:hover{background:#ffeaea!important;border-color:#e79898!important;transform:scale(1.04)!important}
-.week-select-delete:disabled{opacity:.5!important;cursor:wait!important;transform:none!important}
+/* v88 — requested dashboard, celebration, notifications and chat polish */
+.dashboard-week-value{display:flex!important;align-items:center!important;gap:9px!important;min-height:36px!important}
+.dashboard-week-value>strong{font-size:34px!important;line-height:1!important;letter-spacing:-.03em!important}
+.dashboard-week-value .dashboard-current-week{font-size:8px!important;padding:4px 7px!important;transform:translateY(1px)}
+.dashboard-week-metric>small{display:block!important}
 
-/* v89 — Team Chat visibility repair + visible Firebase save status */
-#chatPage.page.active{
-  padding-top:12px!important;
+/* Celebration is wider and centered inside Today Idea Activity without growing the dashboard */
+.dashboard-idea-head{grid-template-columns:auto minmax(300px,1fr) auto!important}
+.dashboard-idea-head .dashboard-celebration-slot{width:min(520px,100%)!important;justify-self:center!important}
+.dashboard-idea-head .dashboard-celebration-slot.is-complete{height:40px!important}
+.dashboard-idea-head .celebration-inline-card{height:40px!important;min-height:40px!important;padding:5px 12px!important;border-radius:11px!important;grid-template-columns:24px 1fr 14px!important;box-shadow:0 7px 20px rgba(36,112,66,.13)!important}
+.dashboard-idea-head .celebration-inline-icon{font-size:18px!important}
+.dashboard-idea-head .celebration-inline-card b{font-size:7.5px!important}
+.dashboard-idea-head .celebration-inline-card small{display:block!important;font-size:7px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.dashboard-idea-head .celebration-inline-spark{font-size:12px!important}
+.dashboard-idea-head .celebration-inline-confetti i{width:4px!important;height:7px!important;left:calc((var(--i) * 3.35%) + 1%)!important}
+
+/* Dashboard-wide celebratory sparkle; visual only, no layout space */
+body.dashboard-team-celebrating #dashboardPage:after{content:"✦  ·  ✧  ·  ✦  ·  ✧  ·  ✦  ·  ✧  ·  ✦  ·  ✧  ·  ✦";position:absolute!important;inset:6px 16px auto 16px!important;height:34px!important;overflow:hidden!important;pointer-events:none!important;z-index:8!important;color:#d9a514!important;font-size:15px!important;letter-spacing:22px!important;white-space:nowrap!important;opacity:.55!important;animation:v88Sparkle 2.2s ease-in-out infinite!important}
+body.dashboard-team-celebrating .topbar{box-shadow:inset 0 -2px 0 rgba(34,197,94,.22),0 5px 18px rgba(24,120,72,.08)!important}
+body.dashboard-team-celebrating .topbar:after{content:"GOOD WORK ✦";position:absolute!important;right:118px!important;top:8px!important;font-size:7px!important;font-weight:900!important;letter-spacing:.12em!important;color:#16805a!important;opacity:.78!important;pointer-events:none!important}
+@keyframes v88Sparkle{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:.8;transform:translateY(3px)}}
+@media(max-width:900px){.dashboard-idea-head{grid-template-columns:auto 1fr auto!important}.dashboard-idea-head .dashboard-celebration-slot{width:min(360px,100%)!important}body.dashboard-team-celebrating .topbar:after{display:none!important}}
+@media(prefers-reduced-motion:reduce){body.dashboard-team-celebrating #dashboardPage:after{animation:none!important}}
+
+/* Pending items remain visibly separated and scroll correctly */
+.notification-panel-content{overscroll-behavior:contain!important}
+.notification-group{display:block!important}
+.notification-item{width:100%!important;text-align:left!important;cursor:pointer!important}
+
+/* v89 — Team Chat visual upgrade only; v88 send/error logic remains unchanged */
+#chatPage .team-chat-page-shell{
+  border:1px solid #d6e5f3!important;
+  border-radius:20px!important;
+  background:linear-gradient(180deg,#f8fbff 0%,#eef6fd 100%)!important;
+  box-shadow:0 16px 42px rgba(19,69,112,.10)!important
 }
-#chatPage .chat-page-toolbar{
-  min-height:34px!important;
-  height:34px!important;
-  margin:0 0 12px!important;
-  padding:0 2px 10px!important;
+#chatPage .team-chat-page-head{
+  padding:14px 18px!important;
+  border-bottom:1px solid #d9e7f3!important;
+  background:linear-gradient(135deg,#ffffff 0%,#f2f8ff 100%)!important
+}
+#chatPage .team-chat-page-head h3{font-size:15px!important;font-weight:900!important;letter-spacing:-.02em!important}
+#chatPage #teamChatStatus{
+  display:inline-flex!important;align-items:center!important;gap:6px!important;
+  padding:5px 9px!important;border-radius:999px!important;
+  background:#eaf8ef!important;color:#16804c!important;font-size:8px!important;font-weight:850!important
+}
+#chatPage #teamChatStatus:before{
+  content:"";width:7px;height:7px;border-radius:50%;background:#22c55e;
+  box-shadow:0 0 0 4px rgba(34,197,94,.11)
+}
+#chatPage #teamChatStatus.offline{background:#fff2f2!important;color:#b83a3a!important}
+#chatPage #teamChatStatus.offline:before{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.10)}
+#chatPage .team-chat-page-messages{
+  padding:20px 18px 22px!important;
+  background:
+    radial-gradient(circle at 12% 18%,rgba(39,112,180,.045) 0 2px,transparent 3px),
+    radial-gradient(circle at 88% 78%,rgba(39,112,180,.035) 0 2px,transparent 3px),
+    linear-gradient(180deg,#f8fbff,#f2f7fc)!important;
+  background-size:38px 38px,46px 46px,auto!important
+}
+#chatPage .chat-message{max-width:76%!important;margin-bottom:10px!important}
+#chatPage .chat-message-bubble{
+  border:1px solid #d9e6f1!important;border-radius:16px 16px 16px 5px!important;
+  padding:9px 11px!important;background:#fff!important;
+  box-shadow:0 5px 14px rgba(28,70,106,.065)!important
+}
+#chatPage .chat-message.mine .chat-message-bubble{
+  border-color:#bcd8f1!important;border-radius:16px 16px 5px 16px!important;
+  background:linear-gradient(135deg,#eaf5ff,#dceeff)!important
+}
+#chatPage .chat-message-name{font-size:8px!important;font-weight:900!important;letter-spacing:.02em!important}
+#chatPage .chat-message-text{font-size:11px!important;line-height:1.5!important;margin-top:3px!important}
+#chatPage .chat-message-time{font-size:7px!important;opacity:.62!important;margin-top:5px!important}
+#chatPage .team-chat-page-composer{
+  padding:12px 14px 13px!important;background:rgba(255,255,255,.96)!important;
+  border-top:1px solid #d8e6f2!important;box-shadow:0 -7px 22px rgba(24,70,108,.055)!important
+}
+#chatPage #teamChatInput{
+  border:1px solid #cbddea!important;border-radius:14px!important;background:#f9fcff!important;
+  padding:11px 13px!important;font-size:11px!important;box-shadow:inset 0 1px 2px rgba(25,68,104,.035)!important
+}
+#chatPage #teamChatInput:focus{
+  border-color:#78addb!important;background:#fff!important;
+  box-shadow:0 0 0 3px rgba(44,126,196,.10)!important;outline:none!important
+}
+#chatPage #teamChatSend{
+  border-radius:13px!important;font-weight:900!important;
+  background:linear-gradient(135deg,#1264ad,#0e4f91)!important;
+  box-shadow:0 8px 18px rgba(15,83,145,.20)!important
+}
+
+/* v89 — premium navbar celebration, no extra layout height */
+body.dashboard-team-celebrating .topbar{
+  position:relative!important;
+  background:
+    radial-gradient(circle at 16% 0,rgba(255,215,75,.13),transparent 22%),
+    radial-gradient(circle at 82% 0,rgba(34,197,94,.10),transparent 24%),
+    #fff!important;
+  box-shadow:inset 0 -2px 0 rgba(34,197,94,.20),0 7px 22px rgba(21,91,63,.09)!important
+}
+body.dashboard-team-celebrating .topbar:before{
+  content:"🏆  TEAM COMPLETE  ·  GREAT WORK!";
+  position:absolute!important;left:50%!important;top:7px!important;transform:translateX(-50%)!important;
+  height:24px!important;display:flex!important;align-items:center!important;
+  padding:0 13px!important;border-radius:999px!important;
+  border:1px solid rgba(218,169,28,.30)!important;
+  background:linear-gradient(135deg,rgba(255,249,217,.96),rgba(237,255,244,.96))!important;
+  color:#5e6519!important;font-size:7.5px!important;font-weight:950!important;letter-spacing:.10em!important;
+  box-shadow:0 5px 16px rgba(142,112,20,.12)!important;
+  z-index:9!important;pointer-events:none!important;
+  animation:v89CelebratePill 2.6s ease-in-out infinite!important
+}
+body.dashboard-team-celebrating .topbar:after{
+  content:"✦   ✧   ✦   ✧   ✦   ✧   ✦"!important;
+  position:absolute!important;left:50%!important;top:33px!important;transform:translateX(-50%)!important;
+  width:330px!important;text-align:center!important;color:#d4a51b!important;
+  font-size:9px!important;letter-spacing:12px!important;opacity:.72!important;
+  pointer-events:none!important;animation:v89NavSpark 2s ease-in-out infinite!important
+}
+@keyframes v89CelebratePill{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.035)}}
+@keyframes v89NavSpark{0%,100%{opacity:.30}50%{opacity:.92}}
+@media(max-width:850px){body.dashboard-team-celebrating .topbar:before{font-size:6.5px!important;padding:0 9px!important}body.dashboard-team-celebrating .topbar:after{width:220px!important}}
+@media(prefers-reduced-motion:reduce){body.dashboard-team-celebrating .topbar:before,body.dashboard-team-celebrating .topbar:after{animation:none!important}}
+
+/* v90 — requested-only correction */
+/* Remove navbar celebration completely */
+body.dashboard-team-celebrating .topbar:before,
+body.dashboard-team-celebrating .topbar:after{display:none!important;content:none!important;animation:none!important}
+body.dashboard-team-celebrating .topbar{
+  background:#fff!important;
+  box-shadow:var(--topbar-shadow,0 1px 0 rgba(20,55,90,.08))!important
+}
+
+/* Keep the chat utility/status area compact and tucked into the top-right */
+#chatPage .team-chat-page-head{
+  position:relative!important;
+  min-height:52px!important;
+  padding:13px 150px 13px 18px!important
+}
+#chatPage #teamChatStatus{
+  position:absolute!important;
+  top:12px!important;
+  right:14px!important;
+  max-width:128px!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+  z-index:4!important
+}
+#chatPage .team-chat-page-shell{
+  position:relative!important;
+  overflow:hidden!important
+}
+
+/* v91 chat reply */
+.team-chat-reply-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;padding:8px 10px;border-left:3px solid #1d73bd;border-radius:9px;background:#eef7ff}
+.team-chat-reply-bar.hidden{display:none!important}.team-chat-reply-bar>div{min-width:0;display:grid;gap:2px}.team-chat-reply-bar b{font-size:8px;color:#155b98}.team-chat-reply-bar span{font-size:8px;color:#5c7184;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.team-chat-reply-bar button{border:0;background:transparent;font-size:18px;cursor:pointer}
+.team-chat-reply-quote{display:grid;gap:2px;margin:0 0 7px;padding:6px 8px;border-left:3px solid #3b8dcc;border-radius:7px;background:rgba(227,242,255,.78)}.team-chat-reply-quote b{font-size:7px;color:#216da8}.team-chat-reply-quote span{font-size:8px;color:#516b80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-chat-actions [data-chat-reply]{font-weight:850!important;color:#1768a9!important}
+
+/* v94 — Active Week Tasks count + current week alignment only */
+.dashboard-week-value{
   display:flex!important;
   align-items:center!important;
   justify-content:flex-start!important;
-  overflow:visible!important;
-}
-#chatPage .chat-page-toolbar>p{
-  margin:0!important;
-  max-width:none!important;
-  font-size:11px!important;
-  line-height:1.3!important;
-  color:#7188a3!important;
-}
-#chatPage .chat-live-state{
-  display:none!important;
-}
-#chatPage .team-chat-page-shell{
-  min-height:0!important;
-}
-#chatPage .team-chat-composer-head{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
   gap:12px!important;
-  min-width:0!important;
-  margin-bottom:7px!important;
+  min-height:42px!important
 }
-#chatPage .team-chat-composer-head .team-chat-me{
-  margin:0!important;
-  min-width:0!important;
-}
-#chatPage .team-chat-inline-status{
+.dashboard-week-value>strong{
   display:inline-flex!important;
   align-items:center!important;
-  justify-content:flex-end!important;
-  max-width:46%!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-  font-size:9px!important;
+  justify-content:center!important;
+  font-size:36px!important;
   line-height:1!important;
-  font-weight:800!important;
-  color:#247348!important;
-  background:#edf9f1!important;
-  border:1px solid #ccebd7!important;
-  border-radius:999px!important;
-  padding:5px 8px!important;
+  font-weight:900!important;
+  letter-spacing:-.04em!important
 }
-#chatPage .team-chat-inline-status.offline{
-  color:#b4232d!important;
-  background:#fff1f2!important;
-  border-color:#f1c8cc!important;
+.dashboard-week-value .dashboard-current-week{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:28px!important;
+  padding:0 11px!important;
+  margin:0!important;
+  transform:none!important;
+  border-radius:9px!important;
+  font-size:11px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  letter-spacing:.055em!important;
+  white-space:nowrap!important
 }
-@media(max-width:640px){
-  #chatPage .team-chat-composer-head{
-    align-items:flex-start!important;
-    flex-direction:column!important;
-    gap:5px!important;
-  }
-  #chatPage .team-chat-inline-status{
-    max-width:100%!important;
-  }
+
+/* v95 — WEEK badge typography equal to active task number */
+.dashboard-week-value{align-items:center!important;gap:12px!important}
+.dashboard-week-value>strong,
+.dashboard-week-value .dashboard-current-week{
+  height:42px!important;
+  min-height:42px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  transform:none!important;
+  box-sizing:border-box!important
+}
+.dashboard-week-value>strong{
+  font-size:36px!important;
+  line-height:42px!important
+}
+.dashboard-week-value .dashboard-current-week{
+  padding:0 12px!important;
+  font-size:18px!important;
+  line-height:42px!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important
 }
