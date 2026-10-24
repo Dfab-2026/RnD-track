@@ -37,7 +37,7 @@
       case 'departments': return compact({n:r.name,a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
       case 'ideas': return compact({n:r.idea_number,s:Number(r.submitted_by),d:Number(r.department_id),p:r.problem,i:r.proposed_idea,b:r.expected_benefit,q:r.priority,t:r.submission_date,x:r.status,f:attachmentMeta(r.attachment),...common});
       case 'cycles': return compact({l:r.label,s:r.start_date,e:r.end_date,x:r.status,...common});
-      case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks})).filter(x=>Object.keys(x).length);return compact({c:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,z:Number(r.tracker_row_count)||undefined,...common})};
+      case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks})).filter(x=>Object.keys(x).length);return compact({k:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,z:Number(r.tracker_row_count)||undefined,...common})};
       case 'progress': return compact({p:Number(r.project_id),m:Number(r.user_id),d:r.update_date,w:r.work_done,r:r.remarks,b:r.blocker,n:r.next_action,v:Number(r.progress_percent)||0,f:attachmentMeta(r.attachment),...common});
       default: return {};
     }
@@ -68,7 +68,7 @@
       case 'departments': return {...common,name:d.n||'',active:d.a===0?0:1,sort_order:Number(d.o)||0};
       case 'ideas': return {...common,idea_number:d.n||'',submitted_by:Number(d.s),department_id:Number(d.d),problem:d.p||'',proposed_idea:d.i||'',expected_benefit:d.b||'',priority:d.q||'Medium',submission_date:d.t||'',status:d.x||'submitted',...(d.f?{attachment:{name:d.f.n||'',type:d.f.t||'',size:Number(d.f.s)||0}}:{})};
       case 'cycles': return {...common,label:d.l||'',start_date:d.s||'',end_date:d.e||'',status:d.x||'active'};
-      case 'projects': return {...common,cycle_id:Number(d.c),idea_id:Number(d.i),project_number:d.n||'',title:d.t||'',owner_id:Number(d.o),start_date:d.s||'',end_date:d.e||'',progress:Number(d.p)||0,status:d.x||'assigned',tracker_row_count:Number(d.z)||undefined,tracker_rows:Array.isArray(d.g)?d.g.map((x,idx)=>({row_index:Number.isFinite(Number(x.o))?Number(x.o):idx,manual_extra:Number(x.q)===1,date:x.d||'',stage:x.s||'',task:x.t||'',status:x.x||'',issue:x.i||'',next_action:x.n||'',remarks:x.r||''})):[]};
+      case 'projects': return {...common,cycle_id:Number(d.k??d.c),idea_id:Number(d.i),project_number:d.n||'',title:d.t||'',owner_id:Number(d.o),start_date:d.s||'',end_date:d.e||'',progress:Number(d.p)||0,status:d.x||'assigned',tracker_row_count:Number(d.z)||undefined,tracker_rows:Array.isArray(d.g)?d.g.map((x,idx)=>({row_index:Number.isFinite(Number(x.o))?Number(x.o):idx,manual_extra:Number(x.q)===1,date:x.d||'',stage:x.s||'',task:x.t||'',status:x.x||'',issue:x.i||'',next_action:x.n||'',remarks:x.r||''})):[]};
       case 'progress': return {...common,project_id:Number(d.p),user_id:Number(d.m),update_date:d.d||'',work_done:d.w||'',remarks:d.r||'',blocker:d.b||'',next_action:d.n||'',progress_percent:Number(d.v)||0,...(d.f?{attachment:{name:d.f.n||'',type:d.f.t||'',size:Number(d.f.s)||0}}:{})};
       default:return {...common,...d};
     }
@@ -127,6 +127,13 @@
           return row;
         });
       }));
+      // Repair the old project field collision: c was both cycle_id and created_at.
+      // Use only an unambiguous exact date match; never guess between working weeks.
+      for(const project of remoteCache.projects){
+        if(remoteCache.cycles.some(c=>Number(c.id)===Number(project.cycle_id)))continue;
+        const matches=remoteCache.cycles.filter(c=>c.start_date===project.start_date&&c.end_date===project.end_date);
+        if(matches.length===1){project.cycle_id=Number(matches[0].id);legacy.push({collection:'projects',row:project})}
+      }
       // One-time in-place migration of older verbose documents to the compact schema.
       if(legacy.length)await writeMany(legacy);
       lastError=null;return makeSnapshot();
@@ -152,7 +159,7 @@
       clearTimeout(emitTimer);
       emitTimer=setTimeout(()=>{
         const snapshot=makeSnapshot();
-        const sig=JSON.stringify(COLLECTIONS.map(k=>(snapshot[k]||[]).map(r=>[r.id,r.updated_at||r.created_at||'',r.status||'',r.progress??'',r.active??'',r.name||'',r.problem||'',r.work_done||''])));
+        const sig=JSON.stringify(COLLECTIONS.map(k=>snapshot[k]||[]));
         if(sig===lastSig)return;
         lastSig=sig;seen++;ready=true;lastError=null;
         if(typeof onStatus==='function')onStatus({connected:true,seen});

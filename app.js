@@ -72,6 +72,12 @@ function migrateSnapshot(data){
     .map((d,i)=>({id:Number(d.id)||i+1,name:String(d.name||'').trim().replace(/\s+/g,' '),active:Number(d.active)===0?0:1,sort_order:Number(d.sort_order)||i+1,created_at:d.created_at||now,updated_at:d.updated_at||d.created_at||now}))
     .filter(d=>d.name&&(!seen.has(normalizeName(d.name))&&seen.add(normalizeName(d.name))))
     .sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id);
+  // Keep legacy assignments visible while the cloud repair is being persisted.
+  snap.projects=snap.projects.map(project=>{
+    if(snap.cycles.some(c=>Number(c.id)===Number(project.cycle_id)))return project;
+    const matches=snap.cycles.filter(c=>c.start_date===project.start_date&&c.end_date===project.end_date);
+    return matches.length===1?{...project,cycle_id:Number(matches[0].id)}:project;
+  });
   snap.schema_version=22;
   snap.updated_at=now;
   return snap;
@@ -550,7 +556,7 @@ function cloudIsEmpty(s){return !s||['members','departments','ideas','cycles','p
 let lastRemoteSignature='';
 async function applyRemoteSnapshot(remote){
   if(!remote)return;
-  const signature=JSON.stringify(['members','departments','ideas','cycles','projects','progress'].map(k=>(remote[k]||[]).map(r=>[r.id,r.updated_at||r.created_at||'',r.status||'',r.progress??'',r.name||'',r.problem||'',r.work_done||''])));
+  const signature=JSON.stringify(['members','departments','ideas','cycles','projects','progress'].map(k=>remote[k]||[]));
   if(signature===lastRemoteSignature){setCloudRuntimeStatus('live');return}
   lastRemoteSignature=signature;
   const local=await readSnapshot()||seedSnapshot();
