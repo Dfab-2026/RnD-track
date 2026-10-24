@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=98.0.0" />
+  <link rel="stylesheet" href="styles.css?v=100.0.0" />
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
   <section class="login-gate" id="loginGate" aria-label="R&D member login">
@@ -183,7 +183,7 @@
   <dialog id="progressDialog" class="modal"><form method="dialog" id="progressForm"><div class="modal-head"><div><span class="kicker">DAILY UPDATE</span><h2 id="progressDialogTitle">Update Project</h2></div><button type="button" class="icon-btn" data-close="progressDialog">×</button></div><div class="form-grid"><label>Updated By<select id="progressMember" required></select></label><label>Date<input type="date" id="progressDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Overall Completion %<input type="number" min="0" max="100" id="progressPercent" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Attachment<input type="file" id="progressAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label class="full">Today's Work<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressWork" required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label class="full">Remarks<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressRemarks" maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label>Blocker<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressBlocker" maxlength="800" autocorrect="off" autocapitalize="off"></textarea></label><label>Next Action<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressNext" maxlength="800" autocorrect="off" autocapitalize="off"></textarea></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="progressDialog">Cancel</button><button class="primary-btn">Save Progress</button></div></form></dialog>
 
 
-  <dialog id="projectEditDialog" class="modal small"><form method="dialog" id="projectEditForm"><input type="hidden" id="projectEditId"><div class="modal-head"><div><span class="kicker">PROJECT</span><h2>Edit Weekly Project</h2></div><button type="button" class="icon-btn" data-close="projectEditDialog">×</button></div><div class="form-grid one"><label>Project Title<input id="projectEditTitle" maxlength="140" required spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></label><label>Owner<select id="projectEditOwner" required></select></label><label>Start Date<input type="date" id="projectEditStart" required></label><label>End Date<input type="date" id="projectEditEnd" required></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="projectEditDialog">Cancel</button><button class="primary-btn">Save Project</button></div></form></dialog>
+  <dialog id="projectEditDialog" class="modal small"><form method="dialog" id="projectEditForm"><input type="hidden" id="projectEditId"><div class="modal-head"><div><span class="kicker">PROJECT</span><h2>Edit Weekly Project</h2></div><button type="button" class="icon-btn" data-close="projectEditDialog">×</button></div><div class="form-grid one"><label>Project Title<input id="projectEditTitle" maxlength="140" required spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></label><label>Owner<select id="projectEditOwner" required></select></label><label>Task Priority<select id="projectEditPriority"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></label><label>Start Date<input type="date" id="projectEditStart" required></label><label>End Date<input type="date" id="projectEditEnd" required></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="projectEditDialog">Cancel</button><button class="primary-btn">Save Project</button></div></form></dialog>
 
   <button id="sidebarReopenBtn" class="sidebar-reopen-btn" type="button" aria-label="Open navigation">›</button>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -191,7 +191,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
   <script defer src="firebase-config.js?v=22.0.0"></script>
-  <script defer src="firebase-cloud.js?v=98.0.0"></script>
-  <script defer src="app.js?v=98.0.0"></script>
+  <script defer src="firebase-cloud.js?v=100.0.0"></script>
+  <script defer src="app.js?v=100.0.0"></script>
 </body>
 </html>

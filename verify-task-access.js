@@ -1,0 +1,22 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const storage=new Map(),nodes=new Map();
+const node=()=>({innerHTML:'',value:'',textContent:'',dataset:{},style:{setProperty(){}},classList:{toggle(){},add(){},remove(){},contains(){return true}},querySelector(){return null},querySelectorAll(){return[]},setAttribute(){},addEventListener(){}});
+const ctx=vm.createContext({console,Date,Set,Map,Number,String,Math,JSON,crypto:require('crypto').webcrypto,window:{},navigator:{onLine:true},document:{body:node(),querySelector:s=>{if(!nodes.has(s))nodes.set(s,node());return nodes.get(s)},querySelectorAll:()=>[]},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},setTimeout:()=>1,clearTimeout(){},requestAnimationFrame:()=>{}});
+vm.runInContext(fs.readFileSync(__dirname+'/app.js','utf8').split('registerNotificationWorker();disableWritingAssist();')[0],ctx);
+(async()=>{await vm.runInContext(`(async()=>{
+ const check=(v,m)=>{if(!v)throw Error(m)},denied=async run=>{let failed=false;try{await run()}catch{failed=true}check(failed,'Unauthorized action accepted')};
+ Object.assign(state,enrich(seedSnapshot()));persistState=async()=>{};setCloudRuntimeStatus=()=>{};
+ const month=today().slice(0,7),week=inferredWeekForDay(new Date().getDate());state.workMonthKey=month;state.workWeek=week;
+ state.cycles=[{id:10,label:'Week '+week,start_date:month+'-22',end_date:month+'-28',status:'active'}];
+ state.ideas=[{id:21,status:'submitted',priority:'Medium',proposed_idea:'First',problem:'Problem'},{id:22,status:'submitted',priority:'Medium',proposed_idea:'Second',problem:'Problem'}];
+ persistLogin(state.members[1]);check(!isLead(),'Normal member role');await denied(()=>assignWeekLocal(10,[21,22],[1,2]));await denied(()=>createCycleLocal({}));
+ persistLogin(state.members[0]);check(isLead()&&memberRoleLabel(currentMember())==='R&D LEAD','Lead label');await assignWeekLocal(10,[21,22],[1,2],['High','Low']);check(state.projects.length===2,'Lead assigns two tasks');check(state.ideas[0].priority==='High'&&state.ideas[1].priority==='Low','Lead priorities persisted');
+ const mine=state.projects.find(p=>p.owner_id===1),other=state.projects.find(p=>p.owner_id===2);
+ check(canEditTask(mine)&&!canEditTask(other),'Lead edits only own sheet');await denied(()=>addProgressLocal(other.id,{user_id:1}));
+ persistLogin(state.members[1]);check(canEditTask(other)&&!canEditTask(mine),'Member edits only own sheet');await denied(()=>updateProjectLocal(other.id,{}));await denied(()=>deleteProjectLocal(other.id));await denied(()=>updateCycleLocal(10,{}));await denied(()=>deleteIdeaLocal(mine.idea_id));
+ const before=JSON.stringify(pendingCloudOps());scheduleTrackerSave(mine);check(JSON.stringify(pendingCloudOps())===before,'Other task tracker mutation blocked');
+ other.tracker_rows=Array.from({length:6},(_,row_index)=>({row_index,status:'completed'}));scheduleTrackerSave(other);check(other.progress===100,'Owner progress saved');
+ renderWorkPeriodNav=()=>{};renderWorkSummary=()=>{};renderProjectDetail=()=>{};filteredProjects=()=>[mine,other];renderProjects();check($('#projectList').innerHTML.indexOf('data-project="'+other.id+'"')<$('#projectList').innerHTML.indexOf('data-project="'+mine.id+'"'),'Own card is left');check($('#projectList').innerHTML.includes('VIEW ONLY'),'Other card labeled read-only');
+ persistLogin(state.members[0]);await updateProjectLocal(other.id,{owner_id:2,title:other.title,start_date:other.start_date,end_date:other.end_date,priority:'Critical'});check(taskPriority(other)==='Critical','Lead can reprioritize');
+ persistLogin(state.members[4]);check(!canEditTask(mine)&&!canEditTask(other),'Visitor read-only');
+ })()`,ctx);console.log('PASS: lead-only assignment/priority, both owner access directions, visitor read-only, blocked indirect deletion, own task left, progress persistence');})().catch(e=>{console.error(e);process.exitCode=1});

@@ -37,7 +37,7 @@
       case 'departments': return compact({n:r.name,a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
       case 'ideas': return compact({n:r.idea_number,s:Number(r.submitted_by),d:Number(r.department_id),p:r.problem,i:r.proposed_idea,b:r.expected_benefit,q:r.priority,t:r.submission_date,x:r.status,f:attachmentMeta(r.attachment),...common});
       case 'cycles': return compact({l:r.label,s:r.start_date,e:r.end_date,x:r.status,...common});
-      case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks})).filter(x=>Object.keys(x).length);return compact({k:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,z:Number(r.tracker_row_count)||undefined,...common})};
+      case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks})).filter(x=>Object.keys(x).length);return compact({...common,c:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,z:Number(r.tracker_row_count)||undefined})};
       case 'progress': return compact({p:Number(r.project_id),m:Number(r.user_id),d:r.update_date,w:r.work_done,r:r.remarks,b:r.blocker,n:r.next_action,v:Number(r.progress_percent)||0,f:attachmentMeta(r.attachment),...common});
       default: return {};
     }
@@ -61,7 +61,7 @@
       return copy;
     }
     const common={id:Number.isFinite(Number(id))?Number(id):id};
-    const created=numberToIso(d.c),updated=numberToIso(d.u);
+    const created=collection==='projects'&&d.k===undefined?undefined:numberToIso(d.c),updated=numberToIso(d.u);
     if(created)common.created_at=created;if(updated)common.updated_at=updated;
     switch(collection){
       case 'members': return {...common,name:d.n||'',role:d.r==='v'?'visitor':'member',active:d.a===0?0:1,sort_order:Number(d.o)||0};
