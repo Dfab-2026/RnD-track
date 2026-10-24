@@ -181,14 +181,10 @@
   async function sendChatMessage(payload){
     if(!ready)await init(true);
     let user=auth?.currentUser;
-    if(!user){
-      const credential=await auth.signInAnonymously();
-      user=credential?.user||auth.currentUser;
-    }
+    if(!user){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}
     if(!user)user=await waitForAuthUser();
     if(!user)throw new Error('Firebase Anonymous Authentication is not connected.');
-    await user.getIdToken(true);
-    authUid=user.uid;
+    await user.getIdToken(true);authUid=user.uid;
     const text=String(payload?.text||'').trim();
     if(!text)throw new Error('Enter a message.');
     if(text.length>1000)throw new Error('Message is too long.');
@@ -214,17 +210,17 @@
   function watchChat(onChange,onStatus){
     if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}
     if(!ready||typeof onChange!=='function')return()=>{};
-    const emit=qs=>{
-      const rows=qs.docs.map(decodeChat).filter(x=>x&&x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
-      lastError=null;
+    const ref=db.collection('team_chat');
+    chatUnsubscriber=ref.onSnapshot(qs=>{
+      const rows=qs.docs.map(decodeChat).filter(x=>x.text).sort((a,b)=>Number(a.created_at||0)-Number(b.created_at||0)).slice(-100);
+      ready=true;lastError=null;
       if(typeof onStatus==='function')onStatus({connected:true,error:'',message:'Live'});
       onChange(rows);
-    };
-    const fail=e=>{
+    },async e=>{
       lastError=e;
       if(typeof onStatus==='function')onStatus({connected:false,error:e,message:errText(e)});
-    };
-    try{chatUnsubscriber=db.collection('team_chat').onSnapshot(emit,fail)}catch(e){fail(e)}
+      try{const user=auth?.currentUser;if(user)await user.getIdToken(true)}catch{}
+    });
     return()=>{if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}};
   }
   function stopChat(){if(typeof chatUnsubscriber==='function'){try{chatUnsubscriber()}catch{}chatUnsubscriber=null}}

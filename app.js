@@ -159,6 +159,12 @@ function pendingTaskSummary(){
 }
 function pendingOwnerName(item){return state.members.find(m=>Number(m.id)===Number(item?.project?.owner_id))?.name||item?.project?.owner_name||'Unknown'}
 function notificationItemHtml(x,label){return `<button type="button" class="notification-item ${label==='Mine'?'mine':''}" data-pending-go="progress" data-pending-project="${Number(x.project?.id)||0}"><div class="notification-item-main"><div class="notification-item-top"><span class="notification-owner">${esc(label==='Mine'?'MY TASK':pendingOwnerName(x))}</span><span class="notification-date">${esc(fmtDate(x.date))}</span></div><strong>${esc(x.task)}</strong><small>${esc(x.project.title||x.project.project_number||'Weekly project')}</small></div><span class="pending-status">${x.status==='issue'?'ISSUE':x.status==='in_progress'?'IN PROGRESS':'PENDING'}</span></button>`}
+function dailyIdeaPendingMembers(){
+  const submitted=new Set(state.ideas.filter(i=>i.submission_date===today()).map(i=>Number(i.submitted_by)));
+  return workingMembers().filter(m=>!submitted.has(Number(m.id)));
+}
+function teamDailyIdeaPendingMembers(){return dailyIdeaPendingMembers().filter(m=>Number(m.id)!==Number(currentMember()?.id))}
+function teamDailyIdeaNotificationHtml(m){return `<button type="button" class="notification-item" data-pending-go="ideas"><div class="notification-item-main"><div class="notification-item-top"><span class="notification-owner">${esc(m.name)}</span><span class="notification-date">${esc(fmtDate(today()))}</span></div><strong>Daily Idea</strong><small>Today's idea is not submitted yet.</small></div><span class="pending-status">PENDING</span></button>`}
 function currentTaskAlertCount(){
   if(!currentMember())return 0;
   const data=pendingTaskSummary();
@@ -167,7 +173,7 @@ function currentTaskAlertCount(){
 function updateUnifiedNotificationBadge(){
   const badge=$('#notificationBellBadge');if(!badge)return;
   const m=currentMember(),dailyIdeaPending=m&&m.role!=='visitor'&&!state.ideas.some(i=>Number(i.submitted_by)===Number(m.id)&&i.submission_date===today());
-  const total=currentTaskAlertCount()+(dailyIdeaPending?1:0)+Number(teamChatUnread||0);
+  const total=currentTaskAlertCount()+(dailyIdeaPending?1:0)+teamDailyIdeaPendingMembers().length+Number(teamChatUnread||0);
   badge.textContent=String(Math.min(total,99));
   badge.classList.toggle('hidden',total<=0);
   badge.title=`${currentTaskAlertCount()} task alert${currentTaskAlertCount()===1?'':'s'} · ${teamChatUnread} unread chat`;
@@ -178,8 +184,10 @@ function renderNotificationCenter(){
   const mine=[...data.own.yesterday,...data.own.today];
   const team=[...data.other.yesterday,...data.other.today];
   const m=currentMember(),dailyIdeaPending=m&&m.role!=='visitor'&&!state.ideas.some(i=>Number(i.submitted_by)===Number(m.id)&&i.submission_date===today());
+  const teamDaily=teamDailyIdeaPendingMembers();
+  const teamHtml=teamDaily.map(teamDailyIdeaNotificationHtml).join('')+team.map(x=>notificationItemHtml(x,'Team')).join('');
   const mineHtml=(dailyIdeaPending?`<button type="button" class="notification-item mine" data-pending-go="ideas"><div class="notification-item-main"><div class="notification-item-top"><span class="notification-owner">MY TASK</span><span class="notification-date">${esc(fmtDate(today()))}</span></div><strong>Daily Idea</strong><small>Today's idea is not submitted yet.</small></div><span class="pending-status">PENDING</span></button>`:'')+mine.map(x=>notificationItemHtml(x,'Mine')).join('');
-  panel.innerHTML=`<section class="notification-group"><div class="notification-group-title"><span>MY PENDING</span><b>${mine.length+(dailyIdeaPending?1:0)}</b></div>${mineHtml||'<div class="notification-empty">No pending tasks for you.</div>'}</section><section class="notification-group"><div class="notification-group-title"><span>TEAM PENDING</span><b>${team.length}</b></div>${team.length?team.map(x=>notificationItemHtml(x,'Team')).join(''):'<div class="notification-empty">No pending tasks from other members.</div>'}</section><section class="notification-group notification-chat-group"><div class="notification-group-title"><span>TEAM CHAT</span><b>${teamChatUnread}</b></div><button type="button" class="notification-chat-link" id="notificationChatLink"><span>${teamChatUnread?`${teamChatUnread} unread message${teamChatUnread===1?'':'s'}`:(teamChatMessages.length?`Latest: ${esc(String(teamChatMessages[teamChatMessages.length-1]?.text||'New team message').slice(0,48))}`:'No chat messages yet')}</span><b>OPEN CHAT →</b></button></section>`;
+  panel.innerHTML=`<section class="notification-group"><div class="notification-group-title"><span>MY PENDING</span><b>${mine.length+(dailyIdeaPending?1:0)}</b></div>${mineHtml||'<div class="notification-empty">No pending tasks for you.</div>'}</section><section class="notification-group"><div class="notification-group-title"><span>TEAM PENDING</span><b>${team.length+teamDaily.length}</b></div>${teamHtml||'<div class="notification-empty">No pending tasks from other members.</div>'}</section><section class="notification-group notification-chat-group"><div class="notification-group-title"><span>TEAM CHAT</span><b>${teamChatUnread}</b></div><button type="button" class="notification-chat-link" id="notificationChatLink"><span>${teamChatUnread?`${teamChatUnread} unread message${teamChatUnread===1?'':'s'}`:(teamChatMessages.length?`Latest: ${esc(String(teamChatMessages[teamChatMessages.length-1]?.text||'New team message').slice(0,48))}`:'No chat messages yet')}</span><b>OPEN CHAT →</b></button></section>`;
   bindPendingNavigation(panel);
   $('#notificationChatLink')?.addEventListener('click',()=>{showPage('chat');$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
   updateUnifiedNotificationBadge();
@@ -244,6 +252,7 @@ function renderPage(name=state.page){
   else if(name==='progress')renderProjects();
   else if(name==='chat'){updateTeamChatIdentity();renderTeamChat();startTeamChat();}
   else if(name==='liveSheet'){}
+  else if(name==='kpi')renderKpiReport();
   else if(name==='settings')renderSettings();
   bindRecordActions();
 }
@@ -615,6 +624,19 @@ async function load(){
   member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
   if(member){persistLogin(member);showApp()}else showLogin();
 }
+function renderKpiReport(){
+  const memberSel=$('#kpiMemberSelect'),periodSel=$('#kpiPeriodType'),weekSel=$('#kpiWeekSelect'),host=$('#kpiReportContent');if(!memberSel||!periodSel||!weekSel||!host)return;
+  const members=workingMembers().slice(0,4),me=currentMember();
+  if(!memberSel.options.length){memberSel.innerHTML=members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');if(me&&members.some(m=>Number(m.id)===Number(me.id)))memberSel.value=String(me.id);weekSel.value=String(inferredWeekForDay(new Date().getDate()));memberSel.onchange=periodSel.onchange=weekSel.onchange=()=>renderKpiReport()}
+  const member=members.find(m=>Number(m.id)===Number(memberSel.value))||members[0];if(!member){host.innerHTML='<div class="empty-state">No R&D members available.</div>';return}
+  const monthKey=String(today()).slice(0,7),week=Number(weekSel.value)||1,monthly=periodSel.value==='monthly';
+  const cycles=state.cycles.filter(c=>monthKeyFromDate(c.start_date)===monthKey&&(monthly||workCycleWeek(c)===week)),cycleIds=new Set(cycles.map(c=>Number(c.id)));
+  const projects=state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))&&Number(p.owner_id)===Number(member.id)),completed=projects.filter(p=>p.status==='completed'||Number(p.progress||0)>=100).length;
+  const ideas=state.ideas.filter(i=>Number(i.submitted_by)===Number(member.id)&&String(i.submission_date||'').slice(0,7)===monthKey&&(monthly||inferredWeekForDay(Number(String(i.submission_date).slice(8,10)))===week));
+  const teamProjects=state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))),teamCompleted=teamProjects.filter(p=>p.status==='completed'||Number(p.progress||0)>=100).length;
+  host.innerHTML=`<section class="panel kpi-report-card"><div class="kpi-report-head"><div class="kpi-report-avatar">${esc(member.name.charAt(0).toUpperCase())}</div><div><span class="kicker">${monthly?'MONTHLY':`WEEK ${week}`} KPI REPORT</span><h3>${esc(member.name)}</h3><p>R&D performance snapshot · ${esc(monthKey)}</p></div></div><div class="kpi-report-grid"><article><span>NEW PRODUCT IDEAS</span><strong>${ideas.length}${monthly?'':' / 7'}</strong><small>${monthly?'Ideas submitted this month':'Individual KPI · 1 idea/day'}</small></article><article><span>MY WEEKLY ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed</small></article><article><span>AUTOMATION OF MANUAL PROCESS</span><strong>${teamCompleted}${monthly?'':' / 16'}</strong><small>Team KPI · 2/week × 8 departments</small></article><article><span>DEVELOPMENT OF NEW PRODUCT</span><strong>${monthly?`${Math.min(teamCompleted,2)} / 2`:teamCompleted}</strong><small>Team KPI · monthly target 2 products</small></article></div><div class="kpi-note"><b>TEAM KPI</b><p>Automation and New Product Development are shared team targets. Daily Ideas and weekly assignments use the selected member's data.</p></div></section>`;
+}
+
 function renderSettings(){
   const deptHost=$('#departmentsSettings'),memberHost=$('#membersSettings');
   const visitor=false;
@@ -678,66 +700,71 @@ function dashboardAllSubmittedCelebration(workers,submitters){
 function dashboardTrackerStatusScore(status){
   return status==='completed'?100:status==='in_progress'?60:status==='issue'?25:0;
 }
+function dashboardCurrentWeekInfo(){
+  const d=today(),dt=new Date(`${d}T00:00:00`),week=inferredWeekForDay(dt.getDate()),monthKey=d.slice(0,7),me=currentMember();
+  // Match the logical month/week, not only a single cycle record. This keeps assignments visible
+  // even when duplicate/recreated working-week records exist in Firebase.
+  const cycles=state.cycles.filter(c=>monthKeyFromDate(c.start_date)===monthKey&&workCycleWeek(c)===week);
+  const cycleIds=new Set(cycles.map(c=>Number(c.id)));
+  const mine=me?state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))&&Number(p.owner_id)===Number(me.id)):[];
+  const cycle=cycles[0]||null;
+  return {week,monthKey,cycle,cycles,cycleIds,active:mine.length,mine};
+}
+function dashboardCurrentCycle(){return dashboardCurrentWeekInfo().cycle}
 function dashboardTodayProgress(){
-  const m=currentMember(),date=today(),monthKey=String(date).slice(0,7);
-  if(!m)return {percent:0,projects:0,updated:0};
-  const mine=state.projects.filter(p=>{
-    const cycle=state.cycles.find(c=>Number(c.id)===Number(p.cycle_id));
-    const start=String(cycle?.start_date||p.start_date||'');
-    const end=String(cycle?.end_date||p.end_date||'');
-    return Number(p.owner_id)===Number(m.id)&&start.slice(0,7)===monthKey&&date>=start&&date<=end;
-  });
-  if(!mine.length)return {percent:0,projects:0,updated:0};
-  let total=0,updated=0;
-  mine.forEach(p=>{
+  const info=dashboardCurrentWeekInfo(),date=today();
+  const tasks=info.mine.slice(0,2).map(p=>{
     const row=trackerRowsForProject(p).find(r=>!r.manual_extra&&trackerDateToIso(r.date)===date);
-    const score=dashboardTrackerStatusScore(row?.status||'');
-    total+=score;if(score>0)updated++;
+    return {project:p,score:dashboardTrackerStatusScore(row?.status||''),status:row?.status||''};
   });
-  return {percent:Math.round(total/mine.length),projects:mine.length,updated};
+  const total=tasks.reduce((n,x)=>n+x.score,0);
+  return {percent:tasks.length?Math.round(total/tasks.length):0,projects:tasks.length,updated:tasks.filter(x=>x.score>0).length,tasks};
 }
 function dashboardMonthCompletion(){
-  const monthKey=String(today()).slice(0,7),completeWeeks=new Set();
-  state.cycles.filter(c=>String(c.start_date||'').slice(0,7)===monthKey).forEach(c=>{
-    const week=Math.max(1,Math.min(4,workCycleWeek(c)));
-    const projects=state.projects.filter(p=>Number(p.cycle_id)===Number(c.id));
-    const complete=String(c.status||'').toLowerCase()==='completed'||
-      (projects.length>=2&&projects.every(p=>p.status==='completed'||Number(p.progress||0)>=100));
-    if(complete)completeWeeks.add(week);
-  });
+  const monthKey=String(today()).slice(0,7),me=currentMember(),completeWeeks=new Set();
+  for(let week=1;week<=4;week++){
+    const cycleIds=new Set(state.cycles.filter(c=>monthKeyFromDate(c.start_date)===monthKey&&workCycleWeek(c)===week).map(c=>Number(c.id)));
+    const projects=me?state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))&&Number(p.owner_id)===Number(me.id)):[];
+    // Member dashboard: this week is green as soon as every task assigned to this member is 100%.
+    // Never wait for the calendar end date.
+    if(projects.length>0&&projects.every(p=>p.status==='completed'||Number(p.progress||0)>=100||trackerDerivedProgress(p)>=100))completeWeeks.add(week);
+  }
   const d=new Date(`${monthKey}-01T00:00:00`);
   return {weeks:[1,2,3,4].map(w=>completeWeeks.has(w)),monthName:d.toLocaleDateString('en-IN',{month:'short'}).toUpperCase()};
 }
-function dashboardActiveWeekTaskCount(){const c=dashboardCurrentCycle();if(!c)return 0;return state.projects.filter(p=>Number(p.cycle_id)===Number(c.id)&&p.status!=='completed').length}
-function dashboardCurrentWeekInfo(){
-  const d=today(),dt=new Date(`${d}T00:00:00`),week=inferredWeekForDay(dt.getDate()),monthKey=d.slice(0,7);
-  const cycle=state.cycles.find(c=>d>=String(c.start_date||'')&&d<=String(c.end_date||''))||
-    state.cycles.find(c=>monthKeyFromDate(c.start_date)===monthKey&&workCycleWeek(c)===week)||null;
-  const active=cycle?state.projects.filter(p=>Number(p.cycle_id)===Number(cycle.id)&&p.status!=='completed').length:0;
-  return {week,monthKey,cycle,active};
-}
-function dashboardCurrentCycle(){return dashboardCurrentWeekInfo().cycle}
+function dashboardActiveWeekTaskCount(){return dashboardCurrentWeekInfo().active}
 function renderDashboard(){
   const t=today();$('#todayLabel').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
-  const workers=workingMembers(),todays=state.ideas.filter(i=>i.submission_date===t),active=state.projects.filter(p=>p.status!=='completed');
-  const todayProgress=dashboardTodayProgress(),monthCompletion=dashboardMonthCompletion(),workerIds=new Set(workers.map(m=>m.id)),submitters=new Set(todays.filter(i=>workerIds.has(Number(i.submitted_by))).map(i=>Number(i.submitted_by)));
+  const workers=workingMembers(),todays=state.ideas.filter(i=>i.submission_date===t);
+  const weekInfo=dashboardCurrentWeekInfo(),todayProgress=dashboardTodayProgress(),monthCompletion=dashboardMonthCompletion(),workerIds=new Set(workers.map(m=>m.id)),submitters=new Set(todays.filter(i=>workerIds.has(Number(i.submitted_by))).map(i=>Number(i.submitted_by)));
   dashboardAllSubmittedCelebration(workers,submitters);
   const myPending=dashboardPendingItems();
   const pendingLines=myPending.length?myPending.slice(0,5).map(x=>`<button type="button" class="dashboard-pending-line" data-pending-go="${esc(x.page)}" data-pending-project="${Number(x.projectId)||0}"><span>${esc(x.label)}</span><small>${esc(x.detail)}</small><b>→</b></button>`).join(''):'<div class="dashboard-pending-empty">No pending items for you.</div>';
-  $('#dashboardMetrics').innerHTML=`<div class="metric accent dashboard-nav" data-go="ideas" role="button" tabindex="0"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric dashboard-nav dashboard-week-metric" data-go="weekly" role="button" tabindex="0"><span class="m-label">ACTIVE WEEK TASKS</span><div class="dashboard-week-value"><strong>${dashboardCurrentWeekInfo().active}</strong><b class="dashboard-current-week">WEEK ${dashboardCurrentWeekInfo().week}</b></div><small>${dashboardCurrentWeekInfo().active===1?'active task in the current week':'active tasks in the current week'}</small></div><div class="metric dashboard-nav dashboard-progress-metric" data-go="progress" role="button" tabindex="0"><span class="m-label">TODAY'S PROGRESS</span><strong>${todayProgress.percent}%</strong><small>${todayProgress.projects?`${todayProgress.updated} / ${todayProgress.projects} my projects updated today`:'no project assigned to me today'}</small></div><div class="metric dashboard-month-metric"><span class="m-label">${monthCompletion.monthName} WEEKS COMPLETE</span><div class="month-week-lights">${monthCompletion.weeks.map((done,i)=>`<span class="${done?'done':''}" title="Week ${i+1}"><i></i><b>W${i+1}</b></span>`).join('')}</div><small>green = completed week</small></div>`;
+  const progressTasks=[0,1].map(i=>{const x=todayProgress.tasks[i];return `<div class="today-task-line ${x?'':'is-disabled'}"><b>T${i+1}</b><div><span style="width:${x?x.score:0}%"></span></div><strong>${x?x.score:0}%</strong></div>`}).join('');
+  $('#dashboardMetrics').innerHTML=`<div class="metric accent dashboard-nav" data-go="ideas" role="button" tabindex="0"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric dashboard-nav dashboard-week-metric" data-go="weekly" role="button" tabindex="0"><div class="dashboard-week-heading"><span class="m-label">ACTIVE WEEK TASKS</span><b class="dashboard-current-week">W${weekInfo.week}</b></div><div class="dashboard-week-value"><strong>${weekInfo.active}</strong></div><small>${weekInfo.active===1?'assigned task in the current week':'assigned tasks in the current week'}</small></div><div class="metric dashboard-nav dashboard-progress-metric" data-go="progress" role="button" tabindex="0"><span class="m-label">TODAY'S PROGRESS</span><div class="today-task-progress">${progressTasks}</div><small>${todayProgress.projects?`${todayProgress.updated} / ${todayProgress.projects} my projects updated today`:'no project assigned to me today'}</small></div><div class="metric dashboard-month-metric"><span class="m-label">${monthCompletion.monthName} WEEKS COMPLETE</span><div class="month-week-lights">${monthCompletion.weeks.map((done,i)=>`<span class="${done?'done':''}" title="Week ${i+1}"><i></i><b>W${i+1}</b></span>`).join('')}</div><small>green = completed week</small></div>`;
   const pendingBtn=$('#dashboardPendingBtn'),pendingCount=$('#dashboardPendingCount');
   if(pendingBtn){pendingBtn.classList.toggle('has-pending',myPending.length>0);pendingBtn.classList.toggle('is-clear',myPending.length===0)}
   if(pendingCount)pendingCount.textContent=String(myPending.length);
   $$('#dashboardMetrics .dashboard-nav').forEach(card=>{card.onclick=()=>showPage(card.dataset.go);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showPage(card.dataset.go)}}});
   const heroPending=$('#dashboardPendingBtn');if(heroPending&&!heroPending.dataset.bound){heroPending.dataset.bound='1';heroPending.addEventListener('click',()=>{renderNotificationCenter();$('#notificationPanel')?.classList.remove('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','true')})}
   $('#todayActivity').innerHTML=`<div class="activity-grid">${workers.map(m=>{const n=todays.filter(i=>Number(i.submitted_by)===Number(m.id)).length;return `<div class="activity-person"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">${n?`${n} idea${n>1?'s':''} submitted`:'No entry yet'}</div></div><span class="status-dot ${n?'done':''}">${n?'✓ Submitted':'Pending'}</span></div>`}).join('')}</div>`;
-  const focusCycle=dashboardCurrentCycle(),me=currentMember();
-  const ps=focusCycle?state.projects.filter(p=>Number(p.cycle_id)===Number(focusCycle.id)).slice(0,2):[];
-  $('#weeklyFocus').innerHTML=focusCycle?`<div class="dashboard-focus-head"><span>${esc(focusCycle.label)}</span><small>${fmtDate(focusCycle.start_date)} – ${fmtDate(focusCycle.end_date)}</small></div><div class="dashboard-focus-tasks">${ps.length?ps.map((p,i)=>{const mine=me&&Number(p.owner_id)===Number(me.id);return `<button type="button" class="dashboard-focus-task ${mine?'is-mine':''}" data-focus-project="${p.id}"><i>0${i+1}</i><div class="dashboard-focus-copy"><strong>${esc(p.title)}</strong><small class="dashboard-focus-owner"><em class="${mine?'mine-dot':''}"></em>${esc(p.owner_name||'Unassigned')} · ${Number(p.progress||0)}% complete</small></div><b>→</b></button>`}).join(''):'<div class="dashboard-focus-empty">No tasks assigned in this working week.</div>'}</div>`:'<div class="empty-state">No active working week today.</div>';
+  const ps=weekInfo.mine.slice(0,2),focusCycle=weekInfo.cycles[0]||null;
+  $('#weeklyFocus').innerHTML=weekInfo.cycles.length?`<div class="dashboard-focus-head"><span>Week ${weekInfo.week}</span><small>${focusCycle?`${fmtDate(focusCycle.start_date)} – ${fmtDate(focusCycle.end_date)}`:''}</small></div><div class="dashboard-focus-tasks">${ps.length?ps.map((p,i)=>`<button type="button" class="dashboard-focus-task is-mine" data-focus-project="${p.id}"><i>0${i+1}</i><div class="dashboard-focus-copy"><strong>${esc(p.title)}</strong><small class="dashboard-focus-owner"><em class="mine-dot"></em>${esc(p.owner_name||currentMember()?.name||'Assigned')} · ${trackerDerivedProgress(p)}% complete</small></div><b>→</b></button>`).join(''):'<div class="dashboard-focus-empty">No task assigned to you in this working week.</div>'}</div>`:'<div class="empty-state">No working week found for this month.</div>';
   $$('#weeklyFocus [data-focus-project]').forEach(el=>el.addEventListener('click',()=>goToPendingItem('progress',Number(el.dataset.focusProject)||0)));
 }
 
 function renderIdeas(){const q=$('#ideaSearch').value.toLowerCase().trim(), person=Number($('#ideaPersonFilter').value)||0, dep=Number($('#ideaDeptFilter').value)||0, date=$('#ideaDateFilter').value;const rows=state.ideas.filter(i=>(!q||[i.problem,i.proposed_idea,i.department_name,i.submitted_by_name,i.idea_number].join(' ').toLowerCase().includes(q))&&(!person||i.submitted_by===person)&&(!dep||i.department_id===dep)&&(!date||i.submission_date===date));$('#ideasTable').innerHTML=rows.length?rows.map(i=>`<tr><td>${fmtDate(i.submission_date)}</td><td><b>${esc(i.idea_number)}</b>${i.attachment_path?`<div class="sub"><a class="link" href="${i.attachment_path}" target="_blank">Attachment ↗</a></div>`:''}</td><td>${esc(i.submitted_by_name)}</td><td>${esc(i.department_name)}</td><td>${esc(i.problem)}</td><td>${esc(i.proposed_idea)}</td><td><span class="tag ${i.priority.toLowerCase()}">${esc(i.priority)}</span></td><td><span class="tag ${i.status}">${esc(i.status)}</span></td><td>${isVisitor()?'—':`<div class="row-actions"><button class="mini-action" data-edit-idea="${i.id}" title="Edit idea">Edit</button><button class="mini-action danger" data-delete-idea="${i.id}" title="Delete idea">×</button></div>`}</td></tr>`).join(''):'<tr><td colspan="9" class="empty-state">No ideas match the selected filters.</td></tr>'}
+function renderWeekDeletePicker(){
+  const select=$('#weekSelect');if(!select)return;
+  let picker=$('#weekDeletePicker');
+  if(!picker){picker=document.createElement('details');picker.id='weekDeletePicker';picker.className='week-delete-picker';select.insertAdjacentElement('afterend',picker);select.hidden=true;select.parentElement.tagName==='LABEL'&&select.parentElement.setAttribute('class','working-week-field week-picker-field')}
+  picker.open=false;
+  const selected=state.cycles.find(c=>Number(c.id)===Number(select.value));
+  picker.innerHTML=`<summary>${esc(selected?.label||'No week created')} <span>▾</span></summary><div class="week-delete-options">${state.cycles.map(c=>`<div class="week-delete-option"><button type="button" data-pick-week="${c.id}" aria-pressed="${Number(c.id)===Number(select.value)}">${esc(c.label)} · ${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</button>${isVisitor()?'':`<button type="button" class="mini-action danger" data-delete-cycle="${c.id}" aria-label="Delete ${esc(c.label)}">×</button>`}</div>`).join('')||'<p>No week created</p>'}</div>`;
+  picker.querySelectorAll('[data-pick-week]').forEach(b=>b.onclick=()=>{select.value=b.dataset.pickWeek;picker.open=false;select.dispatchEvent(new Event('change'))});
+  picker.onkeydown=e=>{if(e.key==='Escape')picker.open=false};
+  bindRecordActions();
+}
 function renderWeekly(){
   // Keep Weekly Tasks aligned with the Daily Ideas reference period.
   // populateSelects() rebuilds the dropdown before this renderer runs, so
@@ -750,6 +777,7 @@ function renderWeekly(){
   );
   const sel=Number(periodCycle?.id)||Number($('#weekSelect').value)||state.cycles[0]?.id;
   if(sel)$('#weekSelect').value=String(sel);
+  renderWeekDeletePicker();
   const c=state.cycles.find(x=>Number(x.id)===Number(sel));
   if(!c){$('#weeklySetup').innerHTML='<div class="empty-state">Create a working week to begin shortlisting.</div>';return}
   syncWorkPeriodFromCycle(c);
@@ -836,7 +864,13 @@ function renderWorkPeriodNav(){ensureWorkPeriod();const monthSelect=$('#workMont
 function workPeriodProjects(){ensureWorkPeriod();return state.projects.filter(p=>{const cycle=state.cycles.find(c=>Number(c.id)===Number(p.cycle_id));const date=cycle?.start_date||p.start_date;return monthKeyFromDate(date)===state.workMonthKey&&workCycleWeek(cycle||{start_date:date,label:p.cycle_label})===Number(state.workWeek)})}
 function renderWorkSummary(){const host=$('#workSummary');if(!host)return;const periodRows=workPeriodProjects(),total=periodRows.length,active=periodRows.filter(p=>p.status!=='completed').length,done=periodRows.filter(p=>p.status==='completed').length,blocked=periodRows.filter(p=>projectHasBlocker(p.id)&&p.status!=='completed').length,avg=total?Math.round(periodRows.reduce((n,p)=>n+Number(p.progress||0),0)/total):0;host.innerHTML=`<article class="work-stat primary"><span>ACTIVE WORK</span><strong>${active}</strong><small>${total} projects · ${esc(workPeriodLabel())} W${state.workWeek}</small></article><article class="work-stat"><span>AVG COMPLETION</span><strong>${avg}%</strong><small>selected weekly projects</small></article><article class="work-stat"><span>COMPLETED</span><strong>${done}</strong><small>closed weekly priorities</small></article><article class="work-stat ${blocked?'alert':''}"><span>BLOCKED</span><strong>${blocked}</strong><small>${blocked?'needs attention':'no active blockers'}</small></article>`}
 function filteredProjects(){const q=String($('#workSearch')?.value||'').trim().toLowerCase(),status=$('#workStatusFilter')?.value||'';return workPeriodProjects().filter(p=>{const text=`${p.project_number||''} ${p.title||''} ${p.owner_name||''} ${p.department_name||''} ${p.cycle_label||''}`.toLowerCase();if(q&&!text.includes(q))return false;if(status==='blocked')return projectHasBlocker(p.id)&&p.status!=='completed';if(status&&p.status!==status)return false;return true}).sort((a,b)=>{const rank={in_progress:0,assigned:1,completed:2};return (rank[a.status]??3)-(rank[b.status]??3)||String(b.start_date||'').localeCompare(String(a.start_date||''))})}
-function renderProjects(){renderWorkPeriodNav();renderWorkSummary();const list=$('#projectList');if(!list)return;const rows=filteredProjects();const count=$('#workProjectCount');if(count)count.textContent=String(rows.length);if(!state.projects.length){list.innerHTML='<div class="empty-state">No weekly projects yet. Shortlist two ideas in Weekly Tasks to start execution.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='No work has been assigned yet.';return}if(!rows.length){list.innerHTML=`<div class="empty-state">No projects found for ${esc(workPeriodLabel())} · Week ${state.workWeek}.</div>`;$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='Choose another week from the Work Tracking period bar.';return}if(!state.selectedProject||!rows.some(p=>Number(p.id)===Number(state.selectedProject)))state.selectedProject=rows[0].id;list.innerHTML=rows.map(p=>{const last=projectLastUpdate(p.id),blocked=projectHasBlocker(p.id),due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';return `<button class="work-project-card ${Number(p.id)===Number(state.selectedProject)?'active':''}" data-project="${p.id}"><div class="work-project-top"><span>${esc(p.project_number)}</span><em class="work-status ${p.status}">${statusLabel}</em></div><h4>${esc(p.title)}</h4><div class="work-project-meta"><span>${esc(p.owner_name||'Unassigned')}</span><span>${esc(p.department_name||'—')}</span></div><div class="work-progress-row"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><div class="work-project-foot"><span>${last?`Updated ${fmtDate(last.update_date)}`:'No updates yet'}</span><span class="${blocked?'danger-text':''}">${blocked?'● Blocker':p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)}d overdue`:due===0?'Due today':`${due}d left`}</span></div></button>`}).join('');$$('[data-project]').forEach(b=>b.onclick=()=>{state.selectedProject=Number(b.dataset.project);renderProjects()});renderProjectDetail()}
+function bindTaskDeleteButtons(){
+  $$('[data-remove-task]').forEach(b=>{
+    const remove=e=>{e.stopPropagation();e.preventDefault();const p=state.projects.find(x=>Number(x.id)===Number(b.dataset.removeTask));if(!p||isVisitor())return;if(!confirm(`Delete ${p.project_number}? Its progress history will be removed and the linked idea will return to Submitted.`))return;runMutationButton(b,async()=>{await deleteProjectLocal(p.id);if(Number(state.selectedProject)===Number(p.id))state.selectedProject=null},'Task deleted.')};
+    b.onclick=remove;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')remove(e)};
+  });
+}
+function renderProjects(){renderWorkPeriodNav();renderWorkSummary();const list=$('#projectList');if(!list)return;const rows=filteredProjects();const count=$('#workProjectCount');if(count)count.textContent=String(rows.length);if(!state.projects.length){list.innerHTML='<div class="empty-state">No weekly projects yet. Shortlist two ideas in Weekly Tasks to start execution.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='No work has been assigned yet.';return}if(!rows.length){list.innerHTML=`<div class="empty-state">No projects found for ${esc(workPeriodLabel())} · Week ${state.workWeek}.</div>`;$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='Choose another week from the Work Tracking period bar.';return}if(!state.selectedProject||!rows.some(p=>Number(p.id)===Number(state.selectedProject)))state.selectedProject=rows[0].id;list.innerHTML=rows.map(p=>{const last=projectLastUpdate(p.id),blocked=projectHasBlocker(p.id),due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';return `<div role="button" tabindex="0" class="work-project-card ${Number(p.id)===Number(state.selectedProject)?'active':''}" data-project="${p.id}"><div class="work-project-top"><span>${esc(p.project_number)}</span>${isVisitor()?'':`<button type="button" class="task-delete-x" data-remove-task="${p.id}" aria-label="Delete ${esc(p.title)}">×</button>`}<em class="work-status ${p.status}">${statusLabel}</em></div><h4>${esc(p.title)}</h4><div class="work-project-meta"><span>${esc(p.owner_name||'Unassigned')}</span><span>${esc(p.department_name||'—')}</span></div><div class="work-progress-row"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><div class="work-project-foot"><span>${last?`Updated ${fmtDate(last.update_date)}`:'No updates yet'}</span><span class="${blocked?'danger-text':''}">${blocked?'● Blocker':p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)}d overdue`:due===0?'Due today':`${due}d left`}</span></div></div>`}).join('');$$('[data-project]').forEach(b=>b.onclick=()=>{state.selectedProject=Number(b.dataset.project);renderProjects()});$$('[data-project]').forEach(b=>b.onkeydown=e=>{if(e.target===b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();b.click()}});bindTaskDeleteButtons();renderProjectDetail()}
 let trackerSaveTimer=null;
 const TRACKER_VISIBLE_ROWS=12;
 function cleanTrackerRow(row={},fallbackIndex=0){
@@ -858,11 +892,19 @@ function trackerStatusLabel(value){return value==='completed'?'Completed':value=
 function trackerRowClass(value){return value==='completed'?'done':value==='issue'?'issue':value==='in_progress'?'progress':''}
 function trackerPeriodDates(){
   ensureWorkPeriod();
+  const cycle=state.cycles.find(c=>monthKeyFromDate(c.start_date)===state.workMonthKey&&workCycleWeek(c)===Number(state.workWeek));
+  if(cycle?.start_date&&cycle?.end_date){
+    const start=new Date(`${cycle.start_date}T00:00:00`),end=new Date(`${cycle.end_date}T00:00:00`),out=[];
+    for(let d=new Date(start);d<=end&&out.length<6;d.setDate(d.getDate()+1)){
+      out.push(d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'-'));
+    }
+    while(out.length<6)out.push('');
+    return out;
+  }
   const [yearRaw,monthRaw]=String(state.workMonthKey||'').split('-');
   const year=Number(yearRaw),month=Number(monthRaw);
-  const week=Math.max(1,Math.min(4,Number(state.workWeek)||1));
   if(!Number.isInteger(year)||!Number.isInteger(month)||month<1||month>12)return Array(6).fill('');
-  const startDay=((week-1)*6)+1;
+  const startDay=((Math.max(1,Math.min(4,Number(state.workWeek)||1))-1)*6)+1;
   const monthShort=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1];
   return Array.from({length:6},(_,i)=>`${String(startDay+i).padStart(2,'0')}-${monthShort}-${year}`);
 }
@@ -1003,10 +1045,13 @@ function renderProjectDetail(){
   const heroRingColor=trackerProgressColor(heroProgress);
   const storedRows=trackerRowsForProject(p);
   const highestRow=storedRows.reduce((m,r)=>Math.max(m,Number(r.row_index)||0),-1);
-  const savedRowCount=Math.max(6,Number(p.tracker_row_count)||TRACKER_VISIBLE_ROWS);
-  const visibleCount=Math.max(savedRowCount,highestRow+1,6);
+  // Default sheet shows only the six dates in the selected working week.
+  // Extra rows appear only when the user explicitly adds them.
+  const manualRows=storedRows.filter(r=>r.manual_extra===true);
+  const visibleCount=6+manualRows.length;
   const byRow=new Map(storedRows.map(r=>[Number(r.row_index),r]));
-  const rows=Array.from({length:visibleCount},(_,i)=>byRow.get(i)||cleanTrackerRow({},i));
+  const rows=Array.from({length:6},(_,i)=>byRow.get(i)||cleanTrackerRow({},i));
+  manualRows.sort((a,b)=>Number(a.row_index)-Number(b.row_index)).forEach(r=>{if(!rows.some(x=>Number(x.row_index)===Number(r.row_index)))rows.push(r)});
   const periodDates=trackerPeriodDates();
   let autoDateSlot=0;
   rows.forEach(row=>{
@@ -1195,7 +1240,7 @@ function setupWeekPickerFromCycle(c){
 function openCycleEdit(id){const c=state.cycles.find(x=>x.id===id);if(!c)return;$('#weekForm').dataset.editId=id;$('#weekDialogTitle').textContent='Edit Working Week';setupWeekPickerFromCycle(c);$('#weekDialog').showModal()}
 function openProgressEdit(id){const u=state.progress.find(x=>x.id===id);if(!u)return;const p=state.projects.find(x=>x.id===u.project_id);$('#progressForm').dataset.editId=id;$('#progressForm').dataset.projectId=u.project_id;$('#progressDialogTitle').textContent=(p?.project_number||'Project')+' — Edit Update';$('#progressMember').value=u.user_id;$('#progressDate').value=u.update_date;$('#progressPercent').value=u.progress_percent;$('#progressWork').value=u.work_done;$('#progressRemarks').value=u.remarks||'';$('#progressBlocker').value=u.blocker||'';$('#progressNext').value=u.next_action||'';$('#progressDialog').showModal()}
 function openProjectEdit(id){const p=state.projects.find(x=>x.id===Number(id));if(!p)return;$('#projectEditId').value=p.id;$('#projectEditTitle').value=p.title;$('#projectEditOwner').innerHTML=workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');$('#projectEditOwner').value=p.owner_id;$('#projectEditStart').value=p.start_date;$('#projectEditEnd').value=p.end_date;$('#projectEditDialog').showModal()}
-function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
+function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',kpi:'KPI Report',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
   $('#loginForm').onsubmit=async e=>{e.preventDefault();const name=$('#loginName').value.trim();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';try{const result=findLogin(name);if(result.matched){persistLogin(result.member);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.member.name}.`);return}$('#loginMessage').textContent=result.error||'Name not found.';if(result.suggestion){$('#loginSuggestion').innerHTML=`<div class="suggestion-box"><span>Did you mean <b>${esc(result.suggestion.name)}</b>?</span><button type="button" class="secondary-btn" id="useSuggestionBtn">Yes, use this name</button></div>`;$('#useSuggestionBtn').onclick=()=>{persistLogin(result.suggestion);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.suggestion.name}.`)}}}catch(err){$('#loginMessage').textContent=err.message}};
   $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';input.value='';input.focus();try{if(send){send.dataset.sending='1';send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending…',true);const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text});if(saved&&!teamChatMessages.some(x=>String(x.id)===String(saved.id))){teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat()}setTeamChatStatus('Live · shared with everyone',true)}catch(err){input.value=text;input.focus();setTeamChatStatus('Chat connection problem · tap Send to retry',false);toast(err?.message||'Unable to send chat message.',true)}finally{if(send){delete send.dataset.sending;send.disabled=false;send.textContent=oldLabel}}});
@@ -1225,7 +1270,7 @@ function bind(){
   $('#closeNotificationPanel')?.addEventListener('click',()=>{$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
   $('#profileQuickBtn')?.addEventListener('click',()=>{updateCompactProfile();const panel=$('#profileQuickPanel'),btn=$('#profileQuickBtn');const open=panel.classList.contains('hidden');panel.classList.toggle('hidden',!open);btn.setAttribute('aria-expanded',open?'true':'false');$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
   $('#profileSettingsBtn')?.addEventListener('click',()=>{$('#profileQuickPanel')?.classList.add('hidden');$('#profileQuickBtn')?.setAttribute('aria-expanded','false');showPage('settings')});
-  document.addEventListener('click',e=>{const notif=e.target.closest?.('.notification-center-wrap'),profile=e.target.closest?.('.profile-quick-wrap');if(!notif){$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')}if(!profile){$('#profileQuickPanel')?.classList.add('hidden');$('#profileQuickBtn')?.setAttribute('aria-expanded','false')}});
+  document.addEventListener('click',e=>{const weekPicker=$('#weekDeletePicker');if(weekPicker&&!weekPicker.contains(e.target))weekPicker.open=false;const notif=e.target.closest?.('.notification-center-wrap'),profile=e.target.closest?.('.profile-quick-wrap');if(!notif){$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')}if(!profile){$('#profileQuickPanel')?.classList.add('hidden');$('#profileQuickBtn')?.setAttribute('aria-expanded','false')}});
   $('#logoutBtn').onclick=()=>{stopTeamChat();stopMasterSheet();clearLogin();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';showLogin()};
   $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>showPage(b.dataset.go));
   const toggleSidebar=()=>{const sidebar=$('#sidebar'),shell=$('#appShell'),mobile=window.matchMedia('(max-width:980px)').matches;if(mobile){sidebar.classList.toggle('open');$('#menuBtn')?.setAttribute('aria-expanded',sidebar.classList.contains('open')?'true':'false');return}const closed=shell.classList.toggle('sidebar-collapsed');localStorage.setItem(SIDEBAR_CLOSED_KEY,closed?'1':'0');$('#menuBtn')?.setAttribute('aria-expanded',closed?'false':'true')};

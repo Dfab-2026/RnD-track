@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=88.0.0" />
+  <link rel="stylesheet" href="styles.css?v=94.0.0" />
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
   <section class="login-gate" id="loginGate" aria-label="R&D member login">
@@ -36,7 +36,8 @@
         <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
         <button class="nav-btn" data-page="chat"><span>05</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
         <button class="nav-btn" data-page="liveSheet"><span>06</span> Live Google Sheet</button>
-        <button class="nav-btn" data-page="settings"><span>07</span> Settings</button>
+        <button class="nav-btn" data-page="kpi"><span>07</span> KPI Report</button>
+        <button class="nav-btn" data-page="settings"><span>08</span> Settings</button>
       </nav>
       <div class="side-note"><b>TEAM MODE</b><p>R&D idea and execution tracker with member and visitor access.</p></div>
     </aside>
@@ -97,7 +98,7 @@
 
       <section class="page" id="weeklyPage">
         <div class="week-selector weekly-working-row weekly-working-row-primary">
-          <label class="working-week-field"><span>WORKING WEEK</span><select id="weekSelect"></select></label>
+          <div class="working-week-field"><span>WORKING WEEK</span><select id="weekSelect" aria-label="Working week"></select></div>
           <button class="secondary-btn weekly-create-btn" id="newWeekBtn" type="button">+ CREATE WEEK</button>
         </div>
         <div id="weeklySetup"></div>
@@ -142,18 +143,24 @@
           <div class="live-sheet-note">
             <span class="signal"></span>
             <span>Live Google Sheet</span>
-            <small>If Google asks you to sign in or blocks editing inside this page, use “Open in Google Sheets”.</small>
+            <small>Sheet preview · To edit or resolve a Google access/sign-in error, use “Open in Google Sheets” with your permitted Google account.</small>
           </div>
           <iframe
             id="liveGoogleSheetFrame"
             class="live-sheet-frame"
-            src="https://docs.google.com/spreadsheets/d/1eC65js37QzvlqL-Ryo3waFJt04Kbyf5FieniIEY3AJk/edit?rm=minimal&embedded=true"
+            src="https://docs.google.com/spreadsheets/d/1eC65js37QzvlqL-Ryo3waFJt04Kbyf5FieniIEY3AJk/preview"
             title="Innovation Work Tracker Google Sheet"
             loading="lazy"
             allow="clipboard-read; clipboard-write"
             referrerpolicy="strict-origin-when-cross-origin">
           </iframe>
         </section>
+      </section>
+
+      <section class="page" id="kpiPage">
+        <div class="section-toolbar"><div><span class="kicker">PERFORMANCE CONTROL</span><h2>KPI Report</h2><p>Weekly member performance and shared R&amp;D team targets from the existing tracker data.</p></div></div>
+        <section class="panel kpi-filter-panel"><label><span>MEMBER</span><select id="kpiMemberSelect"></select></label><label><span>PERIOD</span><select id="kpiPeriodType"><option value="weekly" selected>Weekly</option><option value="monthly">Monthly</option></select></label><label><span>WEEK</span><select id="kpiWeekSelect"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></section>
+        <div id="kpiReportContent"></div>
       </section>
 
       <section class="page" id="settingsPage">
@@ -170,7 +177,7 @@
     </main>
   </div>
   <dialog id="pendingTaskDialog" class="modal pending-task-dialog"><div class="pending-task-panel"><div class="modal-head"><div><span class="kicker">DAILY ATTENTION</span><h2>Pending Tasks</h2><p>Only your overdue task from yesterday is shown here</p></div><div class="pending-total"><span>PENDING</span><strong id="pendingTaskTotal">0</strong></div></div><div id="pendingTaskContent" class="pending-task-content"></div><div class="modal-actions pending-actions"><button class="secondary-btn" id="pendingNotificationBtn" type="button">Enable Chrome Notifications</button><button class="primary-btn" type="button" data-close="pendingTaskDialog">Got it</button></div></div></dialog>
-  <dialog id="ideaDialog" class="modal"><form method="dialog" id="ideaForm"><div class="modal-head"><div><span class="kicker">NEW ENTRY</span><h2 id="ideaDialogTitle">Submit Daily Idea</h2></div><button type="button" class="icon-btn" data-close="ideaDialog">×</button></div><div class="form-grid"><label>Submitted By<select id="ideaMember" required></select></label><label>Department<select id="ideaDepartment" required></select></label><label class="full">Problem / Observation<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProblem" required maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label class="full">Idea / Proposed Solution<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProposal" required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label>Expected Benefit<select id="ideaBenefit"><option value="">Select benefit</option><option>Time Saving</option><option>Cost Saving</option><option>Quality Improvement</option><option>Safety</option><option>Productivity</option><option>Automation</option><option>Process Improvement</option><option>Other</option></select></label><label>Priority<select id="ideaPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label><label>Date<input type="date" id="ideaDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Attachment <small>(optional, max 8 MB · images auto-compressed)</small><input type="file" id="ideaAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="ideaDialog">Cancel</button><button class="primary-btn" value="default">Submit Idea</button></div></form></dialog>
+  <dialog id="ideaDialog" class="modal idea-entry-dialog" aria-labelledby="ideaDialogTitle" aria-describedby="ideaDialogDescription"><form method="dialog" id="ideaForm"><div class="modal-head idea-entry-head"><div class="idea-entry-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M8.2 14.7a6 6 0 1 1 7.6 0c-.8.6-1.3 1.4-1.3 2.3h-5c0-.9-.5-1.7-1.3-2.3Z"/><path d="M12 1V0M3 5 1.5 4M21 5l1.5-1"/></svg></div><div class="idea-entry-heading"><span class="kicker">DAILY IDEAS · R&amp;D</span><h2 id="ideaDialogTitle">Submit Daily Idea</h2><p id="ideaDialogDescription">Turn an observation into your next improvement.</p></div><button type="button" class="icon-btn" data-close="ideaDialog" aria-label="Close daily idea form">×</button></div><div class="form-grid idea-entry-grid"><label><span class="idea-field-label">Submitted By <em>Required</em></span><select id="ideaMember" required></select></label><label><span class="idea-field-label">Department <em>Required</em></span><select id="ideaDepartment" required></select></label><label class="full idea-writing-field"><span class="idea-field-label">Problem / Observation <em>Required</em></span><textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProblem" placeholder="What problem did you notice? Describe where it happens and its impact." required maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label class="full idea-writing-field"><span class="idea-field-label">Idea / Proposed Solution <em>Required</em></span><textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProposal" placeholder="Describe your improvement and how it would solve the problem." required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label><span class="idea-field-label">Expected Benefit</span><select id="ideaBenefit"><option value="">Select benefit</option><option>Time Saving</option><option>Cost Saving</option><option>Quality Improvement</option><option>Safety</option><option>Productivity</option><option>Automation</option><option>Process Improvement</option><option>Other</option></select></label><label><span class="idea-field-label">Priority</span><select id="ideaPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label><label><span class="idea-field-label">Date <em>Required</em></span><input type="date" id="ideaDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label class="idea-attachment-field"><span class="idea-field-label">Attachment <em>Optional</em></span><small>Up to 8 MB · images auto-compressed</small><input type="file" id="ideaAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><div class="modal-actions idea-entry-actions"><button type="button" class="ghost-btn" data-close="ideaDialog">Cancel</button><button type="submit" class="primary-btn" value="default">Submit Idea</button></div></form></dialog>
 
   <dialog id="weekDialog" class="modal week-period-modal"><form method="dialog" id="weekForm"><div class="modal-head"><div><span class="kicker">NEW PERIOD</span><h2 id="weekDialogTitle">Create Working Week</h2></div><button type="button" class="icon-btn" data-close="weekDialog">×</button></div><div class="week-period-builder"><section class="month-picker-card" aria-label="Select working month"><div class="month-picker-year"><button type="button" class="month-year-nav" id="weekPrevYear" aria-label="Previous year">‹</button><strong id="weekYearLabel">2026</strong><button type="button" class="month-year-nav" id="weekNextYear" aria-label="Next year">›</button></div><div class="month-grid" id="weekMonthGrid"></div></section><div class="week-selection-row"><label>Selected Month<input id="weekMonthDisplay" type="text" readonly required></label><label>Week<select id="weekNumber" required><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></div><div class="week-date-row"><label>Start Date<input type="date" id="weekStart" required readonly></label><label>End Date<input type="date" id="weekEnd" required readonly></label></div></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="weekDialog">Cancel</button><button class="primary-btn">Create Week</button></div></form></dialog>
 
@@ -185,7 +192,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
   <script defer src="firebase-config.js?v=22.0.0"></script>
-  <script defer src="firebase-cloud.js?v=89.0.0"></script>
-  <script defer src="app.js?v=88.0.0"></script>
+  <script defer src="firebase-cloud.js?v=86.0.0"></script>
+  <script defer src="app.js?v=94.0.0"></script>
 </body>
 </html>
