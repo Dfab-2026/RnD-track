@@ -232,22 +232,35 @@ const SIDEBAR_CLOSED_KEY='rnd_sidebar_closed';
 let selectedManualTrackerRow=null;
 function pendingCloudOps(){try{return JSON.parse(localStorage.getItem(PENDING_KEY)||'[]')}catch{return[]}}
 function queueCloudOps(ops){const deletes=new Set(pendingCloudDeletes().map(x=>`${x.collection}:${x.id}`)),existing=pendingCloudOps(),map=new Map(existing.map(x=>[`${x.collection}:${x.row?.id}`,x]));(ops||[]).forEach(x=>{const key=`${x?.collection}:${x?.row?.id}`;if(x?.collection&&x?.row?.id!==undefined&&!deletes.has(key))map.set(key,x)});localStorage.setItem(PENDING_KEY,JSON.stringify([...map.values()].slice(-500)))}
-function removePendingCloudOps(ops){const keys=new Set((ops||[]).map(x=>`${x?.collection}:${x?.row?.id}`));const left=pendingCloudOps().filter(x=>!keys.has(`${x.collection}:${x.row?.id}`));if(left.length)localStorage.setItem(PENDING_KEY,JSON.stringify(left));else localStorage.removeItem(PENDING_KEY)}
+function removePendingCloudOps(ops){const sent=new Map((ops||[]).map(x=>[`${x.collection}:${x.row?.id}`,JSON.stringify(x.row)]));const left=pendingCloudOps().filter(x=>sent.get(`${x.collection}:${x.row?.id}`)!==JSON.stringify(x.row));if(left.length)localStorage.setItem(PENDING_KEY,JSON.stringify(left));else localStorage.removeItem(PENDING_KEY)}
 function clearPendingCloudOps(){localStorage.removeItem(PENDING_KEY)}
 function pendingCloudDeletes(){try{return JSON.parse(localStorage.getItem(PENDING_DELETE_KEY)||'[]')}catch{return[]}}
 function queueCloudDelete(collection,ids){const cur=pendingCloudDeletes(),map=new Map(cur.map(x=>[`${x.collection}:${x.id}`,x])),deleteKeys=new Set();(ids||[]).forEach(id=>{const key=`${collection}:${id}`;map.set(key,{collection,id});deleteKeys.add(key)});localStorage.setItem(PENDING_DELETE_KEY,JSON.stringify([...map.values()].slice(-500)));const ops=pendingCloudOps().filter(x=>!deleteKeys.has(`${x.collection}:${x.row?.id}`));if(ops.length)localStorage.setItem(PENDING_KEY,JSON.stringify(ops));else localStorage.removeItem(PENDING_KEY)}
 function removePendingCloudDeletes(collection,ids){const keys=new Set((ids||[]).map(id=>`${collection}:${id}`));const left=pendingCloudDeletes().filter(x=>!keys.has(`${x.collection}:${x.id}`));if(left.length)localStorage.setItem(PENDING_DELETE_KEY,JSON.stringify(left));else localStorage.removeItem(PENDING_DELETE_KEY)}
 function clearPendingCloudDeletes(){localStorage.removeItem(PENDING_DELETE_KEY)}
 async function persistState(){const snap=rawSnapshot();await writeSnapshot(snap);return snap}
+let cloudFlushPromise=null;
 async function cloudWrite(ops,{silent=false}={}){
-  const deleted=new Set(pendingCloudDeletes().map(x=>`${x.collection}:${x.id}`));
-  const valid=(ops||[]).filter(x=>x?.collection&&x?.row?.id!==undefined&&!deleted.has(`${x.collection}:${x.row.id}`));
-  if(!valid.length)return true;
-  if(!window.rndCloud?.enabled){queueCloudOps(valid);if(!silent)setCloudRuntimeStatus('offline','Saved locally · waiting for Firebase reconnect');return false}
-  try{await window.rndCloud.writeMany(valid);removePendingCloudOps(valid);setCloudRuntimeStatus('live');return true}catch(e){queueCloudOps(valid);console.error('Firebase write failed',e);setCloudRuntimeStatus('offline',e?.message||String(e));if(!silent)toast('Saved locally. Firebase will retry when cloud reconnects.',true);return false}
+  queueCloudOps(JSON.parse(JSON.stringify(ops||[])));
+  return flushPendingCloudOps();
 }
-async function cloudDelete(collection,ids){const clean=[...new Set((ids||[]).map(Number).filter(Number.isFinite))];if(!clean.length)return true;queueCloudDelete(collection,clean);if(!window.rndCloud?.enabled){setCloudRuntimeStatus('offline','Delete saved locally · waiting for Firebase reconnect');return false}try{await window.rndCloud.deleteMany(collection,clean);removePendingCloudDeletes(collection,clean);setCloudRuntimeStatus('live');return true}catch(e){setCloudRuntimeStatus('offline',e?.message||String(e));console.error('Firebase delete failed',e);return false}}
-async function flushPendingCloudOps(){if(!window.rndCloud?.enabled)return true;try{const dels=pendingCloudDeletes();if(dels.length){const by={};dels.forEach(x=>(by[x.collection]??=[]).push(x.id));for(const [collection,ids] of Object.entries(by)){await window.rndCloud.deleteMany(collection,ids);removePendingCloudDeletes(collection,ids)}}const ops=pendingCloudOps();if(ops.length){await window.rndCloud.writeMany(ops);removePendingCloudOps(ops)}setCloudRuntimeStatus('live');return true}catch(e){setCloudRuntimeStatus('offline',e?.message||String(e));return false}}
+async function cloudDelete(collection,ids){queueCloudDelete(collection,ids);return flushPendingCloudOps()}
+function flushPendingCloudOps(){
+  if(cloudFlushPromise)return cloudFlushPromise;
+  if(!window.rndCloud?.enabled){setCloudRuntimeStatus('offline','Saved locally · waiting for Firebase reconnect');return Promise.resolve(false)}
+  cloudFlushPromise=(async()=>{
+    try{
+      while(pendingCloudDeletes().length||pendingCloudOps().length){
+        const by={};pendingCloudDeletes().forEach(x=>(by[x.collection]??=[]).push(x.id));
+        for(const [collection,ids] of Object.entries(by)){await window.rndCloud.deleteMany(collection,ids);removePendingCloudDeletes(collection,ids)}
+        const ops=pendingCloudOps();
+        if(ops.length){await window.rndCloud.writeMany(ops);removePendingCloudOps(ops)}
+      }
+      setCloudRuntimeStatus('live');return true;
+    }catch(e){setCloudRuntimeStatus('offline',e?.message||String(e));return false}
+  })().finally(()=>{cloudFlushPromise=null});
+  return cloudFlushPromise;
+}
 
 let renderQueued=false;
 function renderPage(name=state.page){
@@ -262,7 +275,23 @@ function renderPage(name=state.page){
   else if(name==='settings')renderSettings();
   bindRecordActions();
 }
-function scheduleRender(full=false){if(renderQueued)return;renderQueued=true;requestAnimationFrame(()=>{renderQueued=false;full?renderAll():renderPage()})}
+let deferredLiveRender=false;
+function scheduleRender(full=false){
+  if(renderQueued)return;renderQueued=true;
+  requestAnimationFrame(()=>{
+    renderQueued=false;
+    const active=document.activeElement,page=$(`#${state.page}Page`);
+    if(active&&page?.contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)&&state.page!=='chat'){
+      if(!deferredLiveRender){deferredLiveRender=true;active.addEventListener('blur',()=>{deferredLiveRender=false;scheduleRender(full)},{once:true})}
+      updateUnifiedNotificationBadge();return;
+    }
+    const positions=$$('[id]').filter(el=>el.scrollTop||el.scrollLeft).map(el=>({id:el.id,top:el.scrollTop,left:el.scrollLeft}));
+    full?renderAll():renderPage();
+    for(const pos of positions){const el=document.getElementById(pos.id);if(el){el.scrollTop=pos.top;el.scrollLeft=pos.left}}
+    updateCompactProfile();updateUnifiedNotificationBadge();
+    if(!$('#notificationPanel')?.classList.contains('hidden'))renderNotificationCenter();
+  });
+}
 function pendingDeleteSet(){return new Set(pendingCloudDeletes().map(x=>`${x.collection}:${x.id}`))}
 function reconcileRemoteSnapshot(remote,local){
   const base=migrateSnapshot(remote||{}),cached=migrateSnapshot(local||seedSnapshot()),deleted=pendingDeleteSet(),pending=pendingCloudOps();
@@ -288,8 +317,7 @@ async function persistThenSync(writes=[],deletes=[]){
   if(writes.length)queueCloudOps(writes);
   scheduleRender();
   await persistState();
-  for(const d of deletes)void cloudDelete(d.collection,d.ids||[]);
-  if(writes.length)void cloudWrite(writes,{silent:true});
+  void flushPendingCloudOps();
 }
 async function refreshFromStorage(){let snap=await readSnapshot();if(!snap)snap=seedSnapshot();snap=migrateSnapshot(snap);await writeSnapshot(snap);const ui={page:state.page,selectedProject:state.selectedProject,reportType:state.reportType};Object.assign(state,enrich(snap),ui)}
 async function updateMemberLocal(id,{name,role}){
@@ -468,7 +496,7 @@ function startTeamChat(){
       }
     }
     renderTeamChat();updateTeamChatUnread();
-  },status=>{if(status?.connected)setTeamChatStatus('Live · shared with everyone',true);else setTeamChatStatus('Chat offline · reconnecting…',false)});
+  },status=>{if(status?.connected)setTeamChatStatus('Live · shared with everyone',true);else{setTeamChatStatus('Chat offline · reconnecting…',false);teamChatStarted=false;setCloudRuntimeStatus('offline',status?.message||'Team chat connection interrupted.')}});
 }
 function stopTeamChat(){
   if(typeof teamChatStop==='function'){try{teamChatStop()}catch{}};
@@ -540,8 +568,23 @@ function updateCompactProfile(){
 }
 function showApp(){const member=currentMember();if(!member){showLogin();return}document.querySelector('#loginGate').classList.add('hidden');document.querySelector('#appShell').classList.remove('app-locked');updateCompactProfile();try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);maybeShowPendingTaskPopup();updateTeamChatIdentity();setTimeout(startTeamChat,120)}
 let cloudRuntimeStatus='connecting', cloudRuntimeMessage='';
+let cloudRetryTimer=null,cloudRetryAttempt=0,cloudBootInFlight=false;
+function scheduleCloudReconnect(immediate=false){
+  if(!window.rndCloud?.configured?.()||navigator.onLine===false)return;
+  if(cloudRetryTimer&&!immediate)return;
+  clearTimeout(cloudRetryTimer);
+  cloudRetryTimer=setTimeout(async()=>{
+    cloudRetryTimer=null;
+    if(cloudBootInFlight){scheduleCloudReconnect();return}
+    cloudBooted=false;cloudWatching=false;
+    await bootCloud();
+  },immediate?0:Math.min(3000*2**cloudRetryAttempt++,60000));
+}
+
 function setCloudRuntimeStatus(status,message=''){
   cloudRuntimeStatus=status;
+  if(status==='offline')scheduleCloudReconnect();
+  if(status==='live'){clearTimeout(cloudRetryTimer);cloudRetryTimer=null;cloudRetryAttempt=0;cloudRuntimeMessage='';}
   if(message) cloudRuntimeMessage=String(message);
   const dot=$('#profileCloudDot'),cloudText=$('#profileQuickCloud');
   if(dot){dot.className='profile-cloud-dot '+status;dot.title=status==='live'?'Cloud online':status==='offline'?'Cloud offline':'Cloud connecting';}
@@ -554,16 +597,25 @@ function setCloudRuntimeStatus(status,message=''){
 let cloudBooted=false,cloudWatching=false;
 function cloudIsEmpty(s){return !s||['members','departments','ideas','cycles','projects','progress'].every(k=>!(s[k]||[]).length)}
 let lastRemoteSignature='';
-async function applyRemoteSnapshot(remote){
+let remoteApplyChain=Promise.resolve();
+function applyRemoteSnapshot(remote){
+  if(!remote)return Promise.resolve();
+  const snapshot=JSON.parse(JSON.stringify(remote));
+  const run=()=>applyRemoteSnapshotNow(snapshot);
+  const task=remoteApplyChain.then(run,run);
+  remoteApplyChain=task.catch(e=>{setCloudRuntimeStatus('offline',e?.message||String(e))});
+  return task;
+}
+async function applyRemoteSnapshotNow(remote){
   if(!remote)return;
   const signature=JSON.stringify(['members','departments','ideas','cycles','projects','progress'].map(k=>remote[k]||[]));
   if(signature===lastRemoteSignature){setCloudRuntimeStatus('live');return}
-  lastRemoteSignature=signature;
   const local=await readSnapshot()||seedSnapshot();
   const reconciled=reconcileRemoteSnapshot(remote,local);
   await writeSnapshot(reconciled);
   const ui={page:state.page,selectedProject:state.selectedProject,reportType:state.reportType};
   Object.assign(state,enrich(reconciled),ui);
+  lastRemoteSignature=signature;
   const saved=storedLogin();
   if(saved){
     let member=state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0);
@@ -577,7 +629,7 @@ async function applyRemoteSnapshot(remote){
   if(!$('#appShell').classList.contains('app-locked'))scheduleRender();
 }
 async function bootCloud(){
-  if(cloudBooted||!window.rndCloud)return;cloudBooted=true;
+  if(cloudBooted||cloudBootInFlight||!window.rndCloud)return;cloudBooted=true;cloudBootInFlight=true;
   try{
     setCloudRuntimeStatus('connecting');
     const result=await window.rndCloud.init();
@@ -601,16 +653,19 @@ async function bootCloud(){
       await window.rndCloud.syncSnapshot(rawSnapshot());
       await window.rndCloud.deleteMany?.('members',obsoleteMemberIds);
     }
-    await flushPendingCloudOps();
+    const flushed=await flushPendingCloudOps();
+    if(!flushed)throw new Error(cloudRuntimeMessage||'Cloud changes are waiting to sync.');
     setCloudRuntimeStatus('live');
     if(!cloudWatching){
       cloudWatching=true;
-      window.rndCloud.watch(applyRemoteSnapshot,status=>setCloudRuntimeStatus(status?.connected?'live':'offline',status?.message||status?.error?.message||''));
+      window.rndCloud.watch(applyRemoteSnapshot,status=>{setCloudRuntimeStatus(status?.connected?'live':'offline',status?.message||status?.error?.message||'');if(status?.connected)void flushPendingCloudOps()});
     }
+    if(!$('#appShell').classList.contains('app-locked'))scheduleRender();
   }catch(e){
+    cloudBooted=false;cloudWatching=false;
     console.error('Firebase startup failed',e);
     setCloudRuntimeStatus('offline',`${e?.code?e.code+': ':''}${e?.message||e}`);
-  }
+  }finally{cloudBootInFlight=false}
 }
 async function load(){
   await refreshFromStorage();
@@ -730,10 +785,9 @@ function dashboardMonthCompletion(){
   const monthKey=String(today()).slice(0,7),me=currentMember(),completeWeeks=new Set();
   for(let week=1;week<=4;week++){
     const cycleIds=new Set(state.cycles.filter(c=>monthKeyFromDate(c.start_date)===monthKey&&workCycleWeek(c)===week).map(c=>Number(c.id)));
-    const projects=me?state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))&&Number(p.owner_id)===Number(me.id)):[];
-    // Member dashboard: this week is green as soon as every task assigned to this member is 100%.
-    // Never wait for the calendar end date.
-    if(projects.length>0&&projects.every(p=>p.status==='completed'||Number(p.progress||0)>=100||trackerDerivedProgress(p)>=100))completeWeeks.add(week);
+    const projects=state.projects.filter(p=>cycleIds.has(Number(p.cycle_id)));
+    // A shared week is complete only after both weekly assignments are complete.
+    if(projects.length>=2&&projects.every(p=>p.status==='completed'||Number(p.progress||0)>=100||trackerDerivedProgress(p)>=100))completeWeeks.add(week);
   }
   const d=new Date(`${monthKey}-01T00:00:00`);
   return {weeks:[1,2,3,4].map(w=>completeWeeks.has(w)),monthName:d.toLocaleDateString('en-IN',{month:'short'}).toUpperCase()};
@@ -754,8 +808,8 @@ function renderDashboard(){
   $$('#dashboardMetrics .dashboard-nav').forEach(card=>{card.onclick=()=>showPage(card.dataset.go);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showPage(card.dataset.go)}}});
   const heroPending=$('#dashboardPendingBtn');if(heroPending&&!heroPending.dataset.bound){heroPending.dataset.bound='1';heroPending.addEventListener('click',()=>{renderNotificationCenter();$('#notificationPanel')?.classList.remove('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','true')})}
   $('#todayActivity').innerHTML=`<div class="activity-grid">${workers.map(m=>{const n=todays.filter(i=>Number(i.submitted_by)===Number(m.id)).length;return `<div class="activity-person"><div><b>${esc(m.name)}</b><div class="muted" style="font-size:11px">${n?`${n} idea${n>1?'s':''} submitted`:'No entry yet'}</div></div><span class="status-dot ${n?'done':''}">${n?'✓ Submitted':'Pending'}</span></div>`}).join('')}</div>`;
-  const ps=weekInfo.mine.slice(0,2),focusCycle=weekInfo.cycles[0]||null;
-  $('#weeklyFocus').innerHTML=weekInfo.cycles.length?`<div class="dashboard-focus-head"><span>Week ${weekInfo.week}</span><small>${focusCycle?`${fmtDate(focusCycle.start_date)} – ${fmtDate(focusCycle.end_date)}`:''}</small></div><div class="dashboard-focus-tasks">${ps.length?ps.map((p,i)=>`<button type="button" class="dashboard-focus-task is-mine" data-focus-project="${p.id}"><i>0${i+1}</i><div class="dashboard-focus-copy"><strong>${esc(p.title)}</strong><small class="dashboard-focus-owner"><em class="mine-dot"></em>${esc(p.owner_name||currentMember()?.name||'Assigned')} · ${trackerDerivedProgress(p)}% complete</small></div><b>→</b></button>`).join(''):'<div class="dashboard-focus-empty">No task assigned to you in this working week.</div>'}</div>`:'<div class="empty-state">No working week found for this month.</div>';
+  const ps=state.projects.filter(p=>weekInfo.cycleIds.has(Number(p.cycle_id))).sort((a,b)=>Number(Number(b.owner_id)===Number(currentMember()?.id))-Number(Number(a.owner_id)===Number(currentMember()?.id))||Number(a.id)-Number(b.id)).slice(0,2),focusCycle=weekInfo.cycles[0]||null;
+  $('#weeklyFocus').innerHTML=weekInfo.cycles.length?`<div class="dashboard-focus-head"><span>Week ${weekInfo.week}</span><small>${focusCycle?`${fmtDate(focusCycle.start_date)} – ${fmtDate(focusCycle.end_date)}`:''}</small></div><div class="dashboard-focus-tasks">${ps.length?ps.map((p,i)=>`<button type="button" class="dashboard-focus-task ${Number(p.owner_id)===Number(currentMember()?.id)?'is-mine':''}" data-focus-project="${p.id}"><i>0${i+1}</i><div class="dashboard-focus-copy"><strong>${esc(p.title)}</strong><small class="dashboard-focus-owner"><em class="mine-dot"></em>${esc(p.owner_name||currentMember()?.name||'Assigned')} · ${Math.max(Number(p.progress)||0,trackerDerivedProgress(p))}% complete</small></div><b>→</b></button>`).join(''):'<div class="dashboard-focus-empty">No tasks assigned in this working week.</div>'}</div>`:'<div class="empty-state">No working week found for this month.</div>';
   $$('#weeklyFocus [data-focus-project]').forEach(el=>el.addEventListener('click',()=>goToPendingItem('progress',Number(el.dataset.focusProject)||0)));
 }
 
@@ -1248,6 +1302,9 @@ function openProgressEdit(id){const u=state.progress.find(x=>x.id===id);if(!u)re
 function openProjectEdit(id){const p=state.projects.find(x=>x.id===Number(id));if(!p)return;$('#projectEditId').value=p.id;$('#projectEditTitle').value=p.title;$('#projectEditOwner').innerHTML=workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');$('#projectEditOwner').value=p.owner_id;$('#projectEditStart').value=p.start_date;$('#projectEditEnd').value=p.end_date;$('#projectEditDialog').showModal()}
 function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',kpi:'KPI Report',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
+  window.addEventListener('online',()=>scheduleCloudReconnect(true));
+  window.addEventListener('offline',()=>setCloudRuntimeStatus('offline','No internet connection · changes are saved locally.'));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&cloudRuntimeStatus!=='live')scheduleCloudReconnect(true)});
   $('#loginForm').onsubmit=async e=>{e.preventDefault();const name=$('#loginName').value.trim();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';try{const result=findLogin(name);if(result.matched){persistLogin(result.member);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.member.name}.`);return}$('#loginMessage').textContent=result.error||'Name not found.';if(result.suggestion){$('#loginSuggestion').innerHTML=`<div class="suggestion-box"><span>Did you mean <b>${esc(result.suggestion.name)}</b>?</span><button type="button" class="secondary-btn" id="useSuggestionBtn">Yes, use this name</button></div>`;$('#useSuggestionBtn').onclick=()=>{persistLogin(result.suggestion);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.suggestion.name}.`)}}}catch(err){$('#loginMessage').textContent=err.message}};
   $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';input.value='';input.focus();try{if(send){send.dataset.sending='1';send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending…',true);const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text});if(saved&&!teamChatMessages.some(x=>String(x.id)===String(saved.id))){teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat()}setTeamChatStatus('Live · shared with everyone',true)}catch(err){input.value=text;input.focus();setTeamChatStatus('Chat connection problem · tap Send to retry',false);toast(err?.message||'Unable to send chat message.',true)}finally{if(send){delete send.dataset.sending;send.disabled=false;send.textContent=oldLabel}}});
   $('#teamChatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#teamChatForm')?.requestSubmit()}});

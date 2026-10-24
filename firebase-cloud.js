@@ -164,10 +164,11 @@
         lastSig=sig;seen++;ready=true;lastError=null;
         if(typeof onStatus==='function')onStatus({connected:true,seen});
         onChange(snapshot);
-      },90);
+      },35);
     };
     COLLECTIONS.forEach(name=>{
       const unsub=db.collection(name).onSnapshot(qs=>{
+        if(qs.metadata?.fromCache&&!qs.metadata?.hasPendingWrites)return;
         remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));
         emit();
       },err=>{
