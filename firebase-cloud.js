@@ -184,7 +184,7 @@
 
   function decodeChat(doc){
     const d=doc.data?doc.data():doc||{};
-    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||'')};
+    return {id:doc.id||d.id||'',member_id:Number(d.m)||0,name:String(d.n||'Unknown'),role:d.r==='v'?'visitor':'member',text:String(d.t||''),created_at:Number(d.c)||0,auth_uid:String(d.a||''),reply:d.y||null};
   }
   async function sendChatMessage(payload){
     if(!ready)await init(true);
@@ -196,11 +196,11 @@
     const text=String(payload?.text||'').trim();
     if(!text)throw new Error('Enter a message.');
     if(text.length>1000)throw new Error('Message is too long.');
-    const row={m:Number(payload?.member_id)||0,t:text,c:Date.now(),a:String(user.uid)};
+    const row={m:Number(payload?.member_id)||0,t:text,c:Date.now(),a:String(user.uid)};if(payload?.reply?.id)row.y={id:String(payload.reply.id).slice(0,150),name:String(payload.reply.name||'').slice(0,80),text:String(payload.reply.text||'').slice(0,250)};
     const ref=db.collection('team_chat').doc();
     await withWriteRetry(()=>ref.set(row),'Team chat send');
     await flushPendingWrites().catch(()=>false);
-    return {id:ref.id,member_id:row.m,name:'',role:'member',text:row.t,created_at:row.c,auth_uid:row.a};
+    return {id:ref.id,member_id:row.m,name:'',role:'member',text:row.t,created_at:row.c,auth_uid:row.a,reply:row.y||null};
   }
   async function deleteChatMessage(id){
     if(!ready)await init(true);
@@ -251,5 +251,21 @@
   if(typeof window!=='undefined'){window.addEventListener('online',()=>{flushPendingWrites().catch(()=>{})});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingWrites().catch(()=>{})})}
 
   async function test(){try{const r=await init(true);if(!r.enabled)return{ok:false,message:r.reason||'Firebase is not configured.',details:status()};await db.collection('members').limit(1).get({source:'server'});return{ok:true,message:`Firebase connected · Auth OK · Firestore OK · compact schema · ${cfg().projectId}`,details:status()}}catch(e){lastError=e;return{ok:false,message:errText(e),details:status()}}}
-  window.rndCloud={configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  function watchReportData(onChange,onError){
+    if(!ready)return()=>{};
+    return db.collection('app_meta').onSnapshot(qs=>onChange(qs.docs.map(d=>({id:d.id,...d.data()})).filter(d=>['kpi_entry','chat_reaction'].includes(d.kind))),onError);
+  }
+  async function saveReportEntry(key,data){
+    if(!ready)throw new Error('Cloud is offline. Please reconnect before saving KPI remarks.');
+    if(!/^[A-Za-z0-9_-]{1,180}$/.test(String(key)))throw new Error('Invalid KPI record.');
+    if(!Number.isInteger(Number(data.value))||Number(data.value)<0||Number(data.value)>9999)throw new Error('Enter a valid completed value.');
+    await db.collection('app_meta').doc('kpi_'+key).set({kind:'kpi_entry',key,value:Number(data.value)||0,remarks:String(data.remarks||'').trim().slice(0,1500),member_id:Number(data.member_id)||0,updated_at:Date.now()});
+  }
+  async function toggleChatReaction(messageId,memberId,emoji){
+    if(!ready)throw new Error('Cloud is offline. Please reconnect to react.');
+    if(!['👍','❤️','😂','🎉','👏','🙏'].includes(emoji))throw new Error('Choose a supported reaction.');
+    const ref=db.collection('app_meta').doc('reaction_'+String(messageId)+'_'+Number(memberId));
+    await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(snap.exists&&snap.data().emoji===emoji)tx.delete(ref);else tx.set(ref,{kind:'chat_reaction',message_id:String(messageId),member_id:Number(memberId),emoji,updated_at:Date.now()})});
+  }
+  window.rndCloud={watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();

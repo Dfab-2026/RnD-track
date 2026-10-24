@@ -746,13 +746,18 @@ function dashboardPendingItems(){
   return items.sort((a,b)=>a.priority-b.priority);
 }
 function goToPendingItem(page,projectId=0){
-  if(page==='progress'&&projectId){
-    const p=state.projects.find(x=>Number(x.id)===Number(projectId));state.selectedProject=Number(projectId);
-    if(p?.start_date){state.workMonthKey=monthKeyFromDate(p.start_date);const day=Number(String(p.start_date).slice(8,10))||1;state.workWeek=day<=6?1:day<=12?2:day<=18?3:4}
-  }
+  const project=page==='progress'?state.projects.find(p=>Number(p.id)===Number(projectId)):null;
   showPage(page||'dashboard');
-  if(page==='progress'&&projectId){state.selectedProject=Number(projectId);renderProjects()}
+  if(project){
+    if($('#workSearch'))$('#workSearch').value='';if($('#workStatusFilter'))$('#workStatusFilter').value='';
+    const cycle=state.cycles.find(c=>Number(c.id)===Number(project.cycle_id));
+    if(cycle)syncWorkPeriodFromCycle(cycle);
+    else if(project.start_date){state.workMonthKey=monthKeyFromDate(project.start_date);state.workWeek=inferredWeekForDay(Number(project.start_date.slice(8,10)))}
+    state.selectedProject=Number(project.id);renderProjects();
+  }
+  $('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false');
 }
+
 function bindPendingNavigation(scope=document){scope.querySelectorAll?.('[data-pending-go]').forEach(el=>{el.onclick=()=>goToPendingItem(el.dataset.pendingGo,Number(el.dataset.pendingProject)||0)})}
 
 function dashboardAllSubmittedCelebration(workers,submitters){
@@ -1326,7 +1331,7 @@ function bind(){
   window.addEventListener('offline',()=>setCloudRuntimeStatus('offline','No internet connection · changes are saved locally.'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&cloudRuntimeStatus!=='live')scheduleCloudReconnect(true)});
   $('#loginForm').onsubmit=async e=>{e.preventDefault();const name=$('#loginName').value.trim();$('#loginMessage').textContent='';$('#loginSuggestion').innerHTML='';try{const result=findLogin(name);if(result.matched){persistLogin(result.member);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.member.name}.`);return}$('#loginMessage').textContent=result.error||'Name not found.';if(result.suggestion){$('#loginSuggestion').innerHTML=`<div class="suggestion-box"><span>Did you mean <b>${esc(result.suggestion.name)}</b>?</span><button type="button" class="secondary-btn" id="useSuggestionBtn">Yes, use this name</button></div>`;$('#useSuggestionBtn').onclick=()=>{persistLogin(result.suggestion);requestNotificationsFromGesture();$('#loginName').value='';showApp();toast(`Welcome, ${result.suggestion.name}.`)}}}catch(err){$('#loginMessage').textContent=err.message}};
-  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';input.value='';input.focus();try{if(send){send.dataset.sending='1';send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending…',true);const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text});if(saved&&!teamChatMessages.some(x=>String(x.id)===String(saved.id))){teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat()}setTeamChatStatus('Live · shared with everyone',true)}catch(err){input.value=text;input.focus();setTeamChatStatus('Chat connection problem · tap Send to retry',false);toast(err?.message||'Unable to send chat message.',true)}finally{if(send){delete send.dataset.sending;send.disabled=false;send.textContent=oldLabel}}});
+  $('#teamChatForm')?.addEventListener('submit',async e=>{e.preventDefault();const m=currentMember(),input=$('#teamChatInput'),send=$('#teamChatSend');const text=String(input?.value||'').trim();if(!m||!text)return;const oldLabel=send?.textContent||'Send';input.value='';input.focus();try{if(send){send.dataset.sending='1';send.disabled=true;send.textContent='Sending…'}setTeamChatStatus('Sending…',true);const saved=await window.rndCloud.sendChatMessage({member_id:m.id,text,reply:window.rndChatReply||null});if(saved){window.rndChatReply=null;window.renderChatReply?.()}if(saved&&!teamChatMessages.some(x=>String(x.id)===String(saved.id))){teamChatMessages=[...teamChatMessages,saved].slice(-100);renderTeamChat()}setTeamChatStatus('Live · shared with everyone',true)}catch(err){input.value=text;input.focus();setTeamChatStatus('Chat connection problem · tap Send to retry',false);toast(err?.message||'Unable to send chat message.',true)}finally{if(send){delete send.dataset.sending;send.disabled=false;send.textContent=oldLabel}}});
   $('#teamChatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#teamChatForm')?.requestSubmit()}});
   $('#excelFormulaBar')?.addEventListener('input',e=>{const {row,col}=excelActiveCell,cell=excelCellElement(row,col);if(!cell)return;cell.textContent=e.target.value;excelCommitCell(row,col,e.target.value)});
   $('#excelFormulaBar')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();excelSelectCell(excelActiveCell.row+1,excelActiveCell.col,true)}});
