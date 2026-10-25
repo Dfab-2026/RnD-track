@@ -271,7 +271,6 @@ function renderPage(name=state.page){
   else if(name==='weekly')renderWeekly();
   else if(name==='progress')renderProjects();
   else if(name==='chat'){updateTeamChatIdentity();renderTeamChat();startTeamChat();}
-  else if(name==='liveSheet'){}
   else if(name==='kpi')renderKpiReport();
   else if(name==='settings')renderSettings();
   bindRecordActions();
@@ -1325,7 +1324,7 @@ function setupWeekPickerFromCycle(c){
 function openCycleEdit(id){const c=state.cycles.find(x=>x.id===id);if(!c)return;$('#weekForm').dataset.editId=id;$('#weekDialogTitle').textContent='Edit Working Week';setupWeekPickerFromCycle(c);$('#weekDialog').showModal()}
 function openProgressEdit(id){const u=state.progress.find(x=>x.id===id);if(!u)return;if(!canEditTask(state.projects.find(p=>Number(p.id)===Number(u.project_id))))return toast('This task is view only for your profile.',true);const p=state.projects.find(x=>x.id===u.project_id);$('#progressForm').dataset.editId=id;$('#progressForm').dataset.projectId=u.project_id;$('#progressDialogTitle').textContent=(p?.project_number||'Project')+' — Edit Update';$('#progressMember').value=u.user_id;$('#progressDate').value=u.update_date;$('#progressPercent').value=u.progress_percent;$('#progressWork').value=u.work_done;$('#progressRemarks').value=u.remarks||'';$('#progressBlocker').value=u.blocker||'';$('#progressNext').value=u.next_action||'';$('#progressDialog').showModal()}
 function openProjectEdit(id){if(!isLead())return toast('Only the R&D Lead can manage assignments.',true);const p=state.projects.find(x=>x.id===Number(id));if(!p)return;$('#projectEditId').value=p.id;$('#projectEditTitle').value=p.title;$('#projectEditOwner').innerHTML=workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');$('#projectEditOwner').value=p.owner_id;$('#projectEditPriority').value=taskPriority(p);$('#projectEditStart').value=p.start_date;$('#projectEditEnd').value=p.end_date;$('#projectEditDialog').showModal()}
-function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',liveSheet:'Live Google Sheet',kpi:'KPI Report',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
+function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',chat:'Team Chat',kpi:'KPI Report',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
   window.addEventListener('online',()=>scheduleCloudReconnect(true));
   window.addEventListener('offline',()=>setCloudRuntimeStatus('offline','No internet connection · changes are saved locally.'));
@@ -1338,10 +1337,6 @@ function bind(){
   $('#excelClearCellBtn')?.addEventListener('click',excelClearCell);
   $('#excelClearRowBtn')?.addEventListener('click',excelClearRow);
   $('#excelExportCsvBtn')?.addEventListener('click',exportExcelCsv);
-  $('#reloadLiveSheetBtn')?.addEventListener('click',()=>{
-    const frame=$('#liveGoogleSheetFrame');
-    if(frame){const src=frame.src;frame.src='about:blank';setTimeout(()=>frame.src=src,60)}
-  });
   $('#excelAddSheetBtn')?.addEventListener('click',addExcelSheet);
   $('#excelFillColor')?.addEventListener('input',e=>applyExcelCellColor('b',e.target.value));
   $('#excelClearFillBtn')?.addEventListener('click',()=>applyExcelCellColor('b',''));

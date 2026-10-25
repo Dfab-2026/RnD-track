@@ -1,13 +1,28 @@
-R&D TRACK v9
+R&D TRACK v108 - Responsive update
 
 For your existing Firebase/Vercel deployment:
 1. KEEP your existing firebase-config.js with the real Firebase values.
-2. Replace index.html, app.js, firebase-cloud.js, styles.css and vercel.json.
-3. git add .
-4. git commit -m "Upgrade R&D tracker compact Firebase persistence"
-5. git push
-6. Wait for Vercel deployment.
-7. Confirm the top badge says CLOUD LIVE.
-8. Submit one idea and verify it appears in another browser.
+2. Deploy the complete extracted folder, including responsive.css, responsive.js,
+   kpi-chat.js and kpi-pdf.js. Do not deploy a ZIP as the site root.
+3. Keep index.html and all linked JS/CSS files in the same directory.
+4. Commit and push the updated files, then wait for the Vercel deployment.
+5. Hard refresh each existing browser once (Ctrl + Shift + R).
 
-All structured form data is stored in Firestore. Attachment bytes stay local until Firebase Storage is enabled.
+No database migration, new Firebase project, security-rule change, or browser
+library is required by this responsive update. Existing saved data is retained.
+
+Checks (Node.js):
+  node verify.js
+  node verify-responsive.js
+  node verify-task-access.js
+  node verify-live-sync.js
+  node verify-project-schema.js
+  node verify-kpi-chat.js
+
+The mobile navigation drawer supports outside click, Escape and keyboard focus.
+KPI filters stay in one horizontally scrollable row on narrow screens.
+Large tracking tables scroll inside their own container; chat keeps its composer
+visible as the available viewport changes.
+
+Structured data is stored in Firestore. Preserve your existing real Firebase
+configuration; the bundled firebase-config.js is a setup template.
