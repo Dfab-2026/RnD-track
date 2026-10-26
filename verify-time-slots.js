@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const app=fs.readFileSync(__dirname+'/app.js','utf8'),cloud=fs.readFileSync(__dirname+'/firebase-cloud.js','utf8');
+const ctx=vm.createContext({window:{addEventListener(){}},document:{addEventListener(){}},console,setTimeout,clearTimeout});
+vm.runInContext(cloud.replace('  window.rndCloud={','  window.testCodec={encode,decode};\n  window.rndCloud={'),ctx);
+vm.runInContext(app.slice(app.indexOf('const TRACKER_TIME_SLOTS='),app.indexOf('function trackerStatusLabel(')),ctx);
+const slots=Object.fromEntries(Array.from({length:4},(_,i)=>[i,{task:'Work '+i,status:'completed',issue:'Reason '+i,next_action:'Next '+i,remarks:'Remarks '+i}]));
+ctx.fixture={id:21,cycle_id:5,owner_id:2,tracker_rows:[{row_index:0,date:'26-Oct-2026',stage:'Daily target',task:'Legacy task',time_slots:slots},{row_index:1,manual_extra:true,time_slots:{0:{task:'Extra row work'}}}]};
+vm.runInContext(`const packed=window.testCodec.encode('projects',fixture);const restored=window.testCodec.decode('projects',packed,'21');window.rows=trackerRowsForProject(restored);window.old=cleanTrackerRow({row_index:3,task:'Old entry'});window.blank=trackerRowHasData({time_slots:{0:{task:'Only slot data'}}});window.bad=cleanTrackerSlots({5:{task:'Invalid'},0:{task:'x'.repeat(900),status:'bad'}});`,ctx);
+const rows=ctx.window.rows;
+assert.equal(rows.length,2);assert.equal(rows[0].stage,'Daily target');assert.equal(rows[0].task,'Legacy task');assert.equal(rows[1].time_slots[0].task,'Extra row work');
+for(let i=0;i<4;i++)for(const key of Object.keys(slots[i]))assert.equal(rows[0].time_slots[i][key],slots[i][key]);
+assert.equal(Object.keys(ctx.window.old.time_slots).length,0);assert.equal(ctx.window.old.task,'Old entry');assert(ctx.window.blank);assert.equal(ctx.window.bad[0].task.length,600);assert.equal(ctx.window.bad[0].status,'');assert(!ctx.window.bad[5]);
+assert(app.includes('if(!canEditTask(p))return;save.disabled=true;'));
+assert(app.includes("queueCloudOps([{collection:'projects',row:p}]);await persistState();const synced=await flushPendingCloudOps();"));
+assert(app.includes('parent.after(tr)'));assert(app.includes("tr.querySelector('[data-slot-close]').onclick=()=>tr.remove()"));
+console.log('PASS: four-slot Firebase codec round-trip, legacy entries, extra rows, normalization, owner save guard, explicit save/close and inline detail wiring');

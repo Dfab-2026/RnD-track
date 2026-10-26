@@ -704,6 +704,34 @@ function renderKpiReport(){
   host.innerHTML=`<section class="panel kpi-report-card"><div class="kpi-report-head"><div class="kpi-report-avatar">${esc(member.name.charAt(0).toUpperCase())}</div><div><span class="kicker">${monthly?'MONTHLY':`WEEK ${week}`} KPI REPORT</span><h3>${esc(member.name)}</h3><p>R&D performance snapshot · ${esc(monthKey)}</p></div></div><div class="kpi-report-grid"><article><span>NEW PRODUCT IDEAS</span><strong>${ideas.length}${monthly?'':' / 7'}</strong><small>${monthly?'Ideas submitted this month':'Individual KPI · 1 idea/day'}</small></article><article><span>MY WEEKLY ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed</small></article><article><span>AUTOMATION OF MANUAL PROCESS</span><strong>${teamCompleted}${monthly?'':' / 16'}</strong><small>Team KPI · 2/week × 8 departments</small></article><article><span>DEVELOPMENT OF NEW PRODUCT</span><strong>${monthly?`${Math.min(teamCompleted,2)} / 2`:teamCompleted}</strong><small>Team KPI · monthly target 2 products</small></article></div><div class="kpi-note"><b>TEAM KPI</b><p>Automation and New Product Development are shared team targets. Daily Ideas and weekly assignments use the selected member's data.</p></div></section>`;
 }
 
+const WORK_DATA_START='2026-10-26';
+function startTodayCleanupPlan(snapshot){
+  const before=value=>/^\d{4}-\d{2}-\d{2}/.test(String(value||''))&&String(value).slice(0,10)<WORK_DATA_START;
+  const cycles=(snapshot.cycles||[]).filter(r=>before(r.start_date)),cycleIds=new Set(cycles.map(r=>Number(r.id)));
+  const projects=(snapshot.projects||[]).filter(r=>before(r.start_date)||cycleIds.has(Number(r.cycle_id))),projectIds=new Set(projects.map(r=>Number(r.id)));
+  const ideas=(snapshot.ideas||[]).filter(r=>before(r.submission_date)&&!(snapshot.projects||[]).some(p=>!projectIds.has(Number(p.id))&&Number(p.idea_id)===Number(r.id)));
+  const progress=(snapshot.progress||[]).filter(r=>before(r.update_date)||projectIds.has(Number(r.project_id)));
+  return {progress,projects,cycles,ideas};
+}
+function renderStartTodayCleanup(){
+  let box=$('#startTodayCleanup');if(!box){box=document.createElement('div');box.id='startTodayCleanup';$('#databaseStats')?.after(box)}
+  box.hidden=!isLead();if(!isLead())return;
+  const plan=startTodayCleanupPlan(rawSnapshot()),total=Object.values(plan).reduce((n,rows)=>n+rows.length,0);
+  box.innerHTML=`<p class="storage-note">Start date: 26 October 2026. Remove earlier ideas, weeks, tasks and progress. Profiles, departments, settings and chat remain. A backup downloads first.</p><button type="button" class="ghost-btn" id="startTodayCleanupBtn" ${total?'':'disabled'}>${total?`Back up & delete ${total} earlier work records`:'No earlier work records'}</button>`;
+  $('#startTodayCleanupBtn').onclick=async e=>{
+    if(!isLead())return;const btn=e.currentTarget;btn.disabled=true;btn.textContent='Checking Firebase…';
+    try{
+      if(!window.rndCloud?.enabled)throw new Error('Connect to Firebase before clearing earlier work data.');
+      if(!await flushPendingCloudOps())throw new Error('Finish pending Firebase saves before clearing earlier work data.');
+      const fresh=await window.rndCloud.loadSnapshot(),plan=startTodayCleanupPlan(fresh);
+      const blob=new Blob([JSON.stringify(fresh,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='RND-before-26-Oct-2026-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+      for(const [collection,rows] of Object.entries(plan)){
+        for(let offset=0;offset<rows.length;offset+=200){const ids=rows.slice(offset,offset+200).map(r=>r.id);queueCloudDelete(collection,ids);if(!await flushPendingCloudOps())throw new Error('Cleanup paused. Reconnect and run it again to finish.');}
+      }
+      const latest=await window.rndCloud.loadSnapshot();Object.assign(state,enrich(latest));state.selectedProject=null;await persistState();scheduleRender();toast('Earlier work data cleared. Start date: 26 October 2026.');
+    }catch(err){toast(err.message,true)}finally{renderStartTodayCleanup()}
+  };
+}
 function renderSettings(){
   const deptHost=$('#departmentsSettings'),memberHost=$('#membersSettings');
   const visitor=false;
@@ -720,6 +748,7 @@ function renderSettings(){
   const ss=$('#storageStatus');if(ss)ss.textContent=storageStatus();
   const m=currentMember();if($('#settingsSignedInName'))$('#settingsSignedInName').textContent=m?.name||'—';if($('#settingsSignedInRole')){$('#settingsSignedInRole').textContent=memberRoleLabel(m);$('#settingsSignedInRole').className='tag '+(m?.role==='visitor'?'visitor':'member')}
   const notif=$('#notificationStatus');if(notif)notif.textContent=!('Notification' in window)?'Not supported':Notification.permission==='granted'?'Enabled':Notification.permission==='denied'?'Blocked in browser':'Not enabled';
+  renderStartTodayCleanup();
   bindSettingsActions();
 }
 function bindSettingsActions(){
@@ -941,9 +970,54 @@ function bindTaskDeleteButtons(){
     b.onclick=remove;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')remove(e)};
   });
 }
-function renderProjects(){renderWorkPeriodNav();renderWorkSummary();const list=$('#projectList');if(!list)return;const rows=filteredProjects().sort((a,b)=>Number(canEditTask(b))-Number(canEditTask(a))||Number(a.id)-Number(b.id));const count=$('#workProjectCount');if(count)count.textContent=String(rows.length);if(!state.projects.length){list.innerHTML='<div class="empty-state">No weekly projects yet. Shortlist two ideas in Weekly Tasks to start execution.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='No work has been assigned yet.';return}if(!rows.length){list.innerHTML=`<div class="empty-state">No projects found for ${esc(workPeriodLabel())} · Week ${state.workWeek}.</div>`;$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='Choose another week from the Work Tracking period bar.';return}if(!state.selectedProject||!rows.some(p=>Number(p.id)===Number(state.selectedProject)))state.selectedProject=rows[0].id;list.innerHTML=rows.map(p=>{const last=projectLastUpdate(p.id),blocked=projectHasBlocker(p.id),due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';return `<div role="button" tabindex="0" class="work-project-card ${Number(p.id)===Number(state.selectedProject)?'active':''}" data-project="${p.id}"><div class="work-project-top"><span>${esc(p.project_number)}</span>${!isLead()?'':`<button type="button" class="task-delete-x" data-remove-task="${p.id}" aria-label="Delete ${esc(p.title)}">×</button>`}<em class="work-status ${p.status}">${statusLabel}</em></div><h4>${esc(p.title)}</h4><div class="task-access-row"><span>${canEditTask(p)?'MY TASK · EDITABLE':'TEAM TASK · VIEW ONLY'}</span><b>${esc(taskPriority(p))} priority</b>${isLead()?`<button type="button" class="mini-action" data-lead-edit-task="${p.id}">Manage</button>`:''}</div><div class="work-project-meta"><span>${esc(p.owner_name||'Unassigned')}</span><span>${esc(p.department_name||'—')}</span></div><div class="work-progress-row"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><div class="work-project-foot"><span>${last?`Updated ${fmtDate(last.update_date)}`:'No updates yet'}</span><span class="${blocked?'danger-text':''}">${blocked?'● Blocker':p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)}d overdue`:due===0?'Due today':`${due}d left`}</span></div></div>`}).join('');$$('[data-project]').forEach(b=>b.onclick=()=>{state.selectedProject=Number(b.dataset.project);renderProjects()});$$('[data-project]').forEach(b=>b.onkeydown=e=>{if(e.target===b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();b.click()}});$$('[data-lead-edit-task]').forEach(b=>b.onclick=e=>{e.stopPropagation();openProjectEdit(Number(b.dataset.leadEditTask))});bindTaskDeleteButtons();renderProjectDetail()}
+function renderProjects(){renderWorkPeriodNav();renderWorkSummary();const list=$('#projectList');if(!list)return;const rows=filteredProjects().sort((a,b)=>Number(canEditTask(b))-Number(canEditTask(a))||Number(a.id)-Number(b.id));const count=$('#workProjectCount');if(count)count.textContent=String(rows.length);if(!state.projects.length){list.innerHTML='<div class="empty-state">No weekly projects yet. Shortlist two ideas in Weekly Tasks to start execution.</div>';$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='No work has been assigned yet.';return}if(!rows.length){list.innerHTML=`<div class="empty-state">No projects found for ${esc(workPeriodLabel())} · Week ${state.workWeek}.</div>`;$('#projectDetail').className='project-detail work-detail empty-state';$('#projectDetail').innerHTML='Choose another week from the Work Tracking period bar.';return}if(!state.selectedProject||!rows.some(p=>Number(p.id)===Number(state.selectedProject)))state.selectedProject=rows[0].id;list.innerHTML=rows.map(p=>{const last=projectLastUpdate(p.id),blocked=projectHasBlocker(p.id),due=daysTo(p.end_date),statusLabel=p.status==='in_progress'?'IN PROGRESS':p.status==='completed'?'COMPLETED':'ASSIGNED';return `<div role="button" tabindex="0" class="work-project-card ${Number(p.id)===Number(state.selectedProject)?'active':''}" data-project="${p.id}"><div class="work-project-top"><span>${esc(p.project_number)}</span>${!isLead()?'':`<button type="button" class="task-delete-x" data-remove-task="${p.id}" aria-label="Delete ${esc(p.title)}">×</button>`}<em class="work-status ${p.status}">${statusLabel}</em></div><h4>${esc(p.title)}</h4><div class="work-readmore-space"><button type="button" class="work-readmore" data-read-project="${p.id}" hidden>Read more</button></div><div class="task-access-row"><span>${canEditTask(p)?'MY TASK · EDITABLE':'TEAM TASK · VIEW ONLY'}</span><b>${esc(taskPriority(p))} priority</b>${isLead()?`<button type="button" class="mini-action" data-lead-edit-task="${p.id}">Manage</button>`:''}</div><div class="work-project-meta"><span>${esc(p.owner_name||'Unassigned')}</span><span>${esc(p.department_name||'—')}</span></div><div class="work-progress-row"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.progress||0)}%"></div></div><b>${Number(p.progress||0)}%</b></div><div class="work-project-foot"><span>${last?`Updated ${fmtDate(last.update_date)}`:'No updates yet'}</span><span class="${blocked?'danger-text':''}">${blocked?'● Blocker':p.status==='completed'?'Closed':due===null?'—':due<0?`${Math.abs(due)}d overdue`:due===0?'Due today':`${due}d left`}</span></div></div>`}).join('');$$('[data-project]').forEach(b=>b.onclick=()=>{state.selectedProject=Number(b.dataset.project);renderProjects()});$$('[data-project]').forEach(b=>b.onkeydown=e=>{if(e.target===b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();b.click()}});$$('[data-lead-edit-task]').forEach(b=>b.onclick=e=>{e.stopPropagation();openProjectEdit(Number(b.dataset.leadEditTask))});requestAnimationFrame(()=>$$('[data-read-project]').forEach(btn=>{const title=btn.closest('.work-project-card')?.querySelector('h4');btn.hidden=!title||title.scrollHeight<=title.clientHeight+1}));$$('[data-read-project]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();const p=state.projects.find(x=>Number(x.id)===Number(btn.dataset.readProject));if(!p)return;const dialog=document.createElement('dialog');dialog.className='modal work-text-dialog';dialog.innerHTML=`<div class="work-text-content"><h3>Project</h3><p>${esc(p.title)}</p><button type="button" class="primary-btn">Close</button></div>`;document.body.append(dialog);dialog.querySelector('button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());dialog.showModal()});bindTaskDeleteButtons();renderProjectDetail()}
 const trackerSaveTimers=new Map();
 const TRACKER_VISIBLE_ROWS=12;
+const TRACKER_TIME_SLOTS=['9:00 AM – 11:00 AM','11:00 AM – 1:30 PM','2:00 PM – 3:30 PM','3:30 PM – 5:30 PM'];
+function cleanTrackerSlots(value){
+  const slots={};
+  for(let i=0;i<4;i++){
+    const r=value?.[i];if(!r||typeof r!=='object')continue;
+    slots[i]={};
+    for(const key of ['task','status','issue','next_action','remarks'])slots[i][key]=String(r[key]||'').slice(0,600);
+    if(!['','in_progress','completed','issue'].includes(slots[i].status))slots[i].status='';
+  }
+  return slots;
+}
+function trackerSlotMenu(p,r){
+  return `<details class="tracker-slot-menu"><summary>Choose time · ${Object.keys(r.time_slots||{}).length}/4 saved</summary><div>${TRACKER_TIME_SLOTS.map((label,i)=>`<div class="tracker-slot-choice"><button type="button" data-slot-edit="${r.row_index}:${i}" ${canEditTask(p)?'':'disabled'}>${esc(label)}</button><button type="button" data-slot-view="${r.row_index}:${i}" ${r.time_slots?.[i]?'':'disabled'} aria-label="View ${esc(label)}" title="View saved details">&#128065;</button></div>`).join('')}</div></details>${r.task?`<details class="tracker-legacy-task"><summary>Previous task entry</summary><div>${esc(r.task)}</div></details>`:''}`;
+}
+function bindTrackerSlots(p){
+  const host=$('#projectDetail');
+  function openSlot(key,view){
+    const [rowIndex,slot]=key.split(':').map(Number);
+    if(!Number.isInteger(rowIndex)||!Number.isInteger(slot)||slot<0||slot>3||(!view&&!canEditTask(p)))return;
+    const parent=host.querySelector(`.rnd-manual-row[data-row-index="${rowIndex}"]`);if(!parent)return;
+    host.querySelectorAll('.tracker-slot-detail').forEach(el=>el.remove());
+    host.querySelectorAll('.tracker-slot-menu').forEach(el=>el.open=false);
+    const row=trackerRowsForProject(p).find(r=>r.row_index===rowIndex)||cleanTrackerRow({date:parent.querySelector('[data-tracker-field="date"]').value},rowIndex);
+    const saved=row.time_slots[slot]||{},disabled=view?'disabled':'';
+    const tr=document.createElement('tr');tr.className='tracker-slot-detail';
+    tr.innerHTML=`<td colspan="8"><div class="tracker-slot-heading"><strong>${esc(row.date)} · ${esc(TRACKER_TIME_SLOTS[slot])}${view?' · Saved details':''}</strong><button type="button" class="ghost-btn" data-slot-close>Close</button></div><div class="tracker-slot-fields">${[['task','Work done / Details'],['status','Status'],['issue','Issue / Reason'],['next_action','Next Action'],['remarks','Review / Remarks']].map(([field,label])=>`<label>${label}${field==='status'?`<select data-slot-field="status" ${disabled}><option value="">Select status</option>${['in_progress','completed','issue'].map(v=>`<option value="${v}" ${saved.status===v?'selected':''}>${trackerStatusLabel(v)}</option>`).join('')}</select>`:`<textarea data-slot-field="${field}" maxlength="600" ${disabled}>${esc(saved[field]||'')}</textarea>`}</label>`).join('')}</div>${view?'':'<div class="tracker-slot-actions"><button type="button" class="primary-btn" data-slot-save>Save</button></div>'}</td>`;
+    parent.after(tr);tr.querySelector('[data-slot-close]').onclick=()=>tr.remove();
+    const save=tr.querySelector('[data-slot-save]');if(save)save.onclick=async()=>{
+      if(!canEditTask(p))return;save.disabled=true;save.textContent='Saving…';
+      try{
+        const values={};tr.querySelectorAll('[data-slot-field]').forEach(el=>values[el.dataset.slotField]=el.value);
+        if(!String(values.task||'').trim())throw new Error('Enter work details before saving.');
+        const rows=trackerRowsForProject(p);let current=rows.find(r=>r.row_index===rowIndex);
+        if(!current){current=cleanTrackerRow(row,rowIndex);rows.push(current)}
+        current.time_slots[slot]=values;p.tracker_rows=rows;
+        queueCloudOps([{collection:'projects',row:p}]);await persistState();const synced=await flushPendingCloudOps();
+        if(Number(state.selectedProject)===Number(p.id))renderProjectDetail();
+        toast(synced?'Time-slot details saved to Firebase.':'Saved on this device · Firebase sync pending.',!synced);
+      }catch(e){toast(e.message,true);save.disabled=false;save.textContent='Save'}
+    };
+    tr.querySelector('textarea,select')?.focus();
+  }
+  host.querySelectorAll('[data-slot-edit]').forEach(btn=>btn.onclick=()=>openSlot(btn.dataset.slotEdit,false));
+  host.querySelectorAll('[data-slot-view]').forEach(btn=>btn.onclick=()=>openSlot(btn.dataset.slotView,true));
+}
 function cleanTrackerRow(row={},fallbackIndex=0){
   return {
     row_index:Number.isFinite(Number(row.row_index))?Number(row.row_index):fallbackIndex,
@@ -954,10 +1028,11 @@ function cleanTrackerRow(row={},fallbackIndex=0){
     status:['in_progress','completed','issue'].includes(String(row.status||''))?String(row.status):'',
     issue:String(row.issue||'').slice(0,600),
     next_action:String(row.next_action||'').slice(0,600),
-    remarks:String(row.remarks||'').slice(0,600)
+    remarks:String(row.remarks||'').slice(0,600),
+    time_slots:cleanTrackerSlots(row.time_slots)
   };
 }
-function trackerRowHasData(row={}){const r=cleanTrackerRow(row);return r.manual_extra===true||['date','stage','task','status','issue','next_action','remarks'].some(k=>String(r[k]||'').trim())}
+function trackerRowHasData(row={}){const r=cleanTrackerRow(row);return Object.keys(r.time_slots).length>0||r.manual_extra===true||['date','stage','task','status','issue','next_action','remarks'].some(k=>String(r[k]||'').trim())}
 function trackerRowsForProject(p){return Array.isArray(p?.tracker_rows)?p.tracker_rows.map((r,i)=>cleanTrackerRow(r,i)).filter(trackerRowHasData):[]}
 function trackerStatusLabel(value){return value==='completed'?'Completed':value==='issue'?'Issue':value==='in_progress'?'In Progress':''}
 function trackerRowClass(value){return value==='completed'?'done':value==='issue'?'issue':value==='in_progress'?'progress':''}
@@ -1036,9 +1111,14 @@ function updateManualTrackerSummary(p){
   if(active)active.textContent=String(rows.filter(r=>r.status==='in_progress').length);
   if(issues)issues.textContent=String(rows.filter(r=>r.status==='issue').length);
 }
+function trackerSheetRows(p){
+  const stored=trackerRowsForProject(p),byIndex=new Map(stored.map(r=>[Number(r.row_index),r]));
+  const count=6+stored.filter(r=>r.manual_extra).length;
+  return Array.from({length:count},(_,i)=>byIndex.get(i)||cleanTrackerRow({},i));
+}
 function insertManualTrackerRow(p,insertIndex){
   if(!canEditTask(p))return;
-  const rows=trackerRowsForProject(p)
+  const rows=trackerSheetRows(p)
     .sort((a,b)=>Number(a.row_index)-Number(b.row_index))
     .map(r=>({...r}));
   rows.forEach(r=>{
@@ -1054,12 +1134,17 @@ function deleteManualTrackerRow(p,rowIndex){
   if(!canEditTask(p))return;
   selectedManualTrackerRow=null;
   const currentCount=Math.max(6,Number(p.tracker_row_count)||TRACKER_VISIBLE_ROWS);
-  const rows=trackerRowsForProject(p)
-    .filter(r=>Number(r.row_index)!==Number(rowIndex))
-    .map(r=>({...r}));
-  rows.forEach(r=>{if(Number(r.row_index)>Number(rowIndex))r.row_index=Number(r.row_index)-1});
+  const sheet=trackerSheetRows(p),target=sheet.find(r=>Number(r.row_index)===Number(rowIndex));
+  if(!target)return;
+  let rows;
+  if(target.manual_extra){
+    rows=sheet.filter(r=>Number(r.row_index)!==Number(rowIndex)).map(r=>({...r,row_index:Number(r.row_index)>Number(rowIndex)?Number(r.row_index)-1:Number(r.row_index)}));
+  }else{
+    // Clear a fixed date without moving later dates, targets or timing details.
+    rows=sheet.map(r=>Number(r.row_index)===Number(rowIndex)?cleanTrackerRow({date:r.date},Number(rowIndex)):r);
+  }
   p.tracker_rows=rows.sort((a,b)=>Number(a.row_index)-Number(b.row_index));
-  p.tracker_row_count=Math.max(6,currentCount-1);
+  p.tracker_row_count=Math.max(6,currentCount-(target.manual_extra?1:0));
   applyTrackerDerivedProgress(p,{updateDom:false});
   renderProjectDetail();
   scheduleTrackerSave(p);
@@ -1133,9 +1218,7 @@ function renderProjectDetail(){
   // Extra rows appear only when the user explicitly adds them.
   const manualRows=storedRows.filter(r=>r.manual_extra===true);
   const visibleCount=6+manualRows.length;
-  const byRow=new Map(storedRows.map(r=>[Number(r.row_index),r]));
-  const rows=Array.from({length:6},(_,i)=>byRow.get(i)||cleanTrackerRow({},i));
-  manualRows.sort((a,b)=>Number(a.row_index)-Number(b.row_index)).forEach(r=>{if(!rows.some(x=>Number(x.row_index)===Number(r.row_index)))rows.push(r)});
+  const rows=trackerSheetRows(p);
   const periodDates=trackerPeriodDates();
   let autoDateSlot=0;
   rows.forEach(row=>{
@@ -1188,11 +1271,11 @@ function renderProjectDetail(){
         <div class="rnd-status-legend"><b>Status Colour:</b><span class="done">COMPLETED</span><span class="progress">IN PROGRESS</span><span class="issue">ISSUE</span><em>Fill the cells manually. Status is selected from the dropdown in each row.</em></div>
         <div class="rnd-daily-table-scroll">
           <table class="rnd-daily-table rnd-manual-table">
-            <thead><tr><th>Date</th><th>R&amp;D Stage / Milestone</th><th>Daily Task / Target</th><th>Status</th><th>Issue / Reason</th><th>Next Action</th><th>Review / Remarks</th><th class="rnd-delete-head">Delete</th></tr></thead>
+            <thead><tr><th>Date</th><th>Daily Target</th><th>Timings Worked</th><th>Status</th><th>Issue / Reason</th><th>Next Action</th><th>Review / Remarks</th><th class="rnd-delete-head">Delete</th></tr></thead>
             <tbody>${rows.map((r,i)=>`<tr class="rnd-manual-row ${trackerRowClass(r.status)} ${r.manual_extra?'manual-extra-row':''}" data-row-index="${r.row_index}" data-manual-extra="${r.manual_extra?'1':'0'}" tabindex="${r.manual_extra?'0':'-1'}">
               <td><input class="rnd-cell-input" data-tracker-field="date" value="${esc(r.date)}" ${(!r.manual_extra&&Number.isInteger(r.auto_date_slot))?'readonly':readonly} aria-label="Date row ${i+1}"></td>
-              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="stage" ${readonly} aria-label="R&D stage row ${i+1}">${esc(r.stage)}</textarea></td>
-              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="task" ${readonly} aria-label="Daily task row ${i+1}">${esc(r.task)}</textarea></td>
+              <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="stage" ${readonly} aria-label="Daily target row ${i+1}">${esc(r.stage)}</textarea></td>
+              <td>${trackerSlotMenu(p,r)}</td>
               <td><select class="rnd-cell-select" data-tracker-field="status" ${readonly} aria-label="Status row ${i+1}"><option value="" ${!r.status?'selected':''}></option><option value="in_progress" ${r.status==='in_progress'?'selected':''}>In Progress</option><option value="completed" ${r.status==='completed'?'selected':''}>Completed</option><option value="issue" ${r.status==='issue'?'selected':''}>Issue</option></select></td>
               <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="issue" ${readonly} aria-label="Issue or reason row ${i+1}">${esc(r.issue)}</textarea></td>
               <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="next_action" ${r.status==='completed'?'disabled':readonly} aria-label="Next action row ${i+1}">${esc(r.status==='completed'?'N/A':r.next_action)}</textarea></td>
@@ -1206,6 +1289,7 @@ function renderProjectDetail(){
   if($('#openProgressBtn'))$('#openProgressBtn').onclick=()=>openProgress(p);
   bindRecordActions();
   bindManualTrackerGrid(p);
+  bindTrackerSlots(p);
 }
 
 function analyticsProjectUpdates(projectId){return state.progress.filter(u=>Number(u.project_id)===Number(projectId)).sort((a,b)=>String(a.update_date||'').localeCompare(String(b.update_date||''))||rowStamp(a)-rowStamp(b)||Number(a.id)-Number(b.id))}

@@ -1,4 +1,4 @@
-R&D TRACK v108 - Responsive update
+R&D TRACK v109 - Responsive update
 
 For your existing Firebase/Vercel deployment:
 1. KEEP your existing firebase-config.js with the real Firebase values.
@@ -26,3 +26,11 @@ visible as the available viewport changes.
 
 Structured data is stored in Firestore. Preserve your existing real Firebase
 configuration; the bundled firebase-config.js is a setup template.
+
+V109: Work Tracking Daily Target and four Timings Worked slots. Choose a slot to enter details; Save closes it. Eye opens saved details, Close collapses it. Only project owners edit. Offline saves remain queued until Firebase reconnects. Existing task text is retained under Previous task entry.
+
+V110: Equal work cards, Read more titles, equal timing controls. Timing status never changes daily completion. To clear earlier work records, log in as Kabil, open Settings > Database & Backup > Back up & delete earlier work records. Fixed cutoff 26 October 2026. Requires connected Firebase; downloads backup, clears earlier work records, preserves profiles/departments/chat/settings. KPI manual entries are retained.
+
+V111: Fixed tracker row deletion/insertion to preserve six fixed dates and all other timing details. Added automated member, department, idea, week, project and progress edit/delete coverage. Live data has NOT been purged: actual Firebase config/admin access required, including administrator removal of recovery copies in activity_logs.
+
+V113: Reverts V112 desktop layout rewrite. Only restricts the mobile page-scroll overrides to mobile widths and removes the override that broke matching Settings card heights. Original page/card sizes and layout rules restored. Application and Firebase code unchanged.

@@ -14,5 +14,5 @@ for(const [width,height] of [[320,568],[390,844],[600,900],[768,1024],[980,700],
  f.viewport.height=400;for(let i=0;i<15;i++)f.events['viewport-resize']();assert.equal(f.raf.length,1);f.raf.shift()();assert.equal(f.vars['--app-viewport-height'],'400px');
 }
 const css=fs.readFileSync(__dirname+'/responsive.css','utf8');assert(css.includes('grid-template-columns:minmax(0,1fr)'));assert(css.includes('prefers-reduced-motion'));assert(css.includes('overflow:auto'));assert(css.includes('min-height:var(--app-viewport-height)'));assert(css.includes('overscroll-behavior-x:contain'));assert(css.includes('font-size:16px!important'));
-const html=fs.readFileSync(__dirname+'/index.html','utf8');assert(html.includes('responsive.css?v=108.0.0'));assert(html.includes('responsive.js?v=108.0.0'));
+const html=fs.readFileSync(__dirname+'/index.html','utf8');assert(/responsive\.css\?v=\d+\.\d+\.\d+/.test(html));assert(/responsive\.js\?v=\d+\.\d+\.\d+/.test(html));
 console.log('PASS: 320/390/600/768/980/1280/1920 viewport logic, mobile menu/backdrop, focus trap/Escape, desktop transition, visual-viewport keyboard resize and RAF batching');
