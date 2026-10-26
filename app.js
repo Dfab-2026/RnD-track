@@ -1036,16 +1036,20 @@ function trackerRowHasData(row={}){const r=cleanTrackerRow(row);return Object.ke
 function trackerRowsForProject(p){return Array.isArray(p?.tracker_rows)?p.tracker_rows.map((r,i)=>cleanTrackerRow(r,i)).filter(trackerRowHasData):[]}
 function trackerStatusLabel(value){return value==='completed'?'Completed':value==='issue'?'Issue':value==='in_progress'?'In Progress':''}
 function trackerRowClass(value){return value==='completed'?'done':value==='issue'?'issue':value==='in_progress'?'progress':''}
-function trackerPeriodDates(){
+function trackerDateRange(startDate,endDate){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(startDate||''))||!/^\d{4}-\d{2}-\d{2}$/.test(String(endDate||'')))return [];
+  const start=Date.parse(startDate+'T00:00:00Z'),end=Date.parse(endDate+'T00:00:00Z');
+  if(!Number.isFinite(start)||!Number.isFinite(end)||start>end)return [];
+  const out=[];
+  for(let time=start;time<=end;time+=86400000)out.push(new Date(time).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).replace(/ /g,'-'));
+  return out;
+}
+function trackerPeriodDates(p){
+  const projectDates=trackerDateRange(p?.start_date,p?.end_date);if(projectDates.length)return projectDates;
   ensureWorkPeriod();
   const cycle=state.cycles.find(c=>monthKeyFromDate(c.start_date)===state.workMonthKey&&workCycleWeek(c)===Number(state.workWeek));
   if(cycle?.start_date&&cycle?.end_date){
-    const start=new Date(`${cycle.start_date}T00:00:00`),end=new Date(`${cycle.end_date}T00:00:00`),out=[];
-    for(let d=new Date(start);d<=end&&out.length<6;d.setDate(d.getDate()+1)){
-      out.push(d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'-'));
-    }
-    while(out.length<6)out.push('');
-    return out;
+    return trackerDateRange(cycle.start_date,cycle.end_date);
   }
   const [yearRaw,monthRaw]=String(state.workMonthKey||'').split('-');
   const year=Number(yearRaw),month=Number(monthRaw);
@@ -1055,10 +1059,11 @@ function trackerPeriodDates(){
   return Array.from({length:6},(_,i)=>`${String(startDay+i).padStart(2,'0')}-${monthShort}-${year}`);
 }
 function trackerDerivedProgress(p){
-  const rows=trackerRowsForProject(p).filter(r=>!r.manual_extra&&r.status).sort((a,b)=>Number(a.row_index)-Number(b.row_index)).slice(0,6);
+  const dateCount=trackerDateRange(p?.start_date,p?.end_date).length||6;
+  const rows=trackerRowsForProject(p).filter(r=>!r.manual_extra&&r.status).sort((a,b)=>Number(a.row_index)-Number(b.row_index)).slice(0,dateCount);
   const weights={issue:25,in_progress:60,completed:100};
   const total=rows.reduce((sum,row)=>sum+(weights[row.status]||0),0);
-  return Math.max(0,Math.min(100,Math.round(total/6)));
+  return Math.max(0,Math.min(100,Math.round(total/dateCount)));
 }
 function trackerProgressColor(percent){return percent>=60?'#22c55e':percent>=26?'#facc15':'#ef4444'}
 function applyTrackerDerivedProgress(p,{updateDom=true}={}){
@@ -1113,7 +1118,8 @@ function updateManualTrackerSummary(p){
 }
 function trackerSheetRows(p){
   const stored=trackerRowsForProject(p),byIndex=new Map(stored.map(r=>[Number(r.row_index),r]));
-  const count=6+stored.filter(r=>r.manual_extra).length;
+  const dateCount=trackerDateRange(p?.start_date,p?.end_date).length||6;
+  const count=Math.max(dateCount+stored.filter(r=>r.manual_extra).length,...stored.map(r=>Number(r.row_index)+1));
   return Array.from({length:count},(_,i)=>byIndex.get(i)||cleanTrackerRow({},i));
 }
 function insertManualTrackerRow(p,insertIndex){
@@ -1214,16 +1220,16 @@ function renderProjectDetail(){
   const heroRingColor=trackerProgressColor(heroProgress);
   const storedRows=trackerRowsForProject(p);
   const highestRow=storedRows.reduce((m,r)=>Math.max(m,Number(r.row_index)||0),-1);
-  // Default sheet shows only the six dates in the selected working week.
+  // Default sheet includes every date in the project heading range.
   // Extra rows appear only when the user explicitly adds them.
   const manualRows=storedRows.filter(r=>r.manual_extra===true);
   const visibleCount=6+manualRows.length;
   const rows=trackerSheetRows(p);
-  const periodDates=trackerPeriodDates();
+  const periodDates=trackerPeriodDates(p);
   let autoDateSlot=0;
   rows.forEach(row=>{
     if(row.manual_extra)return;
-    if(autoDateSlot<6){
+    if(autoDateSlot<periodDates.length){
       row.date=periodDates[autoDateSlot]||'';
       row.auto_date_slot=autoDateSlot;
       autoDateSlot++;

@@ -34,3 +34,5 @@ V110: Equal work cards, Read more titles, equal timing controls. Timing status n
 V111: Fixed tracker row deletion/insertion to preserve six fixed dates and all other timing details. Added automated member, department, idea, week, project and progress edit/delete coverage. Live data has NOT been purged: actual Firebase config/admin access required, including administrator removal of recovery copies in activity_logs.
 
 V113: Reverts V112 desktop layout rewrite. Only restricts the mobile page-scroll overrides to mobile widths and removes the override that broke matching Settings card heights. Original page/card sizes and layout rules restored. Application and Firebase code unchanged.
+
+V114: Work Tracking automatically shows every calendar date from project Start Date through Deadline, inclusive. Removed six-date truncation. Daily completion is calculated across that displayed date range; time-slot statuses remain separate. No CSS/layout, Firebase schema or permission changes.
