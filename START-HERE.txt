@@ -36,3 +36,5 @@ V111: Fixed tracker row deletion/insertion to preserve six fixed dates and all o
 V113: Reverts V112 desktop layout rewrite. Only restricts the mobile page-scroll overrides to mobile widths and removes the override that broke matching Settings card heights. Original page/card sizes and layout rules restored. Application and Firebase code unchanged.
 
 V114: Work Tracking automatically shows every calendar date from project Start Date through Deadline, inclusive. Removed six-date truncation. Daily completion is calculated across that displayed date range; time-slot statuses remain separate. No CSS/layout, Firebase schema or permission changes.
+
+V115: Daily Ideas edit/delete controls enabled for every R&D member, including assigned ideas. Visitor read-only, lead-only priority/weekly assignment, owner-only tracker editing and existing deletion cascade unchanged. No layout changes.
