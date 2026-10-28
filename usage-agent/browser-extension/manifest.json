@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "DFAB R&D Browser Timesheet",
+  "version": "1.0.0",
+  "description": "Reports active Chrome and Edge domain time for the managed R&D timesheet.",
+  "permissions": ["alarms", "idle", "storage", "tabs", "windows"],
+  "host_permissions": ["https://identitytoolkit.googleapis.com/*", "https://firestore.googleapis.com/*"],
+  "background": {"service_worker": "background.js"}
+}

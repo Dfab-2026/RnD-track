@@ -1,0 +1,9 @@
+﻿{
+    "ApiKey":  "AIzaSyAbArRptyHA6u9KY-sQ24kRDYEhCXCznv4",
+    "ProjectId":  "dfab-rnd-track",
+    "MemberId":  1,
+    "MemberName":  "Kabil",
+    "DeviceId":  "DFAB-PC22",
+    "IdleThresholdSeconds":  300,
+    "PollSeconds":  10
+}

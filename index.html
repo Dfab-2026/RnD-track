@@ -8,11 +8,22 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=117.0.0" />
-  <link rel="stylesheet" href="responsive.css?v=117.0.0">
+  <link rel="stylesheet" href="styles.css?v=120.0.0" />
+  <link rel="stylesheet" href="responsive.css?v=120.0.0">
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
-  <section class="login-gate" id="loginGate" aria-label="R&D member login">
+  <section class="department-gate" id="departmentGate" aria-label="Select a department">
+    <div class="department-gate-card">
+      <div class="login-brand"><span class="brand-mark">D</span><div><strong>DFAB KPI TRACK</strong><small>DEPARTMENT WORKSPACE</small></div></div>
+      <span class="kicker">SELECT DEPARTMENT</span>
+      <h1>Choose your dashboard</h1>
+      <p>Select a department to continue. R&amp;D is available now; the remaining department dashboards can be activated when their workflows are ready.</p>
+      <div class="department-gate-grid" id="departmentGateGrid" aria-live="polite"></div>
+      <div id="departmentGateMessage" class="department-gate-message" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="login-gate hidden" id="loginGate" aria-label="R&D member login">
     <div class="login-card">
       <div class="login-brand"><span class="brand-mark">R</span><div><strong>R&D TRACK</strong><small>IDENTIFY YOURSELF</small></div></div>
       <span class="kicker">MEMBER ACCESS</span>
@@ -24,6 +35,7 @@
       </form>
       <div id="loginMessage" class="login-message" aria-live="polite"></div>
       <div id="loginSuggestion"></div>
+      <button class="department-back-btn" id="backToDepartmentsBtn" type="button">← All departments</button>
     </div>
   </section>
 
@@ -35,9 +47,10 @@
         <button class="nav-btn" data-page="ideas"><span>02</span> Daily Ideas</button>
         <button class="nav-btn" data-page="weekly"><span>03</span> Weekly Tasks</button>
         <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
-        <button class="nav-btn" data-page="chat"><span>05</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
-        <button class="nav-btn" data-page="kpi"><span>06</span> KPI Report</button>
-        <button class="nav-btn" data-page="settings"><span>07</span> Settings</button>
+        <button class="nav-btn" data-page="timesheet"><span>05</span> Timesheet</button>
+        <button class="nav-btn" data-page="chat"><span>06</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
+        <button class="nav-btn" data-page="kpi"><span>07</span> KPI Report</button>
+        <button class="nav-btn" data-page="settings"><span>08</span> Settings</button>
       </nav>
       <div class="side-note"><b>TEAM MODE</b><p>R&D idea and execution tracker with member and visitor access.</p></div>
     </aside>
@@ -115,6 +128,13 @@
         <div class="work-layout work-layout-single"><div id="projectDetail" class="project-detail work-detail empty-state">Select a weekly project to open its execution workspace.</div></div>
       </section>
 
+      <section class="page" id="timesheetPage">
+        <div class="section-toolbar"><div><span class="kicker">SYSTEM USAGE</span><h2>R&amp;D Timesheet</h2><p>Active hours, idle time, applications and website-domain usage reported by managed R&amp;D computers.</p></div><span class="timesheet-live-chip"><i></i>AGENT DATA</span></div>
+        <section class="panel timesheet-filters"><label><span>MEMBER</span><select id="timesheetMemberFilter"><option value="">All R&amp;D members</option></select></label><label><span>FROM</span><input id="timesheetFromDate" type="date"></label><label><span>TO</span><input id="timesheetToDate" type="date"></label><button class="primary-btn" id="refreshTimesheetBtn" type="button">Refresh</button></section>
+        <div id="timesheetStatus" class="timesheet-status" aria-live="polite"></div>
+        <div id="timesheetContent"><div class="empty-state">Loading system usage…</div></div>
+      </section>
+
 
       <section class="page" id="chatPage">
         <section class="team-chat-page-shell" aria-label="R&D team chat">
@@ -161,11 +181,12 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
   <script defer src="firebase-config.js?v=22.0.0"></script>
-  <script defer src="firebase-cloud.js?v=117.0.0"></script>
-  <script defer src="app.js?v=117.0.0"></script>
-  <script defer src="kpi-chat.js?v=117.0.0"></script>
-  <script defer src="kpi-pdf.js?v=117.0.0"></script>
-  <script defer src="responsive.js?v=117.0.0"></script>
-<script defer src="daily-sheet-reminder.js?v=117.0.0"></script>
+  <script defer src="firebase-cloud.js?v=120.0.0"></script>
+  <script defer src="app.js?v=120.0.0"></script>
+  <script defer src="kpi-chat.js?v=120.0.0"></script>
+  <script defer src="kpi-pdf.js?v=120.0.0"></script>
+  <script defer src="timesheet.js?v=120.0.0"></script>
+  <script defer src="responsive.js?v=120.0.0"></script>
+<script defer src="daily-sheet-reminder.js?v=120.0.0"></script>
 </body>
 </html>

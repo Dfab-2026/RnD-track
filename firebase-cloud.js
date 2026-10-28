@@ -267,5 +267,12 @@
     const ref=db.collection('app_meta').doc('reaction_'+String(messageId)+'_'+Number(memberId));
     await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(snap.exists&&snap.data().emoji===emoji)tx.delete(ref);else tx.set(ref,{kind:'chat_reaction',message_id:String(messageId),member_id:Number(memberId),emoji,updated_at:Date.now()})});
   }
-  window.rndCloud={watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  function decodeUsageEvent(doc){const d=doc.data?doc.data():doc||{};return{id:doc.id||'',member_id:Number(d.m)||0,member_name:String(d.n||''),device_id:String(d.v||''),date:String(d.d||''),started_at:Number(d.s)||0,ended_at:Number(d.e)||0,app_name:String(d.a||''),process_name:String(d.p||''),site_domain:String(d.h||''),active_seconds:Math.max(0,Number(d.x)||0),idle_seconds:Math.max(0,Number(d.i)||0),source:d.q==='b'?'browser':'system'}}
+  async function loadUsageEvents(startDate,endDate){
+    if(!ready)await init(true);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate||'')||!/^\d{4}-\d{2}-\d{2}$/.test(endDate||'')||startDate>endDate)throw new Error('Choose a valid timesheet date range.');
+    const qs=await db.collection('usage_events').where('d','>=',startDate).where('d','<=',endDate).limit(5000).get({source:'server'});
+    return qs.docs.map(decodeUsageEvent).sort((a,b)=>a.started_at-b.started_at);
+  }
+  window.rndCloud={watchReportData,saveReportEntry,toggleChatReaction,loadUsageEvents,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();
