@@ -10,18 +10,64 @@ $PollSeconds = if($Config.PollSeconds){[Math]::Max(5,[int]$Config.PollSeconds)}e
 $IdleThreshold = if($Config.IdleThresholdSeconds){[Math]::Max(60,[int]$Config.IdleThresholdSeconds)}else{300}
 $Port = if($Config.LocalPort){[Math]::Max(1024,[int]$Config.LocalPort)}else{8765}
 
-Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-public static class UsageNative {
-  [StructLayout(LayoutKind.Sequential)] public struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }
-  [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref LASTINPUTINFO value);
-  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
-  public static uint IdleSeconds() { var v=new LASTINPUTINFO(); v.cbSize=(uint)Marshal.SizeOf(v); return GetLastInputInfo(ref v)?((uint)Environment.TickCount-v.dwTime)/1000:0; }
-  public static uint ForegroundProcessId() { uint id; GetWindowThreadProcessId(GetForegroundWindow(),out id); return id; }
+# Build the required Win32 calls with Reflection.Emit instead of Add-Type/C#.
+# This avoids BadImageFormatException on Windows PowerShell installations where
+# the inline compiler cannot resolve framework assemblies correctly.
+function New-UsageNativeType {
+  if ('UsageNative' -as [type]) { return [UsageNative] }
+
+  $AssemblyName = New-Object System.Reflection.AssemblyName('DFAB.UsageNative.Dynamic')
+  $Domain = [AppDomain]::CurrentDomain
+  $Assembly = $Domain.DefineDynamicAssembly($AssemblyName, [System.Reflection.Emit.AssemblyBuilderAccess]::Run)
+  $Module = $Assembly.DefineDynamicModule('DFAB.UsageNative.Module', $false)
+
+  $StructAttrs = [System.Reflection.TypeAttributes]::Public -bor [System.Reflection.TypeAttributes]::Sealed -bor [System.Reflection.TypeAttributes]::AnsiClass -bor [System.Reflection.TypeAttributes]::BeforeFieldInit
+  $Struct = $Module.DefineType('UsageLastInputInfo', $StructAttrs, [ValueType])
+  [void]$Struct.DefineField('cbSize', [UInt32], [System.Reflection.FieldAttributes]::Public)
+  [void]$Struct.DefineField('dwTime', [UInt32], [System.Reflection.FieldAttributes]::Public)
+  $LastInputInfoType = $Struct.CreateType()
+
+  $TypeAttrs = [System.Reflection.TypeAttributes]::Public -bor [System.Reflection.TypeAttributes]::Sealed -bor [System.Reflection.TypeAttributes]::Abstract
+  $TypeBuilder = $Module.DefineType('UsageNative', $TypeAttrs)
+  $MethodAttrs = [System.Reflection.MethodAttributes]::Public -bor [System.Reflection.MethodAttributes]::Static -bor [System.Reflection.MethodAttributes]::PinvokeImpl
+  $CallConv = [System.Reflection.CallingConventions]::Standard
+  $NativeCall = [System.Runtime.InteropServices.CallingConvention]::Winapi
+  $CharSet = [System.Runtime.InteropServices.CharSet]::Auto
+
+  $M1 = $TypeBuilder.DefinePInvokeMethod('GetForegroundWindow', 'user32.dll', $MethodAttrs, $CallConv, [IntPtr], [Type[]]@(), $NativeCall, $CharSet)
+  $M1.SetImplementationFlags($M1.GetMethodImplementationFlags() -bor [System.Reflection.MethodImplAttributes]::PreserveSig)
+
+  $M2 = $TypeBuilder.DefinePInvokeMethod('GetWindowThreadProcessId', 'user32.dll', $MethodAttrs, $CallConv, [UInt32], [Type[]]@([IntPtr], [UInt32].MakeByRefType()), $NativeCall, $CharSet)
+  $M2.SetImplementationFlags($M2.GetMethodImplementationFlags() -bor [System.Reflection.MethodImplAttributes]::PreserveSig)
+
+  $M3 = $TypeBuilder.DefinePInvokeMethod('GetLastInputInfo', 'user32.dll', $MethodAttrs, $CallConv, [Bool], [Type[]]@($LastInputInfoType.MakeByRefType()), $NativeCall, $CharSet)
+  $M3.SetImplementationFlags($M3.GetMethodImplementationFlags() -bor [System.Reflection.MethodImplAttributes]::PreserveSig)
+
+  return $TypeBuilder.CreateType()
 }
-'@
+
+$script:UsageNativeType = New-UsageNativeType
+$script:UsageLastInputInfoType = 'UsageLastInputInfo' -as [type]
+
+function Get-IdleSeconds {
+  try {
+    $Info = [Activator]::CreateInstance($script:UsageLastInputInfoType)
+    $Info.cbSize = [UInt32][Runtime.InteropServices.Marshal]::SizeOf($Info)
+    if (-not $script:UsageNativeType::GetLastInputInfo([ref]$Info)) { return 0 }
+    $TickBytes = [BitConverter]::GetBytes([Environment]::TickCount)
+    $Tick = [BitConverter]::ToUInt32($TickBytes, 0)
+    return [UInt32](($Tick - $Info.dwTime) / 1000)
+  } catch { return 0 }
+}
+
+function Get-ForegroundProcessId {
+  try {
+    [UInt32]$ProcessId = 0
+    $Window = $script:UsageNativeType::GetForegroundWindow()
+    [void]$script:UsageNativeType::GetWindowThreadProcessId($Window, [ref]$ProcessId)
+    return $ProcessId
+  } catch { return 0 }
+}
 
 function Write-AgentLog([string]$Message) {
   try { Add-Content -Path $LogPath -Value "$(Get-Date -Format s) $Message" -Encoding UTF8 } catch {}
@@ -117,8 +163,8 @@ while ($true) {
     while($Listener.Pending()){$Client=$Listener.AcceptTcpClient();Process-HttpClient $Client}
     $Now=Get-Date
     if($Now -ge $NextSample){
-      $Offset=[DateTimeOffset]::Now.Offset;$Minute=[DateTimeOffset]::new($Now.Year,$Now.Month,$Now.Day,$Now.Hour,$Now.Minute,0,$Offset);$Start=$Minute.ToUnixTimeMilliseconds();$IdleSeconds=[UsageNative]::IdleSeconds();$IsIdle=$IdleSeconds -ge $IdleThreshold
-      $ProcessName='Unknown';try{$ProcessName=(Get-Process -Id ([UsageNative]::ForegroundProcessId()) -ErrorAction Stop).ProcessName.ToLowerInvariant()}catch{}
+      $Offset=[DateTimeOffset]::Now.Offset;$Minute=[DateTimeOffset]::new($Now.Year,$Now.Month,$Now.Day,$Now.Hour,$Now.Minute,0,$Offset);$Start=$Minute.ToUnixTimeMilliseconds();$IdleSeconds=Get-IdleSeconds;$IsIdle=$IdleSeconds -ge $IdleThreshold
+      $ProcessName='Unknown';try{$ForegroundId=Get-ForegroundProcessId;if($ForegroundId -gt 0){$ProcessName=(Get-Process -Id $ForegroundId -ErrorAction Stop).ProcessName.ToLowerInvariant()}}catch{}
       $App=Get-AppName $ProcessName;$Key="$Start|$ProcessName";if(!$Buckets.ContainsKey($Key)){$Buckets[$Key]=[ordered]@{Date=$Now.ToString('yyyy-MM-dd');Start=$Start;End=$Start;App=$App;Process=$ProcessName;Site='';Active=0;Idle=0;Source='system'}}
       $Buckets[$Key].End=[DateTimeOffset]::Now.ToUnixTimeMilliseconds();if($IsIdle){$Buckets[$Key].Idle+=$PollSeconds}else{$Buckets[$Key].Active+=$PollSeconds}
       @($Buckets.Keys)|Where-Object{-not $_.StartsWith("$Start|")}|ForEach-Object{$Event=$Buckets[$_];Save-Event $Event;$Buckets.Remove($_)}

@@ -1,6 +1,7 @@
-DFAB R&D TIMESHEET — EASY LOCAL SETUP
+DFAB R&D TIMESHEET — EASY LOCAL SETUP (NO TASK SCHEDULER / NO FIREBASE CLI)
 
-Open PowerShell AS ADMINISTRATOR and paste these commands one by one:
+Open a normal PowerShell window. Administrator mode is NOT required.
+Run these commands one by one:
 
 cd "D:\DFAB PROJECT\KPI R&D\usage-agent"
 Set-ExecutionPolicy -Scope Process Bypass
@@ -13,6 +14,12 @@ ok          : True
 member_name : Kabil
 device_id   : your PC name
 port        : 8765
+
+The agent is installed under:
+%LOCALAPPDATA%\DFAB\RndUsageAgent
+
+It starts automatically at Windows sign-in using the current-user Startup registry entry.
+No Windows Scheduled Task is used in this version.
 
 Then Chrome:
 1. Open chrome://extensions
