@@ -35,7 +35,6 @@
     const map=new Map();[...(cloud||[]),...(local||[])].forEach((event,index)=>{const key=[event.device_id,event.source,event.started_at,event.app_name,event.site_domain].join('|')||String(event.id||index);map.set(key,event)});return [...map.values()].sort((a,b)=>Number(a.started_at)-Number(b.started_at));
   }
   async function load(force=false){
-    if(!(isLead()||isVisitor()))return;
     populate();const from=document.querySelector('#timesheetFromDate').value,to=document.querySelector('#timesheetToDate').value,key=`${from}:${to}`,status=document.querySelector('#timesheetStatus');
     if(!force&&cache.loadedKey===key){render(cache.events);return}if(cache.loading)return;cache.loading=true;status.textContent='Reading Windows usage…';
     try{

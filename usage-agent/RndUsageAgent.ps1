@@ -68,6 +68,19 @@ function Get-ForegroundProcessId {
     return $ProcessId
   } catch { return 0 }
 }
+function Get-ForegroundAppInfo {
+  $ProcessName='Unknown';$ProcessId=0;$WindowTitle=''
+  try {
+    $ProcessId=Get-ForegroundProcessId
+    if($ProcessId -gt 0){
+      $Process=Get-Process -Id $ProcessId -ErrorAction Stop
+      $ProcessName=[string]$Process.ProcessName
+      $WindowTitle=[string]$Process.MainWindowTitle
+    }
+  } catch {}
+  if($ProcessName){$ProcessName=$ProcessName.ToLowerInvariant()}else{$ProcessName='unknown'}
+  return [pscustomobject]@{process_id=[int]$ProcessId;process_name=$ProcessName;app_name=(Get-AppName $ProcessName);window_title=$WindowTitle}
+}
 
 function Write-AgentLog([string]$Message) {
   try { Add-Content -Path $LogPath -Value "$(Get-Date -Format s) $Message" -Encoding UTF8 } catch {}
@@ -141,6 +154,7 @@ function Process-HttpClient($Client) {
     $HeaderEnd=$Text.IndexOf("`r`n`r`n");$Head=if($HeaderEnd -ge 0){$Text.Substring(0,$HeaderEnd)}else{$Text};$Body=if($HeaderEnd -ge 0){$Text.Substring($HeaderEnd+4)}else{''};$Lines=$Head -split "`r`n";$Request=$Lines[0] -split ' ';$Method=$Request[0];$Path=$Request[1]
     if($Method -eq 'OPTIONS'){Send-HttpResponse $Client 204 '';return}
     if($Method -eq 'GET' -and $Path.StartsWith('/health')){Send-HttpResponse $Client 200 (([ordered]@{ok=$true;member_id=[int]$Config.MemberId;member_name=$Config.MemberName;device_id=$Config.DeviceId;port=$Port;started=$script:StartedAt} | ConvertTo-Json -Compress));return}
+    if($Method -eq 'GET' -and $Path.StartsWith('/current')){$Current=Get-ForegroundAppInfo;Send-HttpResponse $Client 200 (($Current | ConvertTo-Json -Compress));return}
     if($Method -eq 'GET' -and $Path.StartsWith('/usage')){$Q=Parse-Query $Path;$Rows=Get-UsageRows $Q['from'] $Q['to'];Send-HttpResponse $Client 200 (@($Rows) | ConvertTo-Json -Depth 6 -Compress);return}
     if($Method -eq 'POST' -and $Path.StartsWith('/browser')){
       try{$Payload=$Body|ConvertFrom-Json}catch{Send-HttpResponse $Client 400 '{"error":"invalid json"}';return}
@@ -163,11 +177,10 @@ while ($true) {
     while($Listener.Pending()){$Client=$Listener.AcceptTcpClient();Process-HttpClient $Client}
     $Now=Get-Date
     if($Now -ge $NextSample){
-      $Offset=[DateTimeOffset]::Now.Offset;$Minute=[DateTimeOffset]::new($Now.Year,$Now.Month,$Now.Day,$Now.Hour,$Now.Minute,0,$Offset);$Start=$Minute.ToUnixTimeMilliseconds();$IdleSeconds=Get-IdleSeconds;$IsIdle=$IdleSeconds -ge $IdleThreshold
-      $ProcessName='Unknown';try{$ForegroundId=Get-ForegroundProcessId;if($ForegroundId -gt 0){$ProcessName=(Get-Process -Id $ForegroundId -ErrorAction Stop).ProcessName.ToLowerInvariant()}}catch{}
-      $App=Get-AppName $ProcessName;$Key="$Start|$ProcessName";if(!$Buckets.ContainsKey($Key)){$Buckets[$Key]=[ordered]@{Date=$Now.ToString('yyyy-MM-dd');Start=$Start;End=$Start;App=$App;Process=$ProcessName;Site='';Active=0;Idle=0;Source='system'}}
-      $Buckets[$Key].End=[DateTimeOffset]::Now.ToUnixTimeMilliseconds();if($IsIdle){$Buckets[$Key].Idle+=$PollSeconds}else{$Buckets[$Key].Active+=$PollSeconds}
-      @($Buckets.Keys)|Where-Object{-not $_.StartsWith("$Start|")}|ForEach-Object{$Event=$Buckets[$_];Save-Event $Event;$Buckets.Remove($_)}
+      $IdleSeconds=Get-IdleSeconds;$IsIdle=$IdleSeconds -ge $IdleThreshold
+      $Current=Get-ForegroundAppInfo
+      $SampleEnd=[DateTimeOffset]::Now.ToUnixTimeMilliseconds();$SampleStart=[long]($SampleEnd-($PollSeconds*1000))
+      Save-Event ([ordered]@{Date=$Now.ToString('yyyy-MM-dd');Start=$SampleStart;End=$SampleEnd;App=$Current.app_name;Process=$Current.process_name;Site='';Active=($(if($IsIdle){0}else{$PollSeconds}));Idle=($(if($IsIdle){$PollSeconds}else{0}));Source='system'})
       $NextSample=$Now.AddSeconds($PollSeconds)
     }
   } catch { Write-AgentLog "ERROR $($_.Exception.Message)" }

@@ -1,34 +1,21 @@
-DFAB R&D TIMESHEET — EASY LOCAL SETUP (NO TASK SCHEDULER / NO FIREBASE CLI)
+DFAB R&D TIMESHEET - LOCAL WINDOWS USAGE AGENT v1.2
 
-Open a normal PowerShell window. Administrator mode is NOT required.
-Run these commands one by one:
+1) Open PowerShell (normal user is enough).
+2) Run:
+   cd "D:\DFAB PROJECT\KPI R&D\usage-agent"
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\Prepare-Kabil-Agent.ps1
+   .\Install-Agent.ps1
 
-cd "D:\DFAB PROJECT\KPI R&D\usage-agent"
-Set-ExecutionPolicy -Scope Process Bypass
-.\Prepare-Kabil-Agent.ps1
-.\Install-Agent.ps1
-Invoke-RestMethod http://127.0.0.1:8765/health
+3) Health check:
+   Invoke-RestMethod http://127.0.0.1:8765/health
 
-EXPECTED HEALTH RESULT:
-ok          : True
-member_name : Kabil
-device_id   : your PC name
-port        : 8765
+4) Foreground-app check:
+   Open Excel, click inside Excel, then from another PowerShell window run:
+   Invoke-RestMethod http://127.0.0.1:8765/current
+   app_name should say Microsoft Excel.
 
-The agent is installed under:
-%LOCALAPPDATA%\DFAB\RndUsageAgent
+5) Chrome/Edge websites:
+   Load usage-agent\browser-extension from chrome://extensions or edge://extensions.
 
-It starts automatically at Windows sign-in using the current-user Startup registry entry.
-No Windows Scheduled Task is used in this version.
-
-Then Chrome:
-1. Open chrome://extensions
-2. Developer mode ON
-3. Remove/reload the older DFAB R&D Browser Timesheet extension if present
-4. Load unpacked
-5. Select: D:\DFAB PROJECT\KPI R&D\usage-agent\browser-extension
-
-Then use a few apps/sites for 1-2 minutes and open Dashboard -> Timesheet -> Refresh.
-
-NO FIREBASE CLI LOGIN IS REQUIRED FOR TIMESHEET USAGE IN THIS VERSION.
-Existing Firebase features elsewhere in the KPI application are unchanged.
+The Timesheet page is visible to every logged-in team member. Each Windows PC that should report its own app usage must run its own local agent configured for that member/device.
