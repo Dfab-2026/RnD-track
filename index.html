@@ -129,7 +129,7 @@
       </section>
 
       <section class="page" id="timesheetPage">
-        <div class="section-toolbar"><div><span class="kicker">SYSTEM USAGE</span><h2>R&amp;D Timesheet</h2><p>Active hours, idle time, applications and website-domain usage reported by managed R&amp;D computers.</p></div><span class="timesheet-live-chip"><i></i>AGENT DATA</span></div>
+        <div class="section-toolbar"><div><span class="kicker">SYSTEM USAGE</span><h2>R&amp;D Timesheet</h2><p>Active hours, idle time, applications and website-domain usage read from the local Windows usage agent, with existing cloud records merged when available.</p></div><span class="timesheet-live-chip"><i></i>LOCAL USAGE</span></div>
         <section class="panel timesheet-filters"><label><span>MEMBER</span><select id="timesheetMemberFilter"><option value="">All R&amp;D members</option></select></label><label><span>FROM</span><input id="timesheetFromDate" type="date"></label><label><span>TO</span><input id="timesheetToDate" type="date"></label><button class="primary-btn" id="refreshTimesheetBtn" type="button">Refresh</button></section>
         <div id="timesheetStatus" class="timesheet-status" aria-live="polite"></div>
         <div id="timesheetContent"><div class="empty-state">Loading system usage…</div></div>
@@ -185,7 +185,7 @@
   <script defer src="app.js?v=120.0.0"></script>
   <script defer src="kpi-chat.js?v=120.0.0"></script>
   <script defer src="kpi-pdf.js?v=120.0.0"></script>
-  <script defer src="timesheet.js?v=120.0.0"></script>
+  <script defer src="timesheet.js?v=121.0.0"></script>
   <script defer src="responsive.js?v=120.0.0"></script>
 <script defer src="daily-sheet-reminder.js?v=120.0.0"></script>
 </body>

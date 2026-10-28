@@ -1,9 +1,8 @@
 {
-  "ApiKey": "PASTE_FIREBASE_WEB_API_KEY",
-  "ProjectId": "PASTE_FIREBASE_PROJECT_ID",
   "MemberId": 1,
   "MemberName": "Kabil",
   "DeviceId": "DFAB-PC22",
   "IdleThresholdSeconds": 300,
-  "PollSeconds": 10
+  "PollSeconds": 10,
+  "LocalPort": 8765
 }

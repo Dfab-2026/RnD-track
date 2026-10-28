@@ -1,0 +1,27 @@
+DFAB R&D TIMESHEET — EASY LOCAL SETUP
+
+Open PowerShell AS ADMINISTRATOR and paste these commands one by one:
+
+cd "D:\DFAB PROJECT\KPI R&D\usage-agent"
+Set-ExecutionPolicy -Scope Process Bypass
+.\Prepare-Kabil-Agent.ps1
+.\Install-Agent.ps1
+Invoke-RestMethod http://127.0.0.1:8765/health
+
+EXPECTED HEALTH RESULT:
+ok          : True
+member_name : Kabil
+device_id   : your PC name
+port        : 8765
+
+Then Chrome:
+1. Open chrome://extensions
+2. Developer mode ON
+3. Remove/reload the older DFAB R&D Browser Timesheet extension if present
+4. Load unpacked
+5. Select: D:\DFAB PROJECT\KPI R&D\usage-agent\browser-extension
+
+Then use a few apps/sites for 1-2 minutes and open Dashboard -> Timesheet -> Refresh.
+
+NO FIREBASE CLI LOGIN IS REQUIRED FOR TIMESHEET USAGE IN THIS VERSION.
+Existing Firebase features elsewhere in the KPI application are unchanged.

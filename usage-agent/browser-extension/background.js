@@ -1,12 +1,13 @@
 importScripts('config.js');
-let token='',expiresAt=0;
-const valid=()=>USAGE_CONFIG.apiKey&&!USAGE_CONFIG.apiKey.startsWith('PASTE_')&&USAGE_CONFIG.projectId&&!USAGE_CONFIG.projectId.startsWith('PASTE_');
-async function auth(){if(token&&Date.now()<expiresAt)return token;const response=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(USAGE_CONFIG.apiKey)}`,{method:'POST',headers:{'content-type':'application/json'},body:'{"returnSecureToken":true}'});if(!response.ok)throw Error(`Firebase authentication failed: ${response.status}`);const data=await response.json();token=data.idToken;expiresAt=Date.now()+Math.max(300,Number(data.expiresIn||3600)-120)*1000;return token}
-const s=value=>({stringValue:String(value||'')}),i=value=>({integerValue:String(Math.max(0,Math.round(Number(value)||0)))});
+const endpoint=()=>String(USAGE_CONFIG.localEndpoint||'http://127.0.0.1:8765/browser');
 async function record(){
-  if(!valid())return;const state=await chrome.idle.queryState(300);if(state!=='active')return;const window=await chrome.windows.getLastFocused({populate:true});if(!window?.focused)return;const tab=(window.tabs||[]).find(item=>item.active);if(!tab?.url||!/^https?:/i.test(tab.url))return;
-  const url=new URL(tab.url),now=Date.now(),date=new Date(),slot=Math.floor(now/30000)*30000,source=navigator.userAgent.includes('Edg/')?'Microsoft Edge':'Google Chrome',key=`${USAGE_CONFIG.deviceId}|browser|${slot}|${url.hostname}`;
-  const bytes=new TextEncoder().encode(key),digest=await crypto.subtle.digest('SHA-256',bytes),id=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,32),fields={m:i(USAGE_CONFIG.memberId),n:s(USAGE_CONFIG.memberName),v:s(USAGE_CONFIG.deviceId),d:s(`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`),s:i(slot),e:i(now),a:s(source),p:s(source==='Microsoft Edge'?'msedge':'chrome'),h:s(url.hostname.replace(/^www\./,'')),x:i(30),i:i(0),q:s('b'),u:i(now)};
-  const bearer=await auth(),endpoint=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(USAGE_CONFIG.projectId)}/databases/(default)/documents/usage_events/${id}`,response=await fetch(endpoint,{method:'PATCH',headers:{authorization:`Bearer ${bearer}`,'content-type':'application/json'},body:JSON.stringify({fields})});if(!response.ok){if(response.status===401||response.status===403){token='';expiresAt=0}throw Error(`Usage upload failed: ${response.status}`)}
+  const state=await chrome.idle.queryState(300);if(state!=='active')return;
+  const window=await chrome.windows.getLastFocused({populate:true});if(!window?.focused)return;
+  const tab=(window.tabs||[]).find(item=>item.active);if(!tab?.url||!/^https?:/i.test(tab.url))return;
+  const url=new URL(tab.url),now=Date.now(),app=navigator.userAgent.includes('Edg/')?'Microsoft Edge':'Google Chrome';
+  const payload={member_id:Number(USAGE_CONFIG.memberId)||1,member_name:String(USAGE_CONFIG.memberName||'Kabil'),device_id:String(USAGE_CONFIG.deviceId||''),site_domain:url.hostname.replace(/^www\./,''),app_name:app,active_seconds:30,started_at:now-30000,ended_at:now};
+  const response=await fetch(endpoint(),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+  if(!response.ok)throw Error(`Local usage agent unavailable: ${response.status}`);
 }
-chrome.runtime.onInstalled.addListener(()=>chrome.alarms.create('usage-tick',{periodInMinutes:.5}));chrome.runtime.onStartup.addListener(()=>chrome.alarms.create('usage-tick',{periodInMinutes:.5}));chrome.alarms.onAlarm.addListener(alarm=>{if(alarm.name==='usage-tick')record().catch(console.error)});chrome.alarms.create('usage-tick',{periodInMinutes:.5});
+function ensureAlarm(){chrome.alarms.create('usage-tick',{periodInMinutes:.5});}
+chrome.runtime.onInstalled.addListener(ensureAlarm);chrome.runtime.onStartup.addListener(ensureAlarm);chrome.alarms.onAlarm.addListener(alarm=>{if(alarm.name==='usage-tick')record().catch(console.error)});ensureAlarm();

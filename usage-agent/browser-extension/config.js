@@ -1,1 +1,1 @@
-﻿self.USAGE_CONFIG={apiKey:'AIzaSyAbArRptyHA6u9KY-sQ24kRDYEhCXCznv4',projectId:'dfab-rnd-track',memberId:1,memberName:'Kabil',deviceId:'DFAB-PC22'};
+self.USAGE_CONFIG={memberId:1,memberName:'Kabil',deviceId:'DFAB-PC22',localEndpoint:'http://127.0.0.1:8765/browser'};
