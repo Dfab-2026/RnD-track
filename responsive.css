@@ -72,3 +72,21 @@ html{scroll-padding-top:calc(var(--app-header-height) + 12px);-webkit-text-size-
 .work-project-grid .work-project-meta{min-height:28px;overflow-wrap:anywhere}
 .work-text-content{padding:24px}.work-text-content p{white-space:pre-wrap;overflow-wrap:anywhere;max-height:60vh;overflow:auto;line-height:1.6}
 .tracker-slot-fields textarea,.tracker-slot-fields select{height:100px!important;min-height:100px!important;max-height:100px;box-sizing:border-box;resize:none}
+
+/* v117: contain long weekly idea text inside equal-height cards. */
+#weeklySetup .weekly-idea-list{grid-auto-rows:176px!important;align-content:start!important;grid-template-rows:none!important}
+#weeklySetup .weekly-idea-card{height:176px!important;min-height:176px!important;max-height:176px!important;box-sizing:border-box;align-items:start!important;margin:0!important;overflow:hidden!important;grid-template-columns:20px minmax(0,1fr)!important}
+#weeklySetup .weekly-idea-card>input{align-self:start;margin-top:3px}
+#weeklySetup .weekly-idea-main{min-width:0;width:100%;display:grid;grid-template-rows:55px 26px 28px 20px;gap:3px}
+#weeklySetup .weekly-idea-top{min-width:0;align-items:start!important;gap:8px!important}
+#weeklySetup .weekly-idea-top>b{min-width:0;overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-height:1.35!important;max-height:55px}
+#weeklySetup .weekly-source{white-space:nowrap;line-height:1.3;align-self:start}
+#weeklySetup .weekly-idea-meta{min-width:0;max-height:26px;overflow:hidden;margin:0!important;line-height:1.4!important;align-content:start}
+#weeklySetup .weekly-idea-main p{margin:0!important;max-height:28px;line-height:1.4!important;overflow:hidden}
+#weeklySetup .weekly-read-more{justify-self:start;align-self:start;min-height:20px;padding:0 5px;font-size:10px}
+#weeklySetup .weekly-read-more[hidden]{display:none!important}
+#weeklySetup .weekly-owner-pickers .owner-row{grid-template-columns:minmax(0,1fr)!important;min-width:0}
+#weeklySetup .weekly-owner-pickers .owner-row>*{min-width:0;width:100%}
+.daily-sheet-reminder .work-text-content{padding:22px}.daily-sheet-reminder .sheet-reminder-list{display:grid;gap:9px;max-height:50vh;overflow:auto;margin:16px 0}
+.daily-sheet-reminder .sheet-reminder-item{width:100%;text-align:left;white-space:normal;height:auto;padding:12px;display:grid;gap:5px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+.daily-sheet-reminder .sheet-reminder-item span{font-size:12px;overflow-wrap:anywhere}.daily-sheet-reminder .sheet-reminder-note{font-size:12px;color:var(--muted);line-height:1.5}

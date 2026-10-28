@@ -375,8 +375,8 @@ async function deleteDepartmentLocal(id){
 }
 async function createIdeaLocal(b){if(isVisitor())throw new Error('Admin visitors do not submit ideas.');const member=state.members.find(m=>Number(m.id)===Number(b.submitted_by)),dep=state.departments.find(d=>Number(d.id)===Number(b.department_id));const problem=String(b.problem||'').trim(),proposal=String(b.proposed_idea||'').trim();if(!member||!dep||!problem||!proposal)throw new Error('Submitted by, department, problem and idea are required.');if(problem.length>1200||proposal.length>1600)throw new Error('Problem or proposed solution is too long.');const date=b.submission_date||today(),seq=state.ideas.filter(i=>i.submission_date===date).length+1,now=new Date().toISOString();const row={id:nextId(state.ideas),idea_number:`IDEA-${date.replaceAll('-','')}-${String(seq).padStart(2,'0')}`,submitted_by:Number(member.id),department_id:Number(dep.id),problem,proposed_idea:proposal,expected_benefit:String(b.expected_benefit||'').trim(),priority:isLead()&&['Low','Medium','High','Critical'].includes(b.priority)?b.priority:'Medium',submission_date:date,status:'submitted',attachment:b.attachment||null,created_at:now,updated_at:now};state.ideas.unshift({...row,submitted_by_name:member.name,department_name:dep.name,attachment_path:row.attachment?.data||''});await persistThenSync([{collection:'ideas',row}]);notifyUser('Idea submitted',`${member.name} submitted ${row.idea_number} for ${dep.name}.`);return {...row,cloud_saved:Boolean(window.rndCloud?.enabled)}}
 async function createCycleLocal(b){requireLead();if(isVisitor())throw new Error('Admin visitors have view-only access.');const start=b.start_date,end=b.end_date,label=String(b.label||'').trim();if(!start||!end||start>end)throw new Error('Valid start and end dates are required.');if(!label)throw new Error('Week label is required.');if(label.length>80)throw new Error('Week label must be 80 characters or less.');if(state.cycles.some(c=>!(c.end_date<start||c.start_date>end)))throw new Error('A weekly cycle already overlaps these dates.');const now=new Date().toISOString(),row={id:nextId(state.cycles),label,start_date:start,end_date:end,status:'active',created_at:now,updated_at:now};state.cycles.unshift(row);await persistThenSync([{collection:'cycles',row}]);return row}
-async function assignWeekLocal(cycleId,ideaIds,ownerIds,priorities=[]){requireLead();if(isVisitor())throw new Error('Admin visitors have view-only access.');const cycle=state.cycles.find(c=>c.id===Number(cycleId)),ids=[...new Set((ideaIds||[]).map(Number))];if(!cycle)throw new Error('Weekly cycle not found.');if(ids.length!==2)throw new Error('Exactly 2 ideas must be selected for a weekly assignment.');if(state.projects.some(p=>p.cycle_id===cycle.id))throw new Error('This week already has its two assigned projects.');const ideas=ids.map(id=>state.ideas.find(i=>Number(i.id)===Number(id)&&String(i.status||'submitted').toLowerCase()==='submitted'&&!state.projects.some(p=>Number(p.idea_id)===Number(i.id))));if(ideas.some(x=>!x))throw new Error('Only submitted ideas that are not already assigned can be selected.');const now=new Date().toISOString(),ops=[];ids.forEach((id,idx)=>{const idea=ideas[idx],owner=workingMembers().find(m=>m.id===Number(ownerIds?.[idx]))||workingMembers()[0];if(!owner)throw new Error('Add at least one R&D Member before assigning projects.');const raw={id:nextId(state.projects),cycle_id:cycle.id,idea_id:id,project_number:`RND-${cycle.start_date.slice(0,4)}-W${String(cycle.id).slice(-4)}-${idx+1}`,title:idea.proposed_idea.slice(0,140),owner_id:owner.id,start_date:cycle.start_date,end_date:cycle.end_date,progress:0,status:'assigned',created_at:now,updated_at:now};state.projects.unshift({...raw,owner_name:owner.name,cycle_label:cycle.label,department_name:idea.department_name});if(['Low','Medium','High','Critical'].includes(priorities[idx]))idea.priority=priorities[idx];idea.status='assigned';idea.updated_at=now;ops.push({collection:'projects',row:raw},{collection:'ideas',row:idea})});cycle.updated_at=now;await persistThenSync(ops);notifyUser('Weekly tasks assigned',`${cycle.label}: 2 R&D tasks are now active.`);return true}
-async function addProgressLocal(projectId,b){requireTaskOwner(state.projects.find(p=>Number(p.id)===Number(projectId)));if(Number(b.user_id)!==activeUser())throw new Error("Progress must be recorded as yourself.");if(isVisitor())throw new Error('Admin visitors have view-only access.');const p=state.projects.find(x=>x.id===Number(projectId)),member=state.members.find(m=>m.id===Number(b.user_id)),pct=Number(b.progress_percent),work=String(b.work_done||'').trim();if(!p)throw new Error('Project not found.');if(!member||!Number.isFinite(pct)||pct<0||pct>100||!work)throw new Error('Member, work done and progress 0-100 are required.');if(work.length>1600)throw new Error("Today's work must be 1600 characters or less.");if(pct<p.progress)throw new Error(`Progress cannot go backwards. Current project progress is ${p.progress}%.`);const now=new Date().toISOString(),u={id:nextId(state.progress),project_id:p.id,user_id:member.id,update_date:b.update_date||today(),work_done:work,progress_percent:pct,remarks:String(b.remarks||'').trim().slice(0,1200),blocker:String(b.blocker||'').trim().slice(0,800),next_action:String(b.next_action||'').trim().slice(0,800),attachment:b.attachment||null,created_at:now,updated_at:now,user_name:member.name,attachment_path:b.attachment?.data||''};state.progress.push(u);p.progress=pct;p.status=pct>=100?'completed':pct>0?'in_progress':'assigned';p.updated_at=now;const ops=[{collection:'progress',row:u},{collection:'projects',row:p}];if(pct>=100){const peers=state.projects.filter(x=>x.cycle_id===p.cycle_id);if(peers.length===2&&peers.every(x=>x.progress===100)){const c=state.cycles.find(x=>x.id===p.cycle_id);if(c){c.status='completed';c.updated_at=now;ops.push({collection:'cycles',row:c})}}}await persistThenSync(ops);notifyUser('Progress updated',`${p.project_number} is now ${pct}% complete.`);return u}
+async function assignWeekLocal(cycleId,ideaIds,ownerIds,priorities=[]){if(isVisitor())throw new Error('Admin visitors have view-only access.');const cycle=state.cycles.find(c=>c.id===Number(cycleId)),ids=[...new Set((ideaIds||[]).map(Number))];if(!cycle)throw new Error('Weekly cycle not found.');if(ids.length<1||ids.length>2)throw new Error('Select one or two ideas for a weekly assignment.');const requestedOwners=ids.map((_,idx)=>Number(ownerIds?.[idx]));if(!isLead()&&requestedOwners.some(id=>id!==activeUser()))throw new Error('You can assign weekly tasks only to yourself.');for(const ownerId of new Set(requestedOwners)){if(!workingMembers().some(m=>Number(m.id)===ownerId))throw new Error('Choose an active R&D member.');const count=state.projects.filter(p=>Number(p.cycle_id)===Number(cycle.id)&&Number(p.owner_id)===ownerId).length+requestedOwners.filter(id=>id===ownerId).length;if(count>2)throw new Error('Each member can have only two tasks in a week.');}const ideas=ids.map(id=>state.ideas.find(i=>Number(i.id)===Number(id)&&String(i.status||'submitted').toLowerCase()==='submitted'&&!state.projects.some(p=>Number(p.idea_id)===Number(i.id))));if(ideas.some(x=>!x))throw new Error('Only submitted ideas that are not already assigned can be selected.');const now=new Date().toISOString(),ops=[];ids.forEach((id,idx)=>{const idea=ideas[idx],owner=workingMembers().find(m=>m.id===Number(ownerIds?.[idx]))||workingMembers()[0];if(!owner)throw new Error('Add at least one R&D Member before assigning projects.');const raw={id:nextId(state.projects),cycle_id:cycle.id,idea_id:id,project_number:`RND-${cycle.start_date.slice(0,4)}-W${String(cycle.id).slice(-4)}-${state.projects.filter(p=>Number(p.cycle_id)===Number(cycle.id)).length+1}`,title:idea.proposed_idea.slice(0,140),owner_id:owner.id,start_date:cycle.start_date,end_date:cycle.end_date,progress:0,status:'assigned',created_at:now,updated_at:now};state.projects.unshift({...raw,owner_name:owner.name,cycle_label:cycle.label,department_name:idea.department_name});if(isLead()&&['Low','Medium','High','Critical'].includes(priorities[idx]))idea.priority=priorities[idx];idea.status='assigned';idea.updated_at=now;ops.push({collection:'projects',row:raw},{collection:'ideas',row:idea})});cycle.updated_at=now;await persistThenSync(ops);notifyUser('Weekly tasks assigned',`${cycle.label}: ${ids.length} R&D task(s) assigned.`);return true}
+async function addProgressLocal(projectId,b){requireTaskOwner(state.projects.find(p=>Number(p.id)===Number(projectId)));if(Number(b.user_id)!==activeUser())throw new Error("Progress must be recorded as yourself.");if(isVisitor())throw new Error('Admin visitors have view-only access.');const p=state.projects.find(x=>x.id===Number(projectId)),member=state.members.find(m=>m.id===Number(b.user_id)),pct=Number(b.progress_percent),work=String(b.work_done||'').trim();if(!p)throw new Error('Project not found.');if(!member||!Number.isFinite(pct)||pct<0||pct>100||!work)throw new Error('Member, work done and progress 0-100 are required.');if(work.length>1600)throw new Error("Today's work must be 1600 characters or less.");if(pct<p.progress)throw new Error(`Progress cannot go backwards. Current project progress is ${p.progress}%.`);const now=new Date().toISOString(),u={id:nextId(state.progress),project_id:p.id,user_id:member.id,update_date:b.update_date||today(),work_done:work,progress_percent:pct,remarks:String(b.remarks||'').trim().slice(0,1200),blocker:String(b.blocker||'').trim().slice(0,800),next_action:String(b.next_action||'').trim().slice(0,800),attachment:b.attachment||null,created_at:now,updated_at:now,user_name:member.name,attachment_path:b.attachment?.data||''};state.progress.push(u);p.progress=pct;p.status=pct>=100?'completed':pct>0?'in_progress':'assigned';p.updated_at=now;const ops=[{collection:'progress',row:u},{collection:'projects',row:p}];if(pct>=100){const peers=state.projects.filter(x=>x.cycle_id===p.cycle_id);if(peers.length>=2&&peers.every(x=>x.progress===100)){const c=state.cycles.find(x=>x.id===p.cycle_id);if(c){c.status='completed';c.updated_at=now;ops.push({collection:'cycles',row:c})}}}await persistThenSync(ops);notifyUser('Progress updated',`${p.project_number} is now ${pct}% complete.`);return u}
 async function updateIdeaLocal(id,b){
   if(!isLead())b={...b,priority:state.ideas.find(i=>Number(i.id)===Number(id))?.priority||'Medium'};if(isVisitor())throw new Error('Admin visitors have view-only access.');
   const i=state.ideas.find(x=>Number(x.id)===Number(id));if(!i)throw new Error('Idea not found.');
@@ -401,7 +401,7 @@ async function updateCycleLocal(id,b){requireLead();
 async function deleteCycleLocal(id){requireLead();
   if(isVisitor())throw new Error('Admin visitors have view-only access.');const c=state.cycles.find(x=>Number(x.id)===Number(id));if(!c)throw new Error('Week not found.');const ps=state.projects.filter(p=>p.cycle_id===c.id),pids=ps.map(p=>p.id),ups=state.progress.filter(u=>pids.includes(u.project_id));const ideaOps=[];ps.forEach(p=>{const i=state.ideas.find(x=>x.id===p.idea_id);if(i){i.status='submitted';i.updated_at=new Date().toISOString();ideaOps.push({collection:'ideas',row:i})}});state.progress=state.progress.filter(u=>!pids.includes(u.project_id));state.projects=state.projects.filter(p=>p.cycle_id!==c.id);state.cycles=state.cycles.filter(x=>x.id!==c.id);const deletes=[{collection:'progress',ids:ups.map(x=>x.id)},{collection:'projects',ids:pids},{collection:'cycles',ids:[c.id]}];await persistThenSync(ideaOps,deletes);return true;
 }
-function recalcProjectFromProgress(projectId){const p=state.projects.find(x=>x.id===Number(projectId));if(!p)return null;const ups=state.progress.filter(u=>u.project_id===p.id).sort((a,b)=>b.update_date.localeCompare(a.update_date)||b.id-a.id);const pct=ups.length?Math.max(...ups.map(u=>Number(u.progress_percent)||0)):0;p.progress=pct;p.status=pct>=100?'completed':pct>0?'in_progress':'assigned';p.updated_at=new Date().toISOString();const c=state.cycles.find(x=>x.id===p.cycle_id);if(c){const peers=state.projects.filter(x=>x.cycle_id===c.id);c.status=peers.length===2&&peers.every(x=>x.progress===100)?'completed':'active';c.updated_at=p.updated_at}return {p,c}}
+function recalcProjectFromProgress(projectId){const p=state.projects.find(x=>x.id===Number(projectId));if(!p)return null;const ups=state.progress.filter(u=>u.project_id===p.id).sort((a,b)=>b.update_date.localeCompare(a.update_date)||b.id-a.id);const pct=ups.length?Math.max(...ups.map(u=>Number(u.progress_percent)||0)):0;p.progress=pct;p.status=pct>=100?'completed':pct>0?'in_progress':'assigned';p.updated_at=new Date().toISOString();const c=state.cycles.find(x=>x.id===p.cycle_id);if(c){const peers=state.projects.filter(x=>x.cycle_id===c.id);c.status=peers.length>=2&&peers.every(x=>x.progress===100)?'completed':'active';c.updated_at=p.updated_at}return {p,c}}
 async function updateProgressLocal(id,b){const existing=state.progress.find(u=>Number(u.id)===Number(id));requireTaskOwner(state.projects.find(p=>Number(p.id)===Number(existing?.project_id)));if(Number(b.user_id)!==activeUser())throw new Error("Progress must be recorded as yourself.");if(isVisitor())throw new Error('Admin visitors have view-only access.');const u=state.progress.find(x=>Number(x.id)===Number(id));if(!u)throw new Error('Progress entry not found.');const member=state.members.find(m=>m.id===Number(b.user_id)),pct=Number(b.progress_percent),work=String(b.work_done||'').trim();if(!member||!Number.isFinite(pct)||pct<0||pct>100||!work)throw new Error('Member, work done and progress 0-100 are required.');Object.assign(u,{user_id:member.id,user_name:member.name,update_date:b.update_date||u.update_date,progress_percent:pct,work_done:work,remarks:String(b.remarks||'').trim().slice(0,1200),blocker:String(b.blocker||'').trim().slice(0,800),next_action:String(b.next_action||'').trim().slice(0,800),updated_at:new Date().toISOString()});if(b.attachment)u.attachment=b.attachment;const rc=recalcProjectFromProgress(u.project_id);const ops=[{collection:'progress',row:u}];if(rc?.p)ops.push({collection:'projects',row:rc.p});if(rc?.c)ops.push({collection:'cycles',row:rc.c});await persistThenSync(ops);return u;}
 async function deleteProgressLocal(id){const existing=state.progress.find(u=>Number(u.id)===Number(id));requireTaskOwner(state.projects.find(p=>Number(p.id)===Number(existing?.project_id)));if(isVisitor())throw new Error('Admin visitors have view-only access.');const u=state.progress.find(x=>Number(x.id)===Number(id));if(!u)throw new Error('Progress entry not found.');state.progress=state.progress.filter(x=>x.id!==u.id);const rc=recalcProjectFromProgress(u.project_id);const ops=[];if(rc?.p)ops.push({collection:'projects',row:rc.p});if(rc?.c)ops.push({collection:'cycles',row:rc.c});const deletes=[{collection:'progress',ids:[u.id]}];await persistThenSync(ops,deletes);return true;}
 async function updateProjectLocal(id,b){requireLead();if(isVisitor())throw new Error('Admin visitors have view-only access.');const p=state.projects.find(x=>Number(x.id)===Number(id));if(!p)throw new Error('Project not found.');const owner=workingMembers().find(m=>m.id===Number(b.owner_id));if(!owner)throw new Error('Choose an active R&D member.');const title=String(b.title||'').trim();if(!title)throw new Error('Project title is required.');if(!b.start_date||!b.end_date||b.start_date>b.end_date)throw new Error('Valid project start and end dates are required.');Object.assign(p,{title:title.slice(0,140),owner_id:owner.id,owner_name:owner.name,start_date:b.start_date,end_date:b.end_date,updated_at:new Date().toISOString()});const idea=state.ideas.find(i=>Number(i.id)===Number(p.idea_id)),ops=[{collection:'projects',row:p}];if(idea&&['Low','Medium','High','Critical'].includes(b.priority)){idea.priority=b.priority;idea.updated_at=p.updated_at;ops.push({collection:'ideas',row:idea})}await persistThenSync(ops);return p;}
@@ -556,6 +556,13 @@ function exportExcelCsv(){let lastRow=1,lastCol=0;excelSheetRows.forEach((row,r)
 function isLead(member=currentMember()){return Boolean(member&&member.role!=='visitor'&&normalizeName(member.name)==='kabil')}
 function memberRoleLabel(member){return member?.role==='visitor'?'ADMIN · VISITOR':isLead(member)?'R&D LEAD':'R&D MEMBER'}
 function canEditTask(project){return Boolean(project&&!isVisitor()&&Number(project.owner_id)===Number(currentMember()?.id))}
+function canEditTrackerProject(p){return Boolean(p&&!isVisitor()&&(isLead()||canEditTask(p)))}
+function trackerEffectiveDate(p,row){
+  if(row?.manual_extra){const date=trackerDateToIso(row.date);if(/^\d{4}-\d{2}-\d{2}$/.test(date))return date;}
+  const sheet=trackerSheetRows(p),index=sheet.filter(r=>!r.manual_extra&&Number(r.row_index)<=Number(row?.row_index)).length-1;
+  return trackerDateToIso(trackerPeriodDates(p)[Math.max(0,index)]||'');
+}
+function canEditTrackerRow(p,row){const date=trackerEffectiveDate(p,row);return !isVisitor()&&Boolean(p)&&((isLead()&&date&&date<today())||(canEditTask(p)&&(!date||date>=today())))}
 function requireLead(){if(!isLead())throw new Error('Only Kabil · R&D Lead can manage weekly assignments and priorities.')}
 function requireTaskOwner(project){if(!canEditTask(project))throw new Error('You can update only your own assigned task.')}
 function taskPriority(project){return state.ideas.find(i=>Number(i.id)===Number(project?.idea_id))?.priority||'Medium'}
@@ -853,7 +860,7 @@ function renderDashboard(){
   $$('#weeklyFocus [data-focus-project]').forEach(el=>el.addEventListener('click',()=>goToPendingItem('progress',Number(el.dataset.focusProject)||0)));
 }
 
-function renderIdeas(){const q=$('#ideaSearch').value.toLowerCase().trim(), person=Number($('#ideaPersonFilter').value)||0, dep=Number($('#ideaDeptFilter').value)||0, date=$('#ideaDateFilter').value;const rows=state.ideas.filter(i=>(!q||[i.problem,i.proposed_idea,i.department_name,i.submitted_by_name,i.idea_number].join(' ').toLowerCase().includes(q))&&(!person||i.submitted_by===person)&&(!dep||i.department_id===dep)&&(!date||i.submission_date===date));$('#ideasTable').innerHTML=rows.length?rows.map(i=>`<tr><td>${fmtDate(i.submission_date)}</td><td><b>${esc(i.idea_number)}</b>${i.attachment_path?`<div class="sub"><a class="link" href="${i.attachment_path}" target="_blank">Attachment ↗</a></div>`:''}</td><td>${esc(i.submitted_by_name)}</td><td>${esc(i.department_name)}</td><td>${esc(i.problem)}</td><td>${esc(i.proposed_idea)}</td><td><span class="tag ${i.priority.toLowerCase()}">${esc(i.priority)}</span></td><td><span class="tag ${i.status}">${esc(i.status)}</span></td><td>${isVisitor()?'—':`<div class="row-actions"><button class="mini-action" data-edit-idea="${i.id}" title="Edit idea">Edit</button><button class="mini-action danger" data-delete-idea="${i.id}" title="Delete idea">×</button></div>`}</td></tr>`).join(''):'<tr><td colspan="9" class="empty-state">No ideas match the selected filters.</td></tr>'}
+function renderIdeas(){const q=$('#ideaSearch').value.toLowerCase().trim(), person=Number($('#ideaPersonFilter').value)||0, dep=Number($('#ideaDeptFilter').value)||0, date=$('#ideaDateFilter').value;const rows=state.ideas.filter(i=>(!q||[i.problem,i.proposed_idea,i.department_name,i.submitted_by_name,i.idea_number].join(' ').toLowerCase().includes(q))&&(!person||i.submitted_by===person)&&(!dep||i.department_id===dep)&&(!date||i.submission_date===date));$('#ideasTable').innerHTML=rows.length?rows.map(i=>`<tr><td>${fmtDate(i.submission_date)}</td><td><b>${esc(i.idea_number)}</b>${i.attachment_path?`<div class="sub"><a class="link" href="${i.attachment_path}" target="_blank">Attachment ↗</a></div>`:''}</td><td>${esc(i.submitted_by_name)}</td><td>${esc(i.department_name)}</td><td>${esc(i.problem)}</td><td>${esc(i.proposed_idea)}</td><td><span class="tag ${i.priority.toLowerCase()}">${esc(i.priority)}</span></td><td><span class="tag ${i.status}">${esc(i.status)}</span></td><td>${isVisitor()?'—':`<div class="row-actions"><button class="mini-action" data-edit-idea="${i.id}" title="Edit idea">Edit</button><button class="mini-action danger" data-delete-idea="${i.id}" title="Delete idea">×</button></div>`}</td></tr>`).join(''):'<tr><td colspan="9" class="empty-state">No ideas match the selected filters.</td></tr>';bindRecordActions()}
 function renderWeekDeletePicker(){
   const select=$('#weekSelect');if(!select)return;
   let picker=$('#weekDeletePicker');
@@ -881,10 +888,12 @@ function renderWeekly(){
   const c=state.cycles.find(x=>Number(x.id)===Number(sel));
   if(!c){$('#weeklySetup').innerHTML='<div class="empty-state">Create a working week to begin shortlisting.</div>';return}
   syncWorkPeriodFromCycle(c);
-  const assigned=state.projects.filter(p=>Number(p.cycle_id)===Number(c.id));
-  if(assigned.length){
-    const assignedCount=Math.min(2,assigned.length);
-    $('#weeklySetup').innerHTML=`<div class="panel assigned-week-panel assigned-week-complete"><div class="assigned-week-celebration"><div><span class="kicker">WEEKLY EXECUTION</span><h3>${esc(c.label)}</h3><p>${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</p></div><div class="assigned-score"><strong>${assignedCount}</strong><i></i><small>2</small><em>ASSIGNED</em></div><div class="assigned-check">✓</div></div><div class="assigned-week-grid">${assigned.map((p,i)=>`<article class="assigned-week-card assigned-week-card-live" style="--delay:${i*120}ms"><div class="assigned-week-index">0${i+1}</div><div class="assigned-week-body"><div class="focus-title"><span>${esc(p.title)}</span><strong>${Number(p.progress||0)}%</strong></div><div class="assigned-week-meta"><span>${esc(p.owner_name||'—')}</span><span>${esc(p.department_name||'—')}</span><span>${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,Number(p.progress||0))}%"></div></div>${!isLead()?'':`<div class="assigned-task-actions"><button type="button" class="mini-action" data-edit-assigned-project="${p.id}">Edit task</button></div>`}</div></article>`).join('')}</div><div class="assigned-week-actions"><span class="tag ${c.status}">${esc(c.status)}</span>${!isLead()?'':`<button class="mini-action" data-edit-cycle="${c.id}">Edit</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button>`}</div></div>`;
+  const assigned=state.projects.filter(p=>Number(p.cycle_id)===Number(c.id)&&(isVisitor()||Number(p.owner_id)===activeUser()));
+  const requiredPicks=Math.max(0,2-assigned.length);
+  if(assigned.length>=2||isVisitor()&&assigned.length){
+    const visibleAssigned=isLead()?state.projects.filter(p=>Number(p.cycle_id)===Number(c.id)):assigned;
+    const assignedCount=visibleAssigned.length;
+    $('#weeklySetup').innerHTML=`<div class="panel assigned-week-panel assigned-week-complete"><div class="assigned-week-celebration"><div><span class="kicker">WEEKLY EXECUTION</span><h3>${esc(c.label)}</h3><p>${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</p></div><div class="assigned-score"><strong>${assignedCount}</strong><i></i><small>${isLead()?Math.max(2,visibleAssigned.length):2}</small><em>ASSIGNED</em></div><div class="assigned-check">✓</div></div><div class="assigned-week-grid">${visibleAssigned.map((p,i)=>`<article class="assigned-week-card assigned-week-card-live" style="--delay:${i*120}ms"><div class="assigned-week-index">0${i+1}</div><div class="assigned-week-body"><div class="focus-title"><span>${esc(p.title)}</span><strong>${Number(p.progress||0)}%</strong></div><div class="assigned-week-meta"><span>${esc(p.owner_name||'—')}</span><span>${esc(p.department_name||'—')}</span><span>${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,Number(p.progress||0))}%"></div></div>${!isLead()?'':`<div class="assigned-task-actions"><button type="button" class="mini-action" data-edit-assigned-project="${p.id}">Edit task</button></div>`}</div></article>`).join('')}</div><div class="assigned-week-actions"><span class="tag ${c.status}">${esc(c.status)}</span>${!isLead()?'':`<button class="mini-action" data-edit-cycle="${c.id}">Edit</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button>`}</div></div>`;
     bindRecordActions();
     return;
   }
@@ -892,18 +901,23 @@ function renderWeekly(){
   const candidates=state.ideas.filter(i=>String(i.status||'submitted').toLowerCase()==='submitted'&&!linked.has(Number(i.id))).sort((a,b)=>String(b.submission_date||'').localeCompare(String(a.submission_date||''))||Number(b.id)-Number(a.id));
   const thisWeek=candidates.filter(i=>i.submission_date>=c.start_date&&i.submission_date<=c.end_date).length;
   const backlog=Math.max(0,candidates.length-thisWeek);
-  const ideaCards=candidates.map(i=>{const inWeek=i.submission_date>=c.start_date&&i.submission_date<=c.end_date;return `<label class="idea-choice weekly-idea-card"><input type="checkbox" class="ideaPick" value="${i.id}" ${!isLead()?'disabled':''}><div class="weekly-idea-main"><div class="weekly-idea-top"><b>${esc(i.proposed_idea)}</b><span class="weekly-source ${inWeek?'current':'backlog'}">${inWeek?'THIS WEEK':'BACKLOG'}</span></div><div class="weekly-idea-meta"><span>${esc(i.idea_number)}</span><span>${fmtDate(i.submission_date)}</span><span>${esc(i.submitted_by_name)}</span><span>${esc(i.department_name)}</span></div><p>${esc(i.problem)}</p></div></label>`}).join('');
-  if(!isLead()){
+  const ideaCards=candidates.map(i=>{const inWeek=i.submission_date>=c.start_date&&i.submission_date<=c.end_date;return `<label class="idea-choice weekly-idea-card"><input type="checkbox" class="ideaPick" value="${i.id}" ${isVisitor()?'disabled':''}><div class="weekly-idea-main"><div class="weekly-idea-top"><b>${esc(i.proposed_idea)}</b><span title="${inWeek?'Submitted within the selected week':'Unassigned idea submitted outside the selected week'}" class="weekly-source ${inWeek?'current':'backlog'}">${inWeek?'SELECTED WEEK':'OTHER DATES'}</span></div><div class="weekly-idea-meta"><span>${esc(i.idea_number)}</span><span>${fmtDate(i.submission_date)}</span><span>${esc(i.submitted_by_name)}</span><span>${esc(i.department_name)}</span></div><p>${esc(i.problem)}</p><button type="button" class="weekly-read-more mini-action" data-weekly-read="${i.id}" hidden>Read more</button></div></label>`}).join('');
+  if(isVisitor()){
     $('#weeklySetup').innerHTML=`<section class="panel weekly-backlog-panel visitor-weekly-panel"><div class="panel-head weekly-compact-head"><div><span class="kicker">IDEA BACKLOG</span><h3>${esc(c.label)}</h3><p class="muted weekly-subcopy">Search submitted ideas available for this week.</p></div><span class="tag visitor">${esc(memberRoleLabel(currentMember()))}</span></div><div class="weekly-search-box"><span>⌕</span><input id="weeklyIdeaSearch" type="search" placeholder="Search idea, problem, member or department..." autocomplete="off" spellcheck="false"></div><div class="visitor-readonly">View only: Kabil · R&D Lead manages weekly assignments and priorities.</div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available.</div>'}</div></section>`;
     bindWeeklySearch();
     return;
   }
-  $('#weeklySetup').innerHTML=`<div class="weekly-assignment-shell premium-weekly-shell"><section class="panel weekly-backlog-panel"><div class="panel-head weekly-compact-head"><div><span class="kicker">IDEA BACKLOG</span><h3>Choose 2 priorities</h3><p class="muted weekly-subcopy">Search and select the two ideas you want to execute this week.</p></div><div class="panel-actions"><button class="mini-action" data-edit-cycle="${c.id}">Edit week</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button></div></div><div class="weekly-search-box"><span>⌕</span><input id="weeklyIdeaSearch" type="search" placeholder="Search idea, problem, member or department..." autocomplete="off" spellcheck="false"></div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available. Submit an idea first.</div>'}</div></section><aside class="weekly-rule-card premium-weekly-rule"><div class="weekly-rule-top"><span class="kicker">WEEKLY SELECTION</span><strong>${esc(c.label)}</strong></div><div class="weekly-rule-count"><span id="pickCount">0</span><small>/ 2</small></div><p class="weekly-rule-range">${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</p><p class="weekly-rule-help">Select exactly two ideas, then assign the responsible owner.</p><div id="ownerPickers" class="weekly-owner-pickers"></div><button class="primary-btn" id="assignWeekBtn" disabled>Create Weekly Assignment</button></aside></div>`;
-  bindWeeklyPicks();
+  $('#weeklySetup').innerHTML=`<div class="weekly-assignment-shell premium-weekly-shell"><section class="panel weekly-backlog-panel"><div class="panel-head weekly-compact-head"><div><span class="kicker">IDEA BACKLOG</span><h3>Choose ${requiredPicks} task${requiredPicks===1?'':'s'}</h3><p class="muted weekly-subcopy">Search and select the two ideas you want to execute this week.</p></div>${isLead()?`<div class="panel-actions"><button class="mini-action" data-edit-cycle="${c.id}">Edit week</button><button class="mini-action danger" data-delete-cycle="${c.id}">×</button></div>`:''}</div><div class="weekly-search-box"><span>⌕</span><input id="weeklyIdeaSearch" type="search" placeholder="Search idea, problem, member or department..." autocomplete="off" spellcheck="false"></div><div id="candidateIdeas" class="weekly-idea-list">${ideaCards||'<div class="empty-state">No submitted, unassigned ideas are available. Submit an idea first.</div>'}</div></section><aside class="weekly-rule-card premium-weekly-rule"><div class="weekly-rule-top"><span class="kicker">WEEKLY SELECTION</span><strong>${esc(c.label)}</strong></div><div class="weekly-rule-count"><span id="pickCount">0</span><small>/ ${requiredPicks}</small></div><p class="weekly-rule-range">${fmtDate(c.start_date)} – ${fmtDate(c.end_date)}</p><p class="weekly-rule-help">${isLead()?'Select ideas and assign the responsible owner.':'Select your own weekly tasks. Priority is set by the R&D Lead.'}</p><div id="ownerPickers" class="weekly-owner-pickers"></div><button class="primary-btn" id="assignWeekBtn" disabled>Create Weekly Assignment</button></aside></div>`;
+  bindWeeklyPicks(requiredPicks);
   bindRecordActions();
 }
 function bindWeeklySearch(){
   const input=$('#weeklyIdeaSearch');if(!input)return;
+  requestAnimationFrame(()=>$$('[data-weekly-read]').forEach(btn=>{const card=btn.closest('.weekly-idea-main'),title=card?.querySelector('.weekly-idea-top>b'),description=card?.querySelector('p');btn.hidden=!(title&&title.scrollHeight>title.clientHeight+1||description&&description.scrollHeight>description.clientHeight+1)}));
+  $$('[data-weekly-read]').forEach(btn=>btn.onclick=event=>{
+    event.preventDefault();event.stopPropagation();const idea=state.ideas.find(i=>Number(i.id)===Number(btn.dataset.weeklyRead));if(!idea)return;
+    const dialog=document.createElement('dialog');dialog.className='modal work-text-dialog';dialog.innerHTML=`<div class="work-text-content"><h3>Idea details</h3><p><strong>${esc(idea.proposed_idea)}</strong></p><p>${esc(idea.problem)}</p><button type="button" class="primary-btn">Close</button></div>`;document.body.append(dialog);dialog.querySelector('button').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());dialog.showModal();
+  });
   input.addEventListener('input',()=>{
     const q=input.value.trim().toLowerCase();
     $$('#candidateIdeas .weekly-idea-card').forEach(card=>{
@@ -912,23 +926,23 @@ function bindWeeklySearch(){
     });
   });
 }
-function bindWeeklyPicks(){
+function bindWeeklyPicks(requiredPicks=2){
   bindWeeklySearch();
   $$('.ideaPick').forEach(cb=>cb.addEventListener('change',()=>{
     const picks=$$('.ideaPick:checked');
-    if(picks.length>2){cb.checked=false;toast('Only 2 ideas can be selected.',true)}
+    if(picks.length>requiredPicks){cb.checked=false;toast(`Select ${requiredPicks} idea(s).`,true)}
     const now=$$('.ideaPick:checked');
     $$('.idea-choice').forEach(x=>x.classList.toggle('selected',x.querySelector('input').checked));
     $('#pickCount').textContent=now.length;
-    $('#assignWeekBtn').disabled=now.length!==2;
+    $('#assignWeekBtn').disabled=now.length!==requiredPicks;
     $('#ownerPickers').innerHTML=now.map((x,i)=>{
       const idea=state.ideas.find(a=>a.id===Number(x.value));
-      return `<div class="owner-row"><span style="font-size:12px">0${i+1} ${esc(idea.proposed_idea.slice(0,42))}</span><select class="ownerSelect">${workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select><label>Task priority<select class="taskPrioritySelect">${['Low','Medium','High','Critical'].map(priority=>`<option ${priority===(idea.priority||'Medium')?'selected':''}>${priority}</option>`).join('')}</select></label></div>`
+      return `<div class="owner-row"><span style="font-size:12px">0${i+1} ${esc(idea.proposed_idea.slice(0,42))}</span><select class="ownerSelect" ${isLead()?'':'disabled'}>${workingMembers().filter(m=>isLead()||Number(m.id)===activeUser()).map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select><label>Task priority<select class="taskPrioritySelect" ${isLead()?'':'disabled'}>${['Low','Medium','High','Critical'].map(priority=>`<option ${priority===(idea.priority||'Medium')?'selected':''}>${priority}</option>`).join('')}</select></label></div>`
     }).join('')
   }));
   $('#assignWeekBtn')?.addEventListener('click',assignWeek)
 }
-async function assignWeek(){try{const ids=$$('.ideaPick:checked').map(x=>Number(x.value));if(ids.length!==2)return;const owners=$$('.ownerSelect').map(x=>Number(x.value));await assignWeekLocal(Number($('#weekSelect').value),ids,owners,$$('.taskPrioritySelect').map(x=>x.value));toast('Two weekly projects assigned.');scheduleRender()}catch(e){toast(e.message,true)}}
+async function assignWeek(){try{const ids=$$('.ideaPick:checked').map(x=>Number(x.value));if(!ids.length||ids.length>2)return;const owners=$$('.ownerSelect').map(x=>Number(x.value));await assignWeekLocal(Number($('#weekSelect').value),ids,owners,$$('.taskPrioritySelect').map(x=>x.value));toast('Weekly tasks assigned.');scheduleRender()}catch(e){toast(e.message,true)}}
 function projectHasBlocker(projectId){return state.progress.some(u=>Number(u.project_id)===Number(projectId)&&String(u.blocker||'').trim())}
 function projectLastUpdate(projectId){return state.progress.filter(u=>Number(u.project_id)===Number(projectId)).sort((a,b)=>String(b.update_date||'').localeCompare(String(a.update_date||''))||Number(b.id)-Number(a.id))[0]||null}
 function daysTo(date){if(!date)return null;const a=new Date(today()+'T00:00:00'),b=new Date(date+'T00:00:00');return Math.ceil((b-a)/86400000)}
@@ -985,23 +999,24 @@ function cleanTrackerSlots(value){
   return slots;
 }
 function trackerSlotMenu(p,r){
-  return `<details class="tracker-slot-menu"><summary>Choose time · ${Object.keys(r.time_slots||{}).length}/4 saved</summary><div>${TRACKER_TIME_SLOTS.map((label,i)=>`<div class="tracker-slot-choice"><button type="button" data-slot-edit="${r.row_index}:${i}" ${canEditTask(p)?'':'disabled'}>${esc(label)}</button><button type="button" data-slot-view="${r.row_index}:${i}" ${r.time_slots?.[i]?'':'disabled'} aria-label="View ${esc(label)}" title="View saved details">&#128065;</button></div>`).join('')}</div></details>${r.task?`<details class="tracker-legacy-task"><summary>Previous task entry</summary><div>${esc(r.task)}</div></details>`:''}`;
+  return `<details class="tracker-slot-menu"><summary>Choose time · ${Object.keys(r.time_slots||{}).length}/4 saved</summary><div>${TRACKER_TIME_SLOTS.map((label,i)=>`<div class="tracker-slot-choice"><button type="button" data-slot-edit="${r.row_index}:${i}" ${canEditTrackerRow(p,r)?'':'disabled'}>${esc(label)}</button><button type="button" data-slot-view="${r.row_index}:${i}" ${r.time_slots?.[i]?'':'disabled'} aria-label="View ${esc(label)}" title="View saved details">&#128065;</button></div>`).join('')}</div></details>${r.task?`<details class="tracker-legacy-task"><summary>Previous task entry</summary><div>${esc(r.task)}</div></details>`:''}`;
 }
 function bindTrackerSlots(p){
   const host=$('#projectDetail');
   function openSlot(key,view){
     const [rowIndex,slot]=key.split(':').map(Number);
-    if(!Number.isInteger(rowIndex)||!Number.isInteger(slot)||slot<0||slot>3||(!view&&!canEditTask(p)))return;
+    if(!Number.isInteger(rowIndex)||!Number.isInteger(slot)||slot<0||slot>3||(!view&&!canEditTrackerProject(p)))return;
     const parent=host.querySelector(`.rnd-manual-row[data-row-index="${rowIndex}"]`);if(!parent)return;
     host.querySelectorAll('.tracker-slot-detail').forEach(el=>el.remove());
     host.querySelectorAll('.tracker-slot-menu').forEach(el=>el.open=false);
     const row=trackerRowsForProject(p).find(r=>r.row_index===rowIndex)||cleanTrackerRow({date:parent.querySelector('[data-tracker-field="date"]').value},rowIndex);
+    if(!view&&!canEditTrackerRow(p,row))return;
     const saved=row.time_slots[slot]||{},disabled=view?'disabled':'';
     const tr=document.createElement('tr');tr.className='tracker-slot-detail';
     tr.innerHTML=`<td colspan="8"><div class="tracker-slot-heading"><strong>${esc(row.date)} · ${esc(TRACKER_TIME_SLOTS[slot])}${view?' · Saved details':''}</strong><button type="button" class="ghost-btn" data-slot-close>Close</button></div><div class="tracker-slot-fields">${[['task','Work done / Details'],['status','Status'],['issue','Issue / Reason'],['next_action','Next Action'],['remarks','Review / Remarks']].map(([field,label])=>`<label>${label}${field==='status'?`<select data-slot-field="status" ${disabled}><option value="">Select status</option>${['in_progress','completed','issue'].map(v=>`<option value="${v}" ${saved.status===v?'selected':''}>${trackerStatusLabel(v)}</option>`).join('')}</select>`:`<textarea data-slot-field="${field}" maxlength="600" ${disabled}>${esc(saved[field]||'')}</textarea>`}</label>`).join('')}</div>${view?'':'<div class="tracker-slot-actions"><button type="button" class="primary-btn" data-slot-save>Save</button></div>'}</td>`;
     parent.after(tr);tr.querySelector('[data-slot-close]').onclick=()=>tr.remove();
     const save=tr.querySelector('[data-slot-save]');if(save)save.onclick=async()=>{
-      if(!canEditTask(p))return;save.disabled=true;save.textContent='Saving…';
+      if(!canEditTrackerRow(p,row))return toast('This date is locked. Only the R&D Lead can edit it.',true);save.disabled=true;save.textContent='Saving…';
       try{
         const values={};tr.querySelectorAll('[data-slot-field]').forEach(el=>values[el.dataset.slotField]=el.value);
         if(!String(values.task||'').trim())throw new Error('Enter work details before saving.');
@@ -1086,7 +1101,7 @@ function applyTrackerDerivedProgress(p,{updateDom=true}={}){
   return progress;
 }
 function scheduleTrackerSave(p){
-  if(!canEditTask(p))return;
+  if(!canEditTrackerProject(p))return;
   const id=Number(p.id);
   p.tracker_rows=trackerRowsForProject(p).filter(trackerRowHasData);
   applyTrackerDerivedProgress(p,{updateDom:true});
@@ -1123,7 +1138,8 @@ function trackerSheetRows(p){
   return Array.from({length:count},(_,i)=>byIndex.get(i)||cleanTrackerRow({},i));
 }
 function insertManualTrackerRow(p,insertIndex){
-  if(!canEditTask(p))return;
+  if(!canEditTrackerProject(p))return;
+  const before=trackerSheetRows(p).find(r=>Number(r.row_index)===insertIndex-1);if(before&&!canEditTrackerRow(p,before))return;
   const rows=trackerSheetRows(p)
     .sort((a,b)=>Number(a.row_index)-Number(b.row_index))
     .map(r=>({...r}));
@@ -1137,11 +1153,11 @@ function insertManualTrackerRow(p,insertIndex){
   scheduleTrackerSave(p);
 }
 function deleteManualTrackerRow(p,rowIndex){
-  if(!canEditTask(p))return;
+  if(!canEditTrackerProject(p))return;
   selectedManualTrackerRow=null;
   const currentCount=Math.max(6,Number(p.tracker_row_count)||TRACKER_VISIBLE_ROWS);
   const sheet=trackerSheetRows(p),target=sheet.find(r=>Number(r.row_index)===Number(rowIndex));
-  if(!target)return;
+  if(!target||!canEditTrackerRow(p,target))return;
   let rows;
   if(target.manual_extra){
     rows=sheet.filter(r=>Number(r.row_index)!==Number(rowIndex)).map(r=>({...r,row_index:Number(r.row_index)>Number(rowIndex)?Number(r.row_index)-1:Number(r.row_index)}));
@@ -1158,6 +1174,7 @@ function deleteManualTrackerRow(p,rowIndex){
 function bindManualTrackerGrid(p){
   $$('.rnd-manual-row').forEach((tr,domIndex)=>{
     const rowIndex=Number(tr.dataset.rowIndex);
+    const rowAccess=()=>canEditTrackerRow(p,trackerSheetRows(p).find(r=>Number(r.row_index)===rowIndex));
     const inputs=[...tr.querySelectorAll('[data-tracker-field]')];
     const statusEl=tr.querySelector('[data-tracker-field="status"]');
     const nextActionEl=tr.querySelector('[data-tracker-field="next_action"]');
@@ -1168,7 +1185,7 @@ function bindManualTrackerGrid(p){
         nextActionEl.disabled=true;
       }else{
         if(nextActionEl.value==='N/A')nextActionEl.value='';
-        nextActionEl.disabled=!canEditTask(p);
+        nextActionEl.disabled=!rowAccess();
       }
     };
     syncNextActionState(statusEl?.value||'');
@@ -1177,7 +1194,8 @@ function bindManualTrackerGrid(p){
       tr.addEventListener('click',selectRow);tr.addEventListener('focusin',selectRow);
     }
     const update=()=>{
-      if(!canEditTask(p))return;
+      if(!rowAccess())return;
+      const proposedDate=tr.querySelector('[data-tracker-field="date"]')?.value;if(!isLead()&&/^\d{4}-\d{2}-\d{2}$/.test(trackerDateToIso(proposedDate))&&trackerDateToIso(proposedDate)<today())return;
       const rows=trackerRowsForProject(p);
       let row=rows.find(r=>Number(r.row_index)===rowIndex);
       if(!row){row=cleanTrackerRow({},rowIndex);rows.push(row)}
@@ -1239,7 +1257,7 @@ function renderProjectDetail(){
   const issueCount=storedRows.filter(r=>r.status==='issue').length;
   const progressCount=storedRows.filter(r=>r.status==='in_progress').length;
   const daysRemaining=p.status==='completed'?0:(due===null?'—':Math.max(0,due));
-  const readonly=!canEditTask(p)?'disabled':'';
+  
   $('#projectDetail').className='project-detail work-detail';
   $('#projectDetail').innerHTML=`
     <div class="work-detail-head">
@@ -1278,7 +1296,7 @@ function renderProjectDetail(){
         <div class="rnd-daily-table-scroll">
           <table class="rnd-daily-table rnd-manual-table">
             <thead><tr><th>Date</th><th>Daily Target</th><th>Timings Worked</th><th>Status</th><th>Issue / Reason</th><th>Next Action</th><th>Review / Remarks</th><th class="rnd-delete-head">Delete</th></tr></thead>
-            <tbody>${rows.map((r,i)=>`<tr class="rnd-manual-row ${trackerRowClass(r.status)} ${r.manual_extra?'manual-extra-row':''}" data-row-index="${r.row_index}" data-manual-extra="${r.manual_extra?'1':'0'}" tabindex="${r.manual_extra?'0':'-1'}">
+            <tbody>${rows.map((r,i)=>{const readonly=canEditTrackerRow(p,r)?'':'disabled';return `<tr class="rnd-manual-row ${trackerRowClass(r.status)} ${r.manual_extra?'manual-extra-row':''}" data-row-index="${r.row_index}" data-manual-extra="${r.manual_extra?'1':'0'}" tabindex="${r.manual_extra?'0':'-1'}">
               <td><input class="rnd-cell-input" data-tracker-field="date" value="${esc(r.date)}" ${(!r.manual_extra&&Number.isInteger(r.auto_date_slot))?'readonly':readonly} aria-label="Date row ${i+1}"></td>
               <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="stage" ${readonly} aria-label="Daily target row ${i+1}">${esc(r.stage)}</textarea></td>
               <td>${trackerSlotMenu(p,r)}</td>
@@ -1286,8 +1304,8 @@ function renderProjectDetail(){
               <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="issue" ${readonly} aria-label="Issue or reason row ${i+1}">${esc(r.issue)}</textarea></td>
               <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="next_action" ${r.status==='completed'?'disabled':readonly} aria-label="Next action row ${i+1}">${esc(r.status==='completed'?'N/A':r.next_action)}</textarea></td>
               <td><textarea class="rnd-cell-input rnd-cell-textarea" data-tracker-field="remarks" ${readonly} aria-label="Review or remarks row ${i+1}">${esc(r.remarks)}</textarea></td>
-              <td class="rnd-delete-cell"><button type="button" class="rnd-row-delete" data-delete-tracker-row="${r.row_index}" ${!canEditTask(p)?'disabled':''} aria-label="Delete tracker row ${i+1}" title="Delete row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-1 11H8L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg></button></td>
-            </tr>${i<rows.length-1?`<tr class="rnd-insert-row"><td colspan="8"><button type="button" class="rnd-row-add" data-insert-tracker-row="${Number(r.row_index)+1}" ${!canEditTask(p)?'disabled':''} aria-label="Insert blank tracker row below this row">+</button></td></tr>`:''}`).join('')}</tbody>
+              <td class="rnd-delete-cell"><button type="button" class="rnd-row-delete" data-delete-tracker-row="${r.row_index}" ${!canEditTrackerRow(p,r)?'disabled':''} aria-label="Delete tracker row ${i+1}" title="Delete row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-1 11H8L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg></button></td>
+            </tr>${i<rows.length-1?`<tr class="rnd-insert-row"><td colspan="8"><button type="button" class="rnd-row-add" data-insert-tracker-row="${Number(r.row_index)+1}" ${!canEditTrackerRow(p,r)?'disabled':''} aria-label="Insert blank tracker row below this row">+</button></td></tr>`:''}`}).join('')}</tbody>
           </table>
         </div>
       </div>
@@ -1467,3 +1485,6 @@ registerNotificationWorker();disableWritingAssist();new MutationObserver(m=>m.fo
   new MutationObserver(sync).observe(shell,{attributes:true,attributeFilter:['class']});
   sync();
 })();
+
+// Refresh date locks at midnight or after returning to the tab; mutation guards also recheck the date.
+(()=>{let last=today();const refresh=()=>{const next=today();if(next!==last){last=next;if(state.page==='progress'&&state.selectedProject)renderProjectDetail()}};window.setInterval?.(refresh,30000);document.addEventListener('visibilitychange',refresh)})();

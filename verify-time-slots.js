@@ -10,7 +10,7 @@ const rows=ctx.window.rows;
 assert.equal(rows.length,2);assert.equal(rows[0].stage,'Daily target');assert.equal(rows[0].task,'Legacy task');assert.equal(rows[1].time_slots[0].task,'Extra row work');
 for(let i=0;i<4;i++)for(const key of Object.keys(slots[i]))assert.equal(rows[0].time_slots[i][key],slots[i][key]);
 assert.equal(Object.keys(ctx.window.old.time_slots).length,0);assert.equal(ctx.window.old.task,'Old entry');assert(ctx.window.blank);assert.equal(ctx.window.bad[0].task.length,600);assert.equal(ctx.window.bad[0].status,'');assert(!ctx.window.bad[5]);
-assert(app.includes('if(!canEditTask(p))return;save.disabled=true;'));
+assert(app.includes("if(!canEditTrackerRow(p,row))return toast('This date is locked. Only the R&D Lead can edit it.',true);save.disabled=true;"));
 assert(app.includes("queueCloudOps([{collection:'projects',row:p}]);await persistState();const synced=await flushPendingCloudOps();"));
 assert(app.includes('parent.after(tr)'));assert(app.includes("tr.querySelector('[data-slot-close]').onclick=()=>tr.remove()"));
 console.log('PASS: four-slot Firebase codec round-trip, legacy entries, extra rows, normalization, owner save guard, explicit save/close and inline detail wiring');

@@ -1,6 +1,6 @@
 const fs=require('fs');
 const vm=require('vm');
-const files=['app.js','firebase-cloud.js','notification-sw.js','kpi-chat.js','kpi-pdf.js','responsive.js'];
+const files=['app.js','firebase-cloud.js','notification-sw.js','kpi-chat.js','kpi-pdf.js','responsive.js','daily-sheet-reminder.js'];
 let failed=false;
 for(const f of files){try{new vm.Script(fs.readFileSync(f,'utf8'),{filename:f});console.log('PASS syntax:',f)}catch(e){failed=true;console.error('FAIL syntax:',f,e.message)}}
 const html=fs.readFileSync('index.html','utf8');
