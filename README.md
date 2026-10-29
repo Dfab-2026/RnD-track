@@ -91,3 +91,10 @@ Analytics now includes a spreadsheet-style project control matrix. Each project 
 
 ## v27 Work Tracking period navigation
 Work Tracking now inherits the active month from Daily Ideas / Weekly Tasks and lets the user switch Week 1–4 from a compact header control. Other application flows are unchanged.
+
+## v158 hourly Time Sheet reminders
+- R&D, Quality, and Production active workflows now trigger a Time Sheet reminder once per user per hour during 09:00-17:59, Monday-Saturday.
+- R&D and Quality reminders work from any page in their active department, not only when the Time Sheet is already open.
+- The reminder opens the correct department Time Sheet directly.
+- If Chrome notifications are enabled, a desktop Time Sheet reminder is also sent.
+- Reminder keys are isolated by department, user, date, and hour to prevent duplicate prompts in the same hour.

@@ -1,0 +1,14 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(__dirname+'/app.js','utf8'),stack=[{}],storage=new Map();let index=0,screen='',login=true;
+const history={get state(){return stack[index]},replaceState(state){stack[index]=state},pushState(state){stack.splice(index+1);stack.push(state);index++}};
+const node={classList:{add(){},remove(){}},textContent:''};
+const ctx=vm.createContext({window:{openProduction:()=>screen='production',openQuality:()=>screen='quality'},normalizeName:s=>s.toLowerCase(),history,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},$:()=>node,stopTeamChat(){},document:{querySelectorAll:()=>[]},renderDepartmentGate:()=>screen='departments',activeDepartments:()=>[{id:3,name:'R&D'},{id:4,name:'Marketing'},{id:1,name:'Production'},{id:7,name:'Quality'}],isRndDepartment:d=>d.name==='R&D',storedLogin:()=>login?{id:1}:null,state:{members:[{id:1,active:1}]},persistLogin(){},showApp:()=>screen='dashboard',showLogin:()=>screen='login'});
+vm.runInContext(source.slice(source.indexOf('function departmentHistory('),source.indexOf('function showLogin(')),ctx);
+ctx.restoreDepartmentRoute();assert.equal(screen,'departments');ctx.selectDepartment(3);assert.equal(screen,'dashboard');assert.equal(stack.length,2);
+ctx.restoreDepartmentRoute();assert.equal(screen,'dashboard');assert.equal(stack.length,2,'refresh must not add history');
+index--;ctx.restoreDepartmentRoute();assert.equal(screen,'departments');assert.equal(storage.get('selectedDepartmentId'),undefined);
+index++;ctx.restoreDepartmentRoute();assert.equal(screen,'dashboard');login=false;ctx.restoreDepartmentRoute();assert.equal(screen,'login');
+ctx.showDepartmentGate();assert.equal(screen,'departments');ctx.restoreDepartmentRoute();assert.equal(screen,'departments');
+console.log('PASS: first entry, department refresh, Back/Forward, login restoration, explicit department return, no duplicate history');
+ctx.selectDepartment(7);assert.equal(screen,'quality');ctx.restoreDepartmentRoute();assert.equal(screen,'quality');console.log('PASS: Quality entry and refresh');
+stack.splice(0,stack.length,{});index=0;storage.set('selectedDepartmentId','3');ctx.restoreDepartmentRoute();assert.equal(stack.length,2,'remembered workspace must seed a Back entry');index--;ctx.restoreDepartmentRoute();assert.equal(screen,'departments');ctx.selectDepartment(1);assert.equal(screen,'production');ctx.restoreDepartmentRoute();assert.equal(screen,'production');console.log('PASS: remembered-session Back history and Production entry/refresh');

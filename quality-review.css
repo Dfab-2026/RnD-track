@@ -1,0 +1,139 @@
+.q-weekly-stack{display:grid;gap:18px}.q-review-filter{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:16px}.q-review-filter label{display:grid;gap:6px;font-size:11px;min-width:130px}.q-review-filter>span{font-size:11px;color:var(--muted)}#qualityWorkspace .kpi-filter-panel.q-review-filter{padding:12px;margin:0 0 16px}#qualityWorkspace .kpi101-card{min-width:0}#qualityWorkspace .kpi101-card textarea{min-height:65px}#qualityWorkspace .kpi101-card form{display:grid;gap:9px}#qualityWorkspace .kpi101-card form label{display:grid;gap:5px;font-size:11px}#qualityWorkspace .kpi101-card input,#qualityWorkspace .kpi101-card select{min-width:0;width:100%}#qualityWorkspace .kpi101-grid{margin-bottom:18px}@media(max-width:600px){.q-review-filter label{min-width:0;flex:1 1 120px}#qualityWorkspace .kpi101-grid{grid-template-columns:1fr!important}}
+
+/* Weekly Report is a report workspace, visually separate from Daily Task cards. */
+#qualityWorkspace .q-weekly-command{display:grid;grid-template-columns:minmax(0,1fr) 190px 210px;gap:18px;align-items:end;padding:22px 24px;border:1px solid #c9dbef;border-radius:18px;background:linear-gradient(135deg,#f8fbff 0%,#eaf3ff 100%);box-shadow:0 8px 26px rgba(22,75,126,.07)}
+#qualityWorkspace .q-weekly-command h2{font-size:24px;letter-spacing:-.025em;margin:4px 0 5px}
+#qualityWorkspace .q-weekly-command p{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+#qualityWorkspace .q-weekly-command label{display:grid;gap:6px;font-size:8px;font-weight:850;letter-spacing:.1em;color:#58718d}
+#qualityWorkspace .q-weekly-command input{height:38px;background:#fff}
+#qualityWorkspace .q-week-range{display:grid;gap:6px;padding:8px 12px;border-left:1px solid #bfd4eb}
+#qualityWorkspace .q-week-range span{font-size:8px;font-weight:850;letter-spacing:.1em;color:#58718d}
+#qualityWorkspace .q-week-range strong{font-size:12px;color:#174f87}
+#qualityWorkspace .q-weekly-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+#qualityWorkspace .q-weekly-overview article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;align-items:center;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+#qualityWorkspace .q-weekly-overview span{font-size:8px;font-weight:850;letter-spacing:.1em;color:var(--muted)}
+#qualityWorkspace .q-weekly-overview strong{grid-row:1/3;grid-column:2;font-size:20px;color:#1f609f}
+#qualityWorkspace .q-weekly-overview small{font-size:9px;color:var(--muted)}
+#qualityWorkspace .q-weekly-tabs{display:flex;gap:6px;padding:5px;margin-bottom:12px;border:1px solid var(--line);border-radius:12px;background:#e9eef3}
+#qualityWorkspace .q-weekly-tabs button{flex:1;min-height:38px;border:0;border-radius:8px;background:transparent;color:#667687;font-size:11px;font-weight:800;cursor:pointer}
+#qualityWorkspace .q-weekly-tabs button.active{background:#fff;color:#174f87;box-shadow:0 3px 10px rgba(20,65,107,.1)}
+#qualityWorkspace .q-weekly-report-panel[hidden]{display:none!important}
+#qualityWorkspace .q-weekly-report-panel{height:auto;padding:0;overflow:hidden}
+#qualityWorkspace .q-weekly-panel-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:17px 20px;border-bottom:1px solid var(--line);background:#f7f9fb}
+#qualityWorkspace .q-weekly-panel-head h3{font-size:17px;margin:4px 0}
+#qualityWorkspace .q-weekly-panel-head p{font-size:10px;color:var(--muted);margin:0}
+#qualityWorkspace .q-weekly-panel-head>b{font-size:10px;padding:7px 10px;border-radius:99px;background:#e6f1fd;color:#225b91;white-space:nowrap}
+#qualityWorkspace .q-weekly-panel-grid{display:grid;grid-template-columns:minmax(320px,.85fr) minmax(340px,1.15fr);gap:0}
+#qualityWorkspace .q-weekly-panel-grid>form{display:grid;align-content:start;gap:12px;padding:20px;border-right:1px solid var(--line)}
+#qualityWorkspace .q-weekly-panel-grid .q-fields{gap:12px}
+#qualityWorkspace .q-weekly-panel-grid textarea{min-height:74px}
+#qualityWorkspace .q-weekly-history{min-width:0;padding:20px;background:#fbfcfd}
+#qualityWorkspace .q-weekly-history>.kicker{display:block;margin-bottom:8px}
+#qualityWorkspace .q-weekly-history .tc-entry{padding:11px 0}
+#qualityWorkspace .q-weekly-history .empty-state{padding:24px 15px;background:#fff}
+@media(max-width:900px){#qualityWorkspace .q-weekly-command{grid-template-columns:minmax(0,1fr) 180px}#qualityWorkspace .q-week-range{grid-column:1/-1;border-left:0;border-top:1px solid #bfd4eb;padding:10px 0 0}#qualityWorkspace .q-weekly-panel-grid{grid-template-columns:1fr}#qualityWorkspace .q-weekly-panel-grid>form{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:650px){#qualityWorkspace .q-weekly-command{grid-template-columns:1fr;padding:18px}#qualityWorkspace .q-weekly-overview{grid-template-columns:1fr}#qualityWorkspace .q-weekly-tabs{overflow-x:auto}#qualityWorkspace .q-weekly-tabs button{min-width:125px}#qualityWorkspace .q-weekly-panel-head{align-items:flex-start;flex-direction:column}#qualityWorkspace .q-weekly-panel-grid>form,#qualityWorkspace .q-weekly-history{padding:16px}}
+
+/* Quality KPI uses the same report card, filter and metric language as R&D. */
+#qualityWorkspace .q-rnd-kpi-filter{grid-template-columns:2fr 1fr 1fr!important;padding:14px!important;margin-bottom:14px!important}
+#qualityWorkspace .q-rnd-kpi-card{height:auto;padding:20px!important}
+#qualityWorkspace .q-rnd-kpi-card .kpi-report-head{position:relative}
+#qualityWorkspace .q-kpi-save-notice{margin-left:auto;font-size:10px;font-weight:750;color:#1c7b49}
+#qualityWorkspace .q-quality-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#qualityWorkspace .q-quality-kpi-grid article{position:relative;min-width:0;border-top:3px solid #d85a5e}
+#qualityWorkspace .q-quality-kpi-grid article.q-kpi-pass{border-top-color:#24a368}
+#qualityWorkspace .q-quality-kpi-grid article>strong{color:#bd3d43;overflow-wrap:anywhere}
+#qualityWorkspace .q-quality-kpi-grid article.q-kpi-pass>strong{color:#15834b}
+#qualityWorkspace .q-quality-kpi-grid article>small{display:block;line-height:1.45;margin-top:4px}
+#qualityWorkspace .q-kpi-update{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+#qualityWorkspace .q-kpi-update summary{cursor:pointer;color:#1b5f9e;font-size:9px;font-weight:850;list-style-position:inside}
+#qualityWorkspace .q-kpi-update form{display:grid;gap:7px;margin-top:9px}
+#qualityWorkspace .q-kpi-update label{display:grid;gap:4px;font-size:8px;font-weight:750;color:var(--muted)}
+#qualityWorkspace .q-kpi-update input,#qualityWorkspace .q-kpi-update select{height:31px;min-height:31px;padding:5px 7px;font-size:10px}
+#qualityWorkspace .q-kpi-update textarea{height:48px;min-height:48px;padding:6px 7px;font-size:10px}
+#qualityWorkspace .q-kpi-update button{min-height:29px}
+#qualityWorkspace .q-kpi-update [role=status]{font-size:8px;color:var(--muted)}
+@media(max-width:1100px){#qualityWorkspace .q-quality-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){#qualityWorkspace .q-rnd-kpi-filter{grid-template-columns:1fr!important}#qualityWorkspace .q-quality-kpi-grid{grid-template-columns:1fr}#qualityWorkspace .q-rnd-kpi-card .kpi-report-head{align-items:flex-start}#qualityWorkspace .q-kpi-save-notice{position:absolute;right:0;bottom:-12px}}
+
+/* R&D-style Quality KPI filters: member, period, month, week and visible date range. */
+#qualityWorkspace .q-rnd-kpi-filter{grid-template-columns:minmax(150px,1.35fr) minmax(105px,.75fr) minmax(135px,.9fr) minmax(95px,.65fr) minmax(165px,1fr)!important;align-items:center!important}
+#qualityWorkspace .q-rnd-kpi-filter>label{min-width:0!important;margin:0!important}
+#qualityWorkspace .q-rnd-kpi-filter input,#qualityWorkspace .q-rnd-kpi-filter select{width:100%;height:38px}
+#qualityWorkspace .q-kpi-range{min-width:0;border-left:1px solid var(--line);padding-left:12px;display:grid;gap:5px}
+#qualityWorkspace .q-kpi-range>span{font-size:8px;font-weight:900;letter-spacing:.09em;color:#71869a}
+#qualityWorkspace .q-kpi-range>strong{font-size:10px;color:var(--ink);white-space:nowrap}
+@media(max-width:1050px){#qualityWorkspace .q-rnd-kpi-filter{grid-template-columns:repeat(4,minmax(0,1fr))!important}#qualityWorkspace .q-kpi-range{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:8px 0 0}}
+@media(max-width:700px){#qualityWorkspace .q-rnd-kpi-filter{grid-template-columns:1fr 1fr!important}#qualityWorkspace .q-kpi-range{grid-column:1/-1}}
+
+/* v141: Quality KPI report uses the same visual structure as the R&D KPI report. */
+#qualityWorkspace .q-rnd-kpi-filter-exact{
+  display:grid!important;
+  grid-template-columns:2fr 1fr 1fr!important;
+  gap:12px!important;
+  padding:14px!important;
+  margin:0 0 14px!important;
+  align-items:end!important;
+}
+#qualityWorkspace .q-rnd-kpi-filter-exact label{display:block!important;min-width:0!important;margin:0!important}
+#qualityWorkspace .q-rnd-kpi-filter-exact label>span{display:block;font-size:8px;font-weight:900;letter-spacing:.09em;color:#71869a;margin-bottom:6px}
+#qualityWorkspace .q-rnd-kpi-filter-exact select{width:100%;height:38px;min-height:38px}
+#qualityWorkspace .q-rnd-kpi-card-exact{padding:20px!important;height:auto!important}
+#qualityWorkspace .q-rnd-kpi-card-exact .kpi-report-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+#qualityWorkspace .q-rnd-kpi-card-exact .q-kpi-save-notice{margin-left:auto;color:#1c7b49;font-size:9px;font-weight:750}
+#qualityWorkspace .q-rnd-kpi-grid-exact{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+#qualityWorkspace .q-rnd-kpi-grid-exact article{border:1px solid #dfe8f0!important;border-top:1px solid #dfe8f0!important;border-radius:14px!important;padding:14px!important;background:#fff!important;min-width:0}
+#qualityWorkspace .q-rnd-kpi-grid-exact article>span{display:block;min-height:22px;font-size:8px;font-weight:900;color:#70859a}
+#qualityWorkspace .q-rnd-kpi-grid-exact article>strong{display:block;font-size:25px;margin:6px 0;color:var(--ink)!important;overflow-wrap:anywhere}
+#qualityWorkspace .q-rnd-kpi-grid-exact article>small{display:block;font-size:8px;color:#7d90a2;line-height:1.45;margin-top:2px}
+#qualityWorkspace .q-rnd-kpi-detail{min-height:24px}
+#qualityWorkspace .q-rnd-kpi-card-exact .q-kpi-update{margin-top:9px;border-top:1px solid #e4ebf1;padding-top:8px}
+#qualityWorkspace .q-rnd-kpi-card-exact .q-kpi-update summary{font-size:8px;font-weight:800;color:#0f65ae;cursor:pointer}
+#qualityWorkspace .q-rnd-kpi-card-exact .q-kpi-update form{display:grid;gap:7px;margin-top:8px}
+#qualityWorkspace .q-rnd-kpi-card-exact .q-kpi-update label{display:grid;gap:4px;font-size:8px;color:#7d90a2}
+#qualityWorkspace .q-rnd-kpi-card-exact .q-kpi-update textarea{min-height:48px}
+@media(max-width:900px){
+  #qualityWorkspace .q-rnd-kpi-grid-exact{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #qualityWorkspace .q-rnd-kpi-filter-exact{grid-template-columns:1fr!important}
+}
+@media(max-width:600px){#qualityWorkspace .q-rnd-kpi-grid-exact{grid-template-columns:1fr!important}}
+
+/* v150 weekly department board: one independent Firebase-backed card per department */
+#qualityWorkspace .q-department-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;background:#f7f9fc}
+#qualityWorkspace .q-department-card{min-width:0;display:grid;gap:11px;padding:15px;border:1px solid #d9e3ee;border-top:4px solid #d99a28;border-radius:14px;background:#fff;box-shadow:0 5px 16px rgba(27,65,101,.05)}
+#qualityWorkspace .q-department-card.completed{border-top-color:#2f9a67}
+#qualityWorkspace .q-department-card-head{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;padding-bottom:9px;border-bottom:1px solid #edf1f5}
+#qualityWorkspace .q-department-avatar{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#e7f1fb;color:#155790;font-size:15px;font-weight:900}
+#qualityWorkspace .q-department-card-head strong{display:block;font-size:12px;color:#203e5b}
+#qualityWorkspace .q-department-card-head small{display:block;margin-top:2px;font-size:8px;color:#8797a7}
+#qualityWorkspace .q-department-state{padding:5px 8px;border-radius:999px;background:#fff4df;color:#956113;font-size:7px;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+#qualityWorkspace .q-department-card.completed .q-department-state{background:#e8f7ef;color:#23734d}
+#qualityWorkspace .q-department-card>label{display:grid;gap:5px;font-size:8px;font-weight:850;letter-spacing:.06em;color:#64788d}
+#qualityWorkspace .q-department-card select,#qualityWorkspace .q-department-card textarea{width:100%;min-width:0;background:#fff}
+#qualityWorkspace .q-department-card textarea{min-height:68px;resize:vertical}
+#qualityWorkspace .q-department-save{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:auto}
+#qualityWorkspace .q-department-save>span{min-width:0;font-size:8px;color:#6e8194}
+#qualityWorkspace .q-department-save .primary-btn{min-height:34px;padding:0 12px;white-space:nowrap}
+@media(max-width:900px){#qualityWorkspace .q-department-board{grid-template-columns:1fr}}
+@media(max-width:520px){#qualityWorkspace .q-department-board{padding:10px}.q-department-card-head{grid-template-columns:34px minmax(0,1fr)!important}.q-department-state{grid-column:2;justify-self:start}.q-department-save{align-items:stretch;flex-direction:column}.q-department-save .primary-btn{width:100%}}
+#qualityWorkspace .q-weekly-head-actions{display:grid;grid-template-columns:auto auto;align-items:center;justify-items:end;gap:7px 9px;min-width:190px}
+#qualityWorkspace .q-weekly-head-actions>b{font-size:10px;padding:7px 10px;border-radius:99px;background:#e6f1fd;color:#225b91;white-space:nowrap}
+#qualityWorkspace .q-weekly-head-actions .q-all-complete{min-height:31px;padding:0 11px;font-size:8px;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+#qualityWorkspace .q-weekly-head-actions>[role=status]{grid-column:1/-1;min-height:12px;max-width:250px;text-align:right;font-size:8px;color:#65788c}
+@media(max-width:650px){#qualityWorkspace .q-weekly-head-actions{width:100%;grid-template-columns:1fr auto;justify-items:start}#qualityWorkspace .q-weekly-head-actions>[role=status]{text-align:left}}
+/* v154 Training is a single KPI record card, not a department completion board. */
+#qualityWorkspace .q-training-record-card{background:#fff;border:1px solid #dce5ef;border-radius:14px;margin:18px;overflow:hidden;box-shadow:0 8px 24px rgba(25,54,92,.06)}
+#qualityWorkspace .q-training-record-grid>form{border-right:1px solid var(--line);padding:0}
+#qualityWorkspace .q-training-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #e8edf3;background:linear-gradient(180deg,#fbfdff,#f7faff)}
+#qualityWorkspace .q-training-card-head h4{margin:3px 0 0;font-size:16px}
+#qualityWorkspace .q-training-kpi-chip{display:inline-flex;align-items:center;min-height:28px;padding:5px 9px;border-radius:999px;background:#e7f6ed;color:#207044;font-size:10px;font-weight:800;letter-spacing:.04em}
+#qualityWorkspace .q-training-record-card .q-fields{padding:18px}
+#qualityWorkspace .q-training-record-card .qd-form-actions{padding:0 18px 18px}
+#qualityWorkspace .q-training-record-card input[readonly]{background:#f4f7fa;color:#31445a;font-weight:700}
+@media(max-width:900px){#qualityWorkspace .q-training-record-grid>form{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:520px){#qualityWorkspace .q-training-card-head{align-items:flex-start;flex-direction:column}#qualityWorkspace .q-training-record-card{margin:10px}}
+
+#qualityWorkspace .kpi101-card h4,#qualityWorkspace .kpi101-card p,#qualityWorkspace .kpi101-card label,#qualityWorkspace .kpi101-card small{overflow-wrap:anywhere;word-break:normal}#qualityWorkspace .kpi101-card{overflow:hidden}#qualityWorkspace .kpi104-manual-value{min-width:0}#qualityWorkspace .kpi104-manual-value input{max-width:100%}
+#qualityWorkspace .kpi105-iso-picker{display:grid;gap:10px;min-width:0}#qualityWorkspace .kpi105-iso-dropdown{border:1px solid rgba(19,48,89,.14);border-radius:14px;background:#fff;overflow:hidden}#qualityWorkspace .kpi105-iso-dropdown summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--ink)}#qualityWorkspace .kpi105-iso-dropdown summary::-webkit-details-marker{display:none}#qualityWorkspace .kpi105-iso-dropdown summary b{font-size:11px;color:var(--muted);white-space:nowrap}#qualityWorkspace .kpi105-iso-list{display:grid;gap:6px;padding:0 10px 10px;max-height:230px;overflow:auto}#qualityWorkspace .kpi105-iso-option{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:9px;padding:9px 10px;border:1px solid rgba(19,48,89,.1);border-radius:12px;background:#fff;cursor:pointer}#qualityWorkspace .kpi105-iso-option input{position:absolute;opacity:0;pointer-events:none}#qualityWorkspace .kpi105-iso-circle{width:17px;height:17px;border-radius:50%;border:2px solid #8aa2c4;display:inline-block;position:relative;background:#fff}#qualityWorkspace .kpi105-iso-option input:checked + .kpi105-iso-circle{border-color:#2a6fd6}#qualityWorkspace .kpi105-iso-option input:checked + .kpi105-iso-circle::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#2a6fd6}#qualityWorkspace .kpi105-iso-text{min-width:0;font-size:12px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}#qualityWorkspace .kpi105-iso-empty{padding:10px;font-size:12px;color:var(--muted)}#qualityWorkspace .kpi105-iso-summary{display:grid;gap:7px;padding:10px 12px;border-radius:14px;background:#f7f9fc;min-width:0}#qualityWorkspace .kpi105-iso-summary>b{font-size:12px}#qualityWorkspace .kpi105-iso-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}#qualityWorkspace .kpi105-iso-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 8px;border-radius:999px;background:#eef7f1;color:#276947;font-size:11px;font-weight:700}#qualityWorkspace .kpi105-iso-chip button{border:0;background:transparent;color:#276947;font-size:15px;line-height:1;cursor:pointer;padding:0}#qualityWorkspace .kpi105-iso-none{font-size:11px;color:var(--muted)}
+
+#qualityWorkspace .kpi106-business-target{display:inline-flex;align-items:center;max-width:100%;padding:6px 9px;border-radius:10px;background:#f1f5fb;color:#385173;font-size:11px;font-weight:800;line-height:1.25;white-space:normal;overflow-wrap:anywhere}

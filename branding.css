@@ -1,0 +1,6 @@
+/* DFAB identity only; existing navigation and page layout are retained. */
+.brand-mark.dfab-brand-mark{background:transparent!important;box-shadow:none;overflow:hidden;flex-shrink:0;border-radius:0}
+.dfab-brand-mark img{display:block;width:100%;height:100%;object-fit:contain}
+.dfab-page-heading{display:flex;align-items:center;gap:10px;min-width:0}
+.dfab-page-heading>img{display:block;object-fit:contain;flex-shrink:0;width:66px;height:28px}
+@media(max-width:480px){.dfab-page-heading{gap:7px}.dfab-page-heading>img{width:48px;height:23px}}

@@ -1,0 +1,12 @@
+const assert=require('assert'),fs=require('fs'),vm=require('vm');
+const reviewSource=fs.readFileSync(__dirname+'/quality-review.js','utf8');
+assert(reviewSource.includes('q-weekly-command')&&reviewSource.includes('data-qw-tab="audit"')&&reviewSource.includes('data-qw-tab="training"'),'Weekly Report must use its dedicated summary and tab workspace');
+assert(reviewSource.includes('class="panel kpi-filter-panel q-review-filter"')&&reviewSource.includes('class="kpi101-heading"')&&reviewSource.includes('class="kpi102-guide"')&&reviewSource.includes('class="kpi101-grid"')&&reviewSource.includes('class="kpi101-card')&&reviewSource.includes('class="kpi101-card-top"')&&reviewSource.includes('class="kpi101-score"')&&reviewSource.includes('class="kpi101-bar"')&&reviewSource.includes('class="kpi102-accountability"')&&reviewSource.includes('class="kpi101-save-state"'),'Quality KPI must use the actual R&D KPI card internals');
+assert(reviewSource.includes('kpi103-contributions')&&reviewSource.includes('Department completion · highest first'),'Shared Quality audit/KPI cards must use the R&D contribution block pattern');
+assert(!reviewSource.includes('button.disabled=!ctx.ready'),'Save buttons must not silently remain disabled while Firebase connects');
+const ctx={window:{},console,crypto:require('crypto').webcrypto,Date,setTimeout,clearTimeout};ctx.global=ctx;ctx.esc=s=>String(s??'');ctx.fmtDate=s=>s;ctx.today=()=> '2026-10-29';ctx.activeDepartments=()=>[{id:1,name:'Production'},{id:2,name:'Quality'}];ctx.periods=undefined;vm.createContext(ctx);
+vm.runInContext(reviewSource.replace('window.qualityReview={','window.testReview={seed(data,m="2026-10",w=4,p="weekly"){ctx={records:data,ready:true,person:()=>"Navarasu",upsert:row=>data.push(row)};month=m;week=w;period=p;selected="all"},save};window.qualityReview={'),ctx);
+const api=ctx.window.qualityReview,test=ctx.window.testReview;
+const model=(()=>{test.seed([]);return api.kpiModel()})();
+assert(model.items.some(i=>i.title==='Daily improvement ideas')&&model.items.some(i=>i.title==='Quality cost reduction')&&model.items.some(i=>i.title==='ISO process implementation'),'Quality KPI model must preserve existing KPI definitions');
+console.log('PASS: Quality KPI uses actual R&D card internals while preserving Quality KPI model');

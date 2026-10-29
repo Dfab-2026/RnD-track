@@ -37,7 +37,7 @@
       case 'departments': return compact({n:r.name,a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
       case 'ideas': return compact({n:r.idea_number,s:Number(r.submitted_by),d:Number(r.department_id),p:r.problem,i:r.proposed_idea,b:r.expected_benefit,q:r.priority,t:r.submission_date,x:r.status,f:attachmentMeta(r.attachment),...common});
       case 'cycles': return compact({l:r.label,s:r.start_date,e:r.end_date,x:r.status,...common});
-      case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks,h:x.time_slots})).filter(x=>Object.keys(x).length);return compact({...common,c:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,z:Number(r.tracker_row_count)||undefined})};
+      case 'projects': {const g=(Array.isArray(r.tracker_rows)?r.tracker_rows:[]).map((x,idx)=>compact({o:Number.isFinite(Number(x.row_index))?Number(x.row_index):idx,q:x.manual_extra===true?1:undefined,d:x.date,s:x.stage,t:x.task,x:x.status,i:x.issue,n:x.next_action,r:x.remarks,h:x.time_slots})).filter(x=>Object.keys(x).length);return compact({...common,c:Number(r.cycle_id),i:Number(r.idea_id),n:r.project_number,t:r.title,o:Number(r.owner_id),s:r.start_date,e:r.end_date,p:Number(r.progress)||0,x:r.status,g:g.length?g:undefined,l:Array.isArray(r.time_entries)?r.time_entries:undefined,z:Number(r.tracker_row_count)||undefined})};
       case 'progress': return compact({p:Number(r.project_id),m:Number(r.user_id),d:r.update_date,w:r.work_done,r:r.remarks,b:r.blocker,n:r.next_action,v:Number(r.progress_percent)||0,f:attachmentMeta(r.attachment),...common});
       default: return {};
     }
@@ -68,7 +68,7 @@
       case 'departments': return {...common,name:d.n||'',active:d.a===0?0:1,sort_order:Number(d.o)||0};
       case 'ideas': return {...common,idea_number:d.n||'',submitted_by:Number(d.s),department_id:Number(d.d),problem:d.p||'',proposed_idea:d.i||'',expected_benefit:d.b||'',priority:d.q||'Medium',submission_date:d.t||'',status:d.x||'submitted',...(d.f?{attachment:{name:d.f.n||'',type:d.f.t||'',size:Number(d.f.s)||0}}:{})};
       case 'cycles': return {...common,label:d.l||'',start_date:d.s||'',end_date:d.e||'',status:d.x||'active'};
-      case 'projects': return {...common,cycle_id:Number(d.k??d.c),idea_id:Number(d.i),project_number:d.n||'',title:d.t||'',owner_id:Number(d.o),start_date:d.s||'',end_date:d.e||'',progress:Number(d.p)||0,status:d.x||'assigned',tracker_row_count:Number(d.z)||undefined,tracker_rows:Array.isArray(d.g)?d.g.map((x,idx)=>({row_index:Number.isFinite(Number(x.o))?Number(x.o):idx,manual_extra:Number(x.q)===1,date:x.d||'',stage:x.s||'',task:x.t||'',status:x.x||'',issue:x.i||'',next_action:x.n||'',remarks:x.r||'',time_slots:x.h||{}})):[]};
+      case 'projects': return {...common,cycle_id:Number(d.k??d.c),idea_id:Number(d.i),project_number:d.n||'',title:d.t||'',owner_id:Number(d.o),start_date:d.s||'',end_date:d.e||'',progress:Number(d.p)||0,status:d.x||'assigned',time_entries:Array.isArray(d.l)?d.l:[],tracker_row_count:Number(d.z)||undefined,tracker_rows:Array.isArray(d.g)?d.g.map((x,idx)=>({row_index:Number.isFinite(Number(x.o))?Number(x.o):idx,manual_extra:Number(x.q)===1,date:x.d||'',stage:x.s||'',task:x.t||'',status:x.x||'',issue:x.i||'',next_action:x.n||'',remarks:x.r||'',time_slots:x.h||{}})):[]};
       case 'progress': return {...common,project_id:Number(d.p),user_id:Number(d.m),update_date:d.d||'',work_done:d.w||'',remarks:d.r||'',blocker:d.b||'',next_action:d.n||'',progress_percent:Number(d.v)||0,...(d.f?{attachment:{name:d.f.n||'',type:d.f.t||'',size:Number(d.f.s)||0}}:{})};
       default:return {...common,...d};
     }
@@ -267,12 +267,137 @@
     const ref=db.collection('app_meta').doc('reaction_'+String(messageId)+'_'+Number(memberId));
     await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(snap.exists&&snap.data().emoji===emoji)tx.delete(ref);else tx.set(ref,{kind:'chat_reaction',message_id:String(messageId),member_id:Number(memberId),emoji,updated_at:Date.now()})});
   }
-  function decodeUsageEvent(doc){const d=doc.data?doc.data():doc||{};return{id:doc.id||'',member_id:Number(d.m)||0,member_name:String(d.n||''),device_id:String(d.v||''),date:String(d.d||''),started_at:Number(d.s)||0,ended_at:Number(d.e)||0,app_name:String(d.a||''),process_name:String(d.p||''),site_domain:String(d.h||''),active_seconds:Math.max(0,Number(d.x)||0),idle_seconds:Math.max(0,Number(d.i)||0),source:d.q==='b'?'browser':'system'}}
-  async function loadUsageEvents(startDate,endDate){
-    if(!ready)await init(true);
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate||'')||!/^\d{4}-\d{2}-\d{2}$/.test(endDate||'')||startDate>endDate)throw new Error('Choose a valid timesheet date range.');
-    const qs=await db.collection('usage_events').where('d','>=',startDate).where('d','<=',endDate).limit(5000).get({source:'server'});
-    return qs.docs.map(decodeUsageEvent).sort((a,b)=>a.started_at-b.started_at);
+  async function productionDatabase(){if(!ready)await init(true);if(!ready)throw new Error('Firebase is not connected. Check the site configuration and connection.');return db}
+  async function saveProduction(kind,id,row){const store=await productionDatabase();if(!['projects','entries'].includes(kind))throw new Error('Invalid Production record.');await store.collection('production_'+kind).doc(String(id)).set(row);return row}
+  async function watchProduction(kind,onRows,onError){const store=await productionDatabase();if(!['projects','entries'].includes(kind))throw new Error('Invalid Production record.');return store.collection('production_'+kind).onSnapshot(q=>onRows(q.docs.map(d=>({...d.data(),id:d.id}))),onError)}
+  // Quality data uses a compact Firestore schema while the UI keeps readable field names.
+  // Existing verbose documents remain fully readable, so this is a non-destructive migration.
+  function compactQualityAttachment(value){
+    if(!value||typeof value!=='object')return undefined;
+    const out={};
+    if(value.name)out.n=String(value.name).slice(0,220);
+    if(value.type)out.t=String(value.type).slice(0,120);
+    if(Number.isFinite(Number(value.size)))out.s=Number(value.size);
+    if(value.path)out.p=String(value.path).slice(0,500);
+    if(value.url)out.u=String(value.url).slice(0,2200);
+    return Object.keys(out).length?out:undefined;
   }
-  window.rndCloud={watchReportData,saveReportEntry,toggleChatReaction,loadUsageEvents,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  function expandQualityAttachment(value){
+    if(!value||typeof value!=='object')return value;
+    if('name' in value||'url' in value||'path' in value)return value;
+    const out={};
+    if(value.n)out.name=value.n;if(value.t)out.type=value.t;if(value.s!==undefined)out.size=Number(value.s)||0;if(value.p)out.path=value.p;if(value.u)out.url=value.u;
+    return out;
+  }
+  function encodeQuality(kind,row){
+    const r=row||{},out={};
+    const put=(k,v)=>{if(v!==undefined&&v!==null&&v!=='')out[k]=v};
+    if(kind==='projects'){put('t',String(r.title||'').trim().slice(0,200));put('o',String(r.owner||'').trim().slice(0,80));put('c',tsToNumber(r.created_at)||Date.now());return out}
+    if(kind==='entries'){put('p',String(r.project_id||'').slice(0,160));put('o',String(r.owner||'').trim().slice(0,80));put('d',String(r.date||'').slice(0,10));put('f',String(r.from||'').slice(0,5));put('z',String(r.to||'').slice(0,5));put('w',String(r.work||'').slice(0,2000));put('r',String(r.remarks||'').slice(0,1000));put('m',Number(r.minutes)||0);put('c',tsToNumber(r.created_at)||Date.now());return out}
+    put('k',String(r.kind||'').slice(0,40));put('p',String(r.person||'').trim().slice(0,80));put('d',String(r.date||'').slice(0,10));
+    if(r.department_id!==undefined&&r.department_id!==null&&r.department_id!=='')put('a',Number(r.department_id));
+    put('s',String(r.status||'').slice(0,20));put('r',String(r.remarks||'').slice(0,2000));put('t',String(r.title||'').slice(0,300));put('c',String(r.candidate||'').slice(0,200));put('o',String(r.role||'').slice(0,200));put('f',String(r.start_date||'').slice(0,10));put('g',String(r.end_date||'').slice(0,10));put('x',String(r.outcomes||'').slice(0,2000));
+    if(r.report_submitted!==undefined)put('b',Boolean(r.report_submitted));put('q',String(r.report_reference||'').slice(0,300));put('i',String(r.idea||'').slice(0,2000));put('u',tsToNumber(r.updated_at)||Date.now());put('m',String(r.problem||'').slice(0,2000));put('n',String(r.inspection_stage||'').slice(0,200));put('w',String(r.week_start||'').slice(0,10));
+    if(r.value!==undefined&&r.value!==null&&r.value!=='')put('v',Number(r.value));put('y',String(r.review_key||'').slice(0,220));put('h',String(r.priority||'').slice(0,30));const attachment=compactQualityAttachment(r.attachment);if(attachment)out.j=attachment;
+    return out;
+  }
+  function decodeQuality(kind,doc){
+    const d=doc.data?doc.data():doc||{},id=String(doc.id||d.id||'');
+    if(kind==='projects'){if('title' in d)return{...d,id};return{id,title:d.t||'',owner:d.o||'',created_at:numberToIso(d.c)||''}}
+    if(kind==='entries'){if('project_id' in d)return{...d,id};return{id,project_id:d.p||'',owner:d.o||'',date:d.d||'',from:d.f||'',to:d.z||'',work:d.w||'',remarks:d.r||'',minutes:Number(d.m)||0,created_at:numberToIso(d.c)||''}}
+    if('kind' in d)return{...d,id};
+    const out={id,kind:d.k||'',person:d.p||'',date:d.d||'',status:d.s||'',updated_at:numberToIso(d.u)||''};
+    if(d.a!==undefined)out.department_id=Number(d.a);if(d.r!==undefined)out.remarks=d.r;if(d.t!==undefined)out.title=d.t;if(d.c!==undefined)out.candidate=d.c;if(d.o!==undefined)out.role=d.o;if(d.f!==undefined)out.start_date=d.f;if(d.g!==undefined)out.end_date=d.g;if(d.x!==undefined)out.outcomes=d.x;if(d.b!==undefined)out.report_submitted=Boolean(d.b);if(d.q!==undefined)out.report_reference=d.q;if(d.i!==undefined)out.idea=d.i;if(d.m!==undefined)out.problem=d.m;if(d.n!==undefined)out.inspection_stage=d.n;if(d.w!==undefined)out.week_start=d.w;if(d.v!==undefined)out.value=Number(d.v);if(d.y!==undefined)out.review_key=d.y;if(d.h!==undefined)out.priority=d.h;if(d.j!==undefined)out.attachment=expandQualityAttachment(d.j);
+    return out;
+  }
+  const QUALITY_META_KINDS={projects:'quality_project',entries:'quality_entry',records:'quality_record'};
+  const qualityMetaKind=kind=>QUALITY_META_KINDS[kind]||'';
+  const qualityMetaId=(kind,id)=>`quality_${kind}_${String(id)}`;
+  const QUALITY_DEPARTMENT_IDS=[1,2,3,4,5,6,7,8];
+  const qualityDepartmentId=row=>Number.isFinite(Number(row?.department_id))&&Number(row.department_id)>0?Number(row.department_id):0;
+  // Legacy reader only: v150/v151 briefly stored department records in app_meta subcollections.
+  // New Quality writes use the exact same top-level app_meta collection as R&D.
+  const qualityDepartmentCollection=(store,departmentId,kind)=>store.collection('app_meta').doc(`quality_department_${Number(departmentId)}`).collection(`quality_${kind}`);
+  function decodeQualityMeta(kind,doc){
+    const d=doc.data?doc.data():doc||{};
+    const raw=(d&&typeof d.v==='object'&&d.v)?d.v:d;
+    const synthetic={id:String(doc.id||d.id||'').replace(new RegExp(`^quality_${kind}_`),''),data:()=>raw};
+    return decodeQuality(kind,synthetic);
+  }
+  async function saveQualityTime(kind,id,row){
+    const store=await productionDatabase();
+    if(!['projects','entries','records'].includes(kind))throw new Error('Invalid Quality record.');
+    if(!id||String(id).includes('/'))throw new Error('Invalid Quality record id.');
+    const payload=encodeQuality(kind,row);
+    // Quality now writes to the exact same top-level app_meta collection used by R&D.
+    // Department separation stays inside the compact payload (field `a`) and the
+    // stable Quality document id, so departments remain isolated without a second DB path.
+    const ref=store.collection('app_meta').doc(qualityMetaId(kind,id));
+    const envelope={kind:qualityMetaKind(kind),v:payload,u:Date.now()};
+    await withWriteRetry(()=>ref.set(envelope),'Quality save');
+    await flushPendingWrites();
+    const confirmed=await withWriteRetry(()=>ref.get({source:'server'}),'Quality verify');
+    if(!confirmed.exists)throw new Error('Firebase did not confirm the saved Quality record. Please retry.');
+    lastError=null;ready=true;
+    return decodeQualityMeta(kind,confirmed);
+  }
+  async function watchQualityTime(kind,onRows,onError){
+    const store=await productionDatabase();
+    if(!['projects','entries','records'].includes(kind))throw new Error('Invalid Quality record.');
+    let metaRows=new Map(),legacyRows=new Map(),departmentRows=new Map(),metaServer=false,legacyServer=false,departmentServer=false;
+    const emit=()=>{
+      const merged=new Map(legacyRows);
+      for(const [id,row] of metaRows)merged.set(id,row);
+      for(const [id,row] of departmentRows)merged.set(id,row); // separated department data wins
+      const rows=[...merged.values()].sort((a,b)=>String(a.id).localeCompare(String(b.id),undefined,{numeric:true}));
+      const serverBacked=metaServer||legacyServer||departmentServer;
+      onRows(rows,{connected:serverBacked,fromCache:!serverBacked,hasPendingWrites:false});
+    };
+    const stops=[];
+    const q=store.collection('app_meta').where('kind','==',qualityMetaKind(kind));
+    stops.push(q.onSnapshot({includeMetadataChanges:true},snap=>{
+      metaServer=!snap.metadata?.fromCache;
+      metaRows=new Map(snap.docs.map(d=>{const row=decodeQualityMeta(kind,d);return[String(row.id),row]}));
+      if(metaServer){lastError=null;ready=true}emit();
+    },err=>{lastError=err;onError?.(err)}));
+
+    // Backward-compatible reader for records saved by v150/v151 in department
+    // subcollections. New writes no longer use these paths; they use top-level app_meta.
+    if(kind==='records')QUALITY_DEPARTMENT_IDS.forEach(departmentId=>{
+      const collection=qualityDepartmentCollection(store,departmentId,kind);
+      stops.push(collection.onSnapshot({includeMetadataChanges:true},snap=>{
+        if(!snap.metadata?.fromCache)departmentServer=true;
+        for(const [key,row] of [...departmentRows])if(Number(row.department_id)===departmentId)departmentRows.delete(key);
+        snap.docs.forEach(d=>{const row=decodeQuality(kind,d);if(!row.department_id)row.department_id=departmentId;departmentRows.set(String(row.id),row)});
+        if(!snap.metadata?.fromCache){lastError=null;ready=true}emit();
+      },err=>{
+        const code=String(err?.code||'').toLowerCase();
+        if(!code.includes('permission-denied'))console.warn('Quality department stream unavailable',departmentId,err);
+        emit();
+      }));
+    });
+
+    try{
+      const legacy=store.collection('quality_'+kind);
+      const off=legacy.onSnapshot({includeMetadataChanges:true},snap=>{
+        legacyServer=!snap.metadata?.fromCache;
+        legacyRows=new Map(snap.docs.map(d=>{const row=decodeQuality(kind,d);return[String(row.id),row]}));
+        if(legacyServer){lastError=null;ready=true}emit();
+      },err=>{legacyServer=false;legacyRows=new Map();const code=String(err?.code||'').toLowerCase();if(!code.includes('permission-denied'))console.warn('Legacy Quality Firebase stream unavailable',err);emit()});
+      stops.push(off);
+    }catch(err){legacyServer=false;legacyRows=new Map();emit()}
+    return ()=>stops.forEach(stop=>{try{stop?.()}catch{}});
+  }
+  async function deleteQualityRecord(id){
+    const store=await productionDatabase();
+    if(!id||String(id).includes('/'))throw new Error('Invalid Quality record.');
+    await withWriteRetry(()=>store.collection('app_meta').doc(qualityMetaId('records',id)).delete(),'Quality delete');
+    // Best-effort cleanup of older Quality locations. Never let an inaccessible
+    // legacy path break the current R&D-backed app_meta path.
+    for(const departmentId of QUALITY_DEPARTMENT_IDS){
+      try{await qualityDepartmentCollection(store,departmentId,'records').doc(String(id)).delete()}catch(e){const code=String(e?.code||'').toLowerCase();if(!code.includes('permission-denied'))console.warn('Legacy Quality department delete skipped',departmentId,e)}
+    }
+    try{await store.collection('quality_records').doc(String(id)).delete()}catch(e){const code=String(e?.code||'').toLowerCase();if(!code.includes('permission-denied'))console.warn('Legacy Quality delete skipped',e)}
+  }
+  window.rndCloud={deleteQualityRecord,saveQualityTime,watchQualityTime,saveProduction,watchProduction,watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();

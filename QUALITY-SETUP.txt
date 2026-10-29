@@ -1,0 +1,26 @@
+QUALITY WORKSPACE — v129
+
+Deploy with your existing Firebase config and publish the included firestore.rules.
+Quality uses quality_projects, quality_entries and quality_records, separate from
+R&D and Production. No existing data is moved or deleted.
+
+Pages:
+- Internal Audit: select any active department and Pending/In progress/Completed.
+  Pending and In progress require remarks; Completed requires no issue remarks.
+- Department-wise Quality KPI: department, KPI name and completion status.
+- Training: candidate, role, training start/end and outcomes.
+- Organisation Document Audit: today's automatic date and record-maintenance status.
+- Incoming Inspection: In progress until Report submitted is checked and its
+  report reference is entered. It then saves as Completed.
+- Kaizen: one idea per person per day; weekly target 5, Monday–Sunday.
+- Time Sheet: the same project assignment, clock selection, work/remarks,
+  saved history and hourly reminder workflow, in Quality-only collections.
+
+Enter your name on Quality pages. Each record includes its author and date.
+Saved records are visible to the Quality workspace; editing requires entering
+the record owner's name, following the existing name-based access model.
+This is not verified user authentication. Browser preferences stay local.
+Business records save to Firebase, with live updates and visible save errors.
+Dashboard contents are left for the next requested specification.
+
+Live Firebase verification needs your real configuration and deployed rules.

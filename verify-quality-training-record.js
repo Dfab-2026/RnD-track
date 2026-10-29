@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const s=fs.readFileSync('quality-review.js','utf8');
+assert(s.includes('q-training-record-card'),'Training uses a dedicated card');
+for(const field of ['candidate','role','start_date','end_date','duration','outcomes'])assert(s.includes(`name="${field}"`),`Training field ${field} exists`);
+assert(!s.includes('data-qw-all="training_status"'),'Training no longer has ALL complete');
+assert(!s.includes('data-qw-board="training_status"'),'Training no longer uses department completion board');
+assert(s.includes("kind:'training',person:reportOwner"),'Training saves as Navarasu KPI-owned record');
+assert(s.includes("Saved · 1 trained record added to KPI."),'Save confirms one KPI record');
+assert(s.includes("r.kind==='training'&&same(r.person,reportOwner)"),'KPI/weekly count reads saved training records');
+console.log('PASS: Training card fields, no department completion board, one save = one trained KPI record');

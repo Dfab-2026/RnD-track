@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const src=fs.readFileSync('quality-review.js','utf8');
+assert(src.includes('latestOnDate(kind,date,person,department)'),'selected-date lookup helper exists');
+assert(src.includes('latestOnDate(kind,weeklyDate,reportOwner,dept.id)'),'weekly cards load exact selected date');
+assert(src.includes('departmentCountOnDate(el.dataset.qwCount,weeklyDate)'),'weekly card counts refresh from exact selected date');
+assert(src.includes('weekly_${kind}_${weeklyDate}_${departmentId}_${clean(row.person)}'),'individual weekly save IDs include selected date');
+assert(src.includes('weekly_${kind}_${weeklyDate}_${Number(dept.id)}_${clean(reportOwner)}'),'bulk weekly save IDs include selected date');
+assert(src.includes("r.date===weeklyDate"),'training history refreshes for selected date');
+assert(src.includes("weeklyDate=e.target.value;weeklyRefresh()"),'changing date immediately refreshes cards');
+console.log('PASS: Quality weekly cards and Firebase records are selected-date specific');

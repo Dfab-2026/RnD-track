@@ -7,14 +7,22 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>R&D Track — Idea to Impact</title>
-  <link rel="stylesheet" href="styles.css?v=120.0.0" />
-  <link rel="stylesheet" href="responsive.css?v=120.0.0">
+  <title>DFAB R&D Track — Idea to Impact</title>
+  <link rel="icon" type="image/png" href="assets/dfab-logo.png?v=129.0.0">
+  <link rel="apple-touch-icon" href="assets/dfab-logo.png?v=129.0.0">
+  <link rel="stylesheet" href="branding.css?v=129.0.0">
+  <link rel="stylesheet" href="styles.css?v=129.0.0" />
+  <link rel="stylesheet" href="responsive.css?v=129.0.0">
+  <link rel="stylesheet" href="production.css?v=129.0.0">
+<link rel="stylesheet" href="quality.css?v=138.0.0">
+<link rel="stylesheet" href="quality-daily.css?v=135.0.0">
+<link rel="stylesheet" href="quality-review.css?v=141.0.0">
+<link rel="stylesheet" href="quality-polish.css?v=137.0.0">
 </head>
 <body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
-  <section class="department-gate" id="departmentGate" aria-label="Select a department">
+  <section class="department-gate hidden" id="departmentGate" aria-label="Select a department">
     <div class="department-gate-card">
-      <div class="login-brand"><span class="brand-mark">D</span><div><strong>DFAB KPI TRACK</strong><small>DEPARTMENT WORKSPACE</small></div></div>
+      <div class="login-brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div><strong>DFAB KPI TRACK</strong><small>DEPARTMENT WORKSPACE</small></div></div>
       <span class="kicker">SELECT DEPARTMENT</span>
       <h1>Choose your dashboard</h1>
       <p>Select a department to continue. R&amp;D is available now; the remaining department dashboards can be activated when their workflows are ready.</p>
@@ -25,7 +33,7 @@
 
   <section class="login-gate hidden" id="loginGate" aria-label="R&D member login">
     <div class="login-card">
-      <div class="login-brand"><span class="brand-mark">R</span><div><strong>R&D TRACK</strong><small>IDENTIFY YOURSELF</small></div></div>
+      <div class="login-brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div><strong>R&D TRACK</strong><small>IDENTIFY YOURSELF</small></div></div>
       <span class="kicker">MEMBER ACCESS</span>
       <h1>What is your name?</h1>
       <p>Enter the same name saved in the R&D members list. You will stay signed in on this device until you log out from Settings.</p>
@@ -41,13 +49,13 @@
 
   <div class="app-shell app-locked" id="appShell">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><span class="brand-mark">R</span><div class="brand-copy"><strong>R&D TRACK</strong><small>IDEA → IMPACT</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button><button class="brand-mini-toggle" id="menuBtn" type="button" aria-label="Toggle navigation" aria-expanded="true">‹</button></div>
+      <div class="brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div class="brand-copy"><strong>R&D TRACK</strong><small>IDEA → IMPACT</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button><button class="brand-mini-toggle" id="menuBtn" type="button" aria-label="Toggle navigation" aria-expanded="true">‹</button></div>
       <nav id="nav">
         <button class="nav-btn active" data-page="dashboard"><span>01</span> Dashboard</button>
         <button class="nav-btn" data-page="ideas"><span>02</span> Daily Ideas</button>
         <button class="nav-btn" data-page="weekly"><span>03</span> Weekly Tasks</button>
         <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
-        <button class="nav-btn" data-page="timesheet"><span>05</span> Timesheet</button>
+        <button class="nav-btn" data-page="timeconsume"><span>◷</span> Time Sheet</button>
         <button class="nav-btn" data-page="chat"><span>06</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
         <button class="nav-btn" data-page="kpi"><span>07</span> KPI Report</button>
         <button class="nav-btn" data-page="settings"><span>08</span> Settings</button>
@@ -58,7 +66,7 @@
     <main class="main">
       <header class="topbar">
         
-        <div><div class="eyebrow" id="pageEyebrow">R&D OPERATIONS</div><h1 id="pageTitle">Dashboard</h1></div>
+        <div><div class="eyebrow" id="pageEyebrow">R&D OPERATIONS</div><div class="dfab-page-heading"><img src="assets/dfab-logo.png" alt="DFAB" width="66" height="28"><h1 id="pageTitle">Dashboard</h1></div></div>
         <div class="top-actions compact-top-actions">
           <div class="notification-center-wrap header-tool-wrap">
             <button class="header-tool-btn notification-bell" id="notificationBellBtn" type="button" aria-label="Open notifications" aria-expanded="false">🔔<span id="notificationBellBadge" class="notification-badge hidden">0</span></button>
@@ -128,13 +136,7 @@
         <div class="work-layout work-layout-single"><div id="projectDetail" class="project-detail work-detail empty-state">Select a weekly project to open its execution workspace.</div></div>
       </section>
 
-      <section class="page" id="timesheetPage">
-        <div class="section-toolbar"><div><span class="kicker">SYSTEM USAGE</span><h2>R&amp;D Timesheet</h2><p>Active hours, idle time, applications and website-domain usage read from the local Windows usage agent, with existing cloud records merged when available.</p></div><span class="timesheet-live-chip"><i></i>LOCAL USAGE</span></div>
-        <section class="panel timesheet-filters"><label><span>MEMBER</span><select id="timesheetMemberFilter"><option value="">All R&amp;D members</option></select></label><label><span>FROM</span><input id="timesheetFromDate" type="date"></label><label><span>TO</span><input id="timesheetToDate" type="date"></label><button class="primary-btn" id="refreshTimesheetBtn" type="button">Refresh</button></section>
-        <div id="timesheetStatus" class="timesheet-status" aria-live="polite"></div>
-        <div id="timesheetContent"><div class="empty-state">Loading system usage…</div></div>
-      </section>
-
+      <section class="page" id="timeconsumePage"><div id="timeConsumeRoot"></div></section>
 
       <section class="page" id="chatPage">
         <section class="team-chat-page-shell" aria-label="R&D team chat">
@@ -180,13 +182,21 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
-  <script defer src="firebase-config.js?v=22.0.0"></script>
-  <script defer src="firebase-cloud.js?v=120.0.0"></script>
-  <script defer src="app.js?v=120.0.0"></script>
-  <script defer src="kpi-chat.js?v=120.0.0"></script>
-  <script defer src="kpi-pdf.js?v=120.0.0"></script>
-  <script defer src="timesheet.js?v=123.0.0"></script>
-  <script defer src="responsive.js?v=120.0.0"></script>
-<script defer src="daily-sheet-reminder.js?v=120.0.0"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+  <script defer src="firebase-config.js?v=129.0.0"></script>
+  <script defer src="firebase-cloud.js?v=140.0.0"></script>
+<script defer src="quality-login.js?v=134.0.0"></script>
+<script defer src="quality-time.js?v=139.0.0"></script>
+<script defer src="quality-ideas.js?v=137.0.0"></script>
+<script defer src="quality-daily.js?v=137.0.0"></script>
+<script defer src="quality-review.js?v=141.0.0"></script>
+<script defer src="quality.js?v=137.0.0"></script>
+  <script defer src="production.js?v=129.0.0"></script>
+  <script defer src="app.js?v=129.0.0"></script>
+  <script defer src="kpi-chat.js?v=129.0.0"></script>
+  <script defer src="kpi-pdf.js?v=129.0.0"></script>
+  <script defer src="responsive.js?v=129.0.0"></script>
+<script defer src="time-consume.js?v=129.0.0"></script>
+<link rel="stylesheet" href="time-consume.css?v=129.0.0">
 </body>
 </html>

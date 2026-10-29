@@ -1,0 +1,14 @@
+Quality sidebar — v134
+
+Dashboard is first, then the uploaded list's eleven items in order. Time Sheet
+and Settings remain last. Quality's fixed panel and navigation controls remain.
+
+Existing audit, department KPI, training, document, inspection and Kaizen records
+keep their original database kinds. No records are moved or deleted.
+ISO, coordination, cost reduction and attrition use dated activity/status/remarks
+records in quality_records. Dashboard and KPI Report summarize saved record
+statuses; they do not invent numeric KPI targets, cost amounts or attrition rates.
+The KPI Report supports a reporting-month filter.
+
+Retain the real firebase-config.js and publish the included firestore.rules,
+which adds the four new Quality record kinds. Other department rules are unchanged.

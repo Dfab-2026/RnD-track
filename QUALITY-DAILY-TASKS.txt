@@ -1,0 +1,25 @@
+QUALITY DAILY WORK — v135
+
+Quality only: Dashboard, Daily Ideas and Daily Task are first in the sidebar.
+Inspections, ORG document readiness and coordination are grouped into Daily Task.
+All other sections, R&D and Production are preserved.
+
+Daily Task has three full-width cards in order. A signed-in member submits one
+record for each card per day. Completed hides remarks and gives a green 1/1.
+Pending/In progress requires remarks and remains red 0/1 on Dashboard, even
+after its submission is saved. Saving marks the form Submitted and moves focus
+to the next card. Edit/Delete operate on that person's current-day submissions.
+The Inspection card includes Incoming/Inprocess/Final stage selection.
+
+Daily Ideas: Navarasu and Mohan each submit one idea per day, with problem,
+proposal and expected benefit. Own entries support Edit/Delete. Team submissions
+and pending names appear on Dashboard. Weekly/monthly Daily Ideas KPI filters
+count the actual saved ideas: 1/day, 6/working week, Monday–Saturday monthly target.
+Kaizen remains its separate original module and does not automatically duplicate
+Daily Ideas. Existing old inspection/document/coordination history is preserved
+and remains included in the Quality KPI Report's historical status summary.
+
+Publish the included firestore.rules for new record kinds and delete actions.
+Retain the real firebase-config.js. Records use quality_records with deterministic
+person/date keys, live listeners and explicit save errors. No data is reset.
+Live Firebase verification requires the real configuration and deployed rules.

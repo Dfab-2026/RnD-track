@@ -7,7 +7,7 @@ service cloud.firestore {
     function validMember() { return request.resource.data.keys().hasOnly(['n','r','a','o','c','u']); }
     function validIdea() { return request.resource.data.keys().hasOnly(['n','s','d','p','i','b','q','t','x','f','c','u']); }
     function validCycle() { return request.resource.data.keys().hasOnly(['l','s','e','x','c','u']); }
-    function validProject() { return request.resource.data.keys().hasOnly(['c','i','n','t','o','s','e','p','x','g','z','u']); }
+    function validProject() { return request.resource.data.keys().hasOnly(['c','i','n','t','o','s','e','p','x','g','z','l','u']); }
     function validProgress() { return request.resource.data.keys().hasOnly(['p','m','d','w','r','b','n','v','f','c','u']); }
 
     match /members/{document=**} { allow read: if isSignedIn(); allow create, update: if isSignedIn() && validMember(); allow delete: if isSignedIn(); }
@@ -29,23 +29,40 @@ service cloud.firestore {
     }
 
     match /notifications/{document=**} { allow read, write: if isSignedIn(); }
-
-    // Minute-level managed-device usage; collection is isolated from R&D work records.
-    match /usage_events/{eventId} {
+    match /production_projects/{id} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['m','n','v','d','s','e','a','p','h','x','i','q','u'])
-        && request.resource.data.m is int
-        && request.resource.data.v is string
-        && request.resource.data.d is string
-        && request.resource.data.s is int
-        && request.resource.data.e is int
-        && request.resource.data.x is int
-        && request.resource.data.i is int;
-      allow delete: if false;
+      allow create, update: if isSignedIn() && request.resource.data.keys().hasOnly(['title','owner','created_at']) && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200 && request.resource.data.owner is string && request.resource.data.owner.size() > 0 && request.resource.data.owner.size() <= 80;
+    }
+    match /production_entries/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.keys().hasOnly(['project_id','owner','date','from','to','work','remarks','minutes','created_at']) && request.resource.data.project_id is string && request.resource.data.owner is string && request.resource.data.work is string && request.resource.data.work.size() > 0 && request.resource.data.work.size() <= 2000 && request.resource.data.remarks is string && request.resource.data.remarks.size() <= 1000 && request.resource.data.minutes is int && request.resource.data.minutes > 0 && request.resource.data.minutes < 1440;
     }
 
     // Lightweight recovery copies created before destructive deletes.
+    match /quality_projects/{id} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        (request.resource.data.keys().hasOnly(['t','o','c']) && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 200 && request.resource.data.o is string && request.resource.data.o.size() > 0 && request.resource.data.o.size() <= 80) ||
+        (request.resource.data.keys().hasOnly(['title','owner','created_at']) && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200 && request.resource.data.owner is string && request.resource.data.owner.size() > 0 && request.resource.data.owner.size() <= 80)
+      );
+    }
+    match /quality_entries/{id} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        (request.resource.data.keys().hasOnly(['p','o','d','f','z','w','r','m','c']) && request.resource.data.p is string && request.resource.data.o is string && request.resource.data.w is string && request.resource.data.w.size() > 0 && request.resource.data.w.size() <= 2000 && request.resource.data.m is int && request.resource.data.m > 0 && request.resource.data.m < 1440) ||
+        (request.resource.data.keys().hasOnly(['project_id','owner','date','from','to','work','remarks','minutes','created_at']) && request.resource.data.project_id is string && request.resource.data.owner is string && request.resource.data.work is string && request.resource.data.work.size() > 0 && request.resource.data.work.size() <= 2000 && request.resource.data.remarks is string && request.resource.data.remarks.size() <= 1000 && request.resource.data.minutes is int && request.resource.data.minutes > 0 && request.resource.data.minutes < 1440)
+      );
+    }
+
+
+    match /quality_records/{id} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        (request.resource.data.keys().hasOnly(['k','p','d','a','s','r','t','c','o','f','g','x','b','q','i','u','m','n','w','v','y','h','j']) && request.resource.data.k in ['audit','kpi','training','documents','incoming','kaizen','iso','coordination','cost','attrition','daily_idea','daily_inspection','daily_documents','daily_coordination','cost_percent','attrition_percent','quality_kpi_review'] && request.resource.data.p is string && request.resource.data.p.size() > 0 && request.resource.data.p.size() <= 80 && request.resource.data.d is string && request.resource.data.s in ['pending','in_progress','completed'] && (!(request.resource.data.k in ['audit','daily_inspection','daily_documents','daily_coordination']) || request.resource.data.s == 'completed' || (request.resource.data.r is string && request.resource.data.r.size() > 0))) ||
+        (request.resource.data.keys().hasOnly(['kind','person','date','department_id','status','remarks','title','candidate','role','start_date','end_date','outcomes','report_submitted','report_reference','idea','updated_at','problem','inspection_stage','week_start','value','review_key','priority','attachment']) && request.resource.data.kind in ['audit','kpi','training','documents','incoming','kaizen','iso','coordination','cost','attrition','daily_idea','daily_inspection','daily_documents','daily_coordination','cost_percent','attrition_percent','quality_kpi_review'] && request.resource.data.person is string && request.resource.data.person.size() > 0 && request.resource.data.person.size() <= 80 && request.resource.data.date is string && request.resource.data.status in ['pending','in_progress','completed'] && (!(request.resource.data.kind in ['audit','daily_inspection','daily_documents','daily_coordination']) || request.resource.data.status == 'completed' || (request.resource.data.remarks is string && request.resource.data.remarks.size() > 0)))
+      );
+      allow delete: if isSignedIn() && ((resource.data.k in ['daily_idea','daily_inspection','daily_documents','daily_coordination']) || (resource.data.kind in ['daily_idea','daily_inspection','daily_documents','daily_coordination']));
+    }
     match /activity_logs/{document=**} {
       allow read, create: if isSignedIn();
       allow update, delete: if false;

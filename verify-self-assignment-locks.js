@@ -20,11 +20,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/app.js','utf8').split('registerNotif
  const mine=state.projects.find(p=>Number(p.owner_id)===2),other=state.projects.find(p=>Number(p.owner_id)===3);
  window.setTestDay('2026-10-28');
  mine.tracker_rows=[{row_index:0,date:'22-Oct-2026',stage:'Saved target',time_slots:{0:{task:'Saved duration'}}},{row_index:6,date:'28-Oct-2026',stage:'Today'}];
- check(!canEditTrackerRow(mine,{row_index:0}),'Past base date locked');check(canEditTrackerRow(mine,{row_index:6}),'Today editable');check(!canEditTrackerRow(other,{row_index:6}),'Other task remains read-only');
- check(!canEditTrackerRow(mine,{row_index:6,manual_extra:true,date:'27-Oct-2026'}),'Past manual date locked');
- const before=JSON.stringify(mine.tracker_rows);deleteManualTrackerRow(mine,0);insertManualTrackerRow(mine,1);check(before===JSON.stringify(mine.tracker_rows),'Locked delete and insertion blocked');
- const menu=trackerSlotMenu(mine,trackerSheetRows(mine)[0]);check(menu.includes('data-slot-edit="0:0" disabled'),'Past timing edit disabled');check(menu.includes('data-slot-view="0:0" '),'Saved timing remains viewable');
- window.setTestDay('2026-10-29');check(!canEditTrackerRow(mine,{row_index:6}),'Date locks immediately after midnight');
+ check(canEditTrackerRow(mine,{row_index:0}),'Past base date editable by owner');check(canEditTrackerRow(mine,{row_index:6}),'Today editable');check(!canEditTrackerRow(other,{row_index:6}),'Other task remains read-only');
+ check(canEditTrackerRow(mine,{row_index:6,manual_extra:true,date:'27-Oct-2026'}),'Past manual date editable');
+ // Owner editing remains available for all prior dates.
+ const menu=trackerSlotMenu(mine,trackerSheetRows(mine)[0]);check(!menu.includes('data-slot-edit="0:0" disabled'),'Past timing edit enabled');check(menu.includes('data-slot-view="0:0" '),'Saved timing remains viewable');
+ window.setTestDay('2026-10-29');check(canEditTrackerRow(mine,{row_index:6}),'Date stays editable after midnight');
  persistLogin(state.members[0]);check(canEditTrackerRow(mine,{row_index:0}),'Lead can edit another owner past row');check(!canEditTrackerRow(mine,{row_index:7}),'Other owner current row stays view-only');deleteManualTrackerRow(mine,0);check(!trackerSheetRows(mine)[0].stage,'Lead clears locked row');
  persistLogin(state.members[4]);check(!canEditTrackerRow(mine,{row_index:0}),'Visitor read-only');await denied(()=>assignWeekLocal(10,[108],[5]));
- })()`,ctx);console.log('PASS: all four self-assign, two-per-member limit, no assigning to others, lead-only priority, unique task labels, past date/timing/manual row locks, midnight check, lead past-row override, visitor protection');})().catch(e=>{console.error(e);process.exitCode=1});
+ })()`,ctx);console.log('PASS: all four self-assign, two-per-member limit, no assigning to others, lead-only priority, unique task labels, past date/timing/manual row access, midnight access, lead past-row override, visitor protection');})().catch(e=>{console.error(e);process.exitCode=1});

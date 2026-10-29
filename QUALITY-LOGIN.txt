@@ -1,0 +1,15 @@
+Quality login — v131
+
+Enter Navarasu or Mohan once when opening Quality. The login remains on this
+device until Logout. Refresh and department navigation retain it. R&D login
+and Production are unchanged.
+
+Record author and Time Sheet owner come from the signed-in Quality member.
+Manual name entry has been removed. Quality project assignments select either
+Navarasu or Mohan. Existing records are retained without migration or deletion.
+
+Quality business records still use the existing quality_records, quality_projects
+and quality_entries Firebase collections. Keep the real firebase-config.js and
+publish the included firestore.rules if not already done. No schema change is
+needed for this login update. Live cloud verification requires that configuration.
+This matches R&D's name-based login; it is not password-verified authentication.

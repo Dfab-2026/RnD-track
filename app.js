@@ -270,7 +270,7 @@ function renderPage(name=state.page){
   else if(name==='ideas')renderIdeas();
   else if(name==='weekly')renderWeekly();
   else if(name==='progress')renderProjects();
-  else if(name==='timesheet')window.renderTimesheet?.();
+  else if(name==='timeconsume')window.renderTimeConsume?.();
   else if(name==='chat'){updateTeamChatIdentity();renderTeamChat();startTeamChat();}
   else if(name==='kpi')renderKpiReport();
   else if(name==='settings')renderSettings();
@@ -563,7 +563,7 @@ function trackerEffectiveDate(p,row){
   const sheet=trackerSheetRows(p),index=sheet.filter(r=>!r.manual_extra&&Number(r.row_index)<=Number(row?.row_index)).length-1;
   return trackerDateToIso(trackerPeriodDates(p)[Math.max(0,index)]||'');
 }
-function canEditTrackerRow(p,row){const date=trackerEffectiveDate(p,row);return !isVisitor()&&Boolean(p)&&((isLead()&&date&&date<today())||(canEditTask(p)&&(!date||date>=today())))}
+function canEditTrackerRow(p,row){return !isVisitor()&&Boolean(p)&&(canEditTask(p)||(isLead()&&trackerEffectiveDate(p,row)<today()))}
 function requireLead(){if(!isLead())throw new Error('Only Kabil · R&D Lead can manage weekly assignments and priorities.')}
 function requireTaskOwner(project){if(!canEditTask(project))throw new Error('You can update only your own assigned task.')}
 function taskPriority(project){return state.ideas.find(i=>Number(i.id)===Number(project?.idea_id))?.priority||'Medium'}
@@ -576,16 +576,32 @@ function isRndDepartment(department){return ['rd','rnd','r and d','research and 
 function renderDepartmentGate(){
   const grid=$('#departmentGateGrid');if(!grid)return;
   const departments=activeDepartments();
-  grid.innerHTML=departments.length?departments.map(department=>{const available=isRndDepartment(department);return `<button type="button" class="department-choice ${available?'available':''}" data-department-id="${department.id}" aria-label="${esc(department.name)} dashboard${available?'':' setup pending'}"><strong>${esc(department.name)}</strong><span>${available?'OPEN DASHBOARD →':'SETUP PENDING'}</span></button>`}).join(''):'<div class="empty-state">No active departments are configured.</div>';
+  grid.innerHTML=departments.length?departments.map(department=>{const available=isRndDepartment(department)||['production','quality'].includes(normalizeName(department.name));return `<button type="button" class="department-choice ${available?'available':''}" data-department-id="${department.id}" aria-label="${esc(department.name)} dashboard${available?'':' setup pending'}"><strong>${esc(department.name)}</strong><span>${available?'OPEN DASHBOARD →':'SETUP PENDING'}</span></button>`}).join(''):'<div class="empty-state">No active departments are configured.</div>';
   grid.querySelectorAll('[data-department-id]').forEach(button=>button.onclick=()=>selectDepartment(Number(button.dataset.departmentId)));
 }
-function showDepartmentGate(){$('#appShell').classList.add('app-locked');$('#loginGate').classList.add('hidden');$('#departmentGate').classList.remove('hidden');$('#departmentGateMessage').textContent='';renderDepartmentGate()}
-function selectDepartment(id){
+function departmentHistory(kind,id,replace=false){
+  const route={rndDepartmentRoute:kind,departmentId:id||null,departmentHistoryReady:true},url=kind==='workspace'?'#department='+id:'#departments';
+  if(replace)history.replaceState({...history.state,...route},'',url);
+  else if(history.state?.rndDepartmentRoute!==kind||Number(history.state?.departmentId)!==Number(id||0))history.pushState({...history.state,...route},'',url);
+}
+function showDepartmentGate(navigate=true){window.closeProduction?.();window.closeQuality?.();if(navigate)departmentHistory('departments',null);localStorage.removeItem('selectedDepartmentId');stopTeamChat();document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());$('#appShell').classList.add('app-locked');$('#loginGate').classList.add('hidden');$('#departmentGate').classList.remove('hidden');$('#departmentGateMessage').textContent='';renderDepartmentGate()}
+function selectDepartment(id,navigate=true){
   const department=activeDepartments().find(d=>Number(d.id)===Number(id));if(!department)return;
-  if(!isRndDepartment(department)){$('#departmentGateMessage').textContent=`${department.name} dashboard will be configured in the next update.`;return}
+  if(!isRndDepartment(department)&&!['production','quality'].includes(normalizeName(department.name))){$('#departmentGateMessage').textContent=`${department.name} dashboard will be configured in the next update.`;return}
+  if(navigate)departmentHistory('workspace',department.id);
   localStorage.setItem('selectedDepartmentId',String(department.id));$('#departmentGate').classList.add('hidden');
+  if(normalizeName(department.name)==='quality'){window.closeProduction?.();window.openQuality?.();return}
+  window.closeQuality?.();
+  if(normalizeName(department.name)==='production'){window.openProduction?.();return}
+  window.closeProduction?.();
   const saved=storedLogin(),member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
   if(member){persistLogin(member);showApp()}else showLogin();
+}
+function restoreDepartmentRoute(){
+  const route=history.state,id=route?.rndDepartmentRoute==='departments'?0:Number(route?.departmentId||localStorage.getItem('selectedDepartmentId'));
+  const selected=activeDepartments().find(d=>Number(d.id)===id&&(isRndDepartment(d)||['production','quality'].includes(normalizeName(d.name))));
+  if(selected){if(!route?.departmentHistoryReady){departmentHistory('departments',null,true);departmentHistory('workspace',selected.id)}else departmentHistory('workspace',selected.id,true);selectDepartment(selected.id,false)}
+  else{departmentHistory('departments',null,true);showDepartmentGate(false)}
 }
 function showLogin(){$('#departmentGate').classList.add('hidden');$('#appShell').classList.add('app-locked');$('#loginGate').classList.remove('hidden');$('#loginName').focus()}
 function updateCompactProfile(){
@@ -702,7 +718,7 @@ async function load(){
   await bootCloud();
   const saved=storedLogin(),member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
   if(member)persistLogin(member);
-  showDepartmentGate();
+  restoreDepartmentRoute();
 }
 function renderKpiReport(){
   const memberSel=$('#kpiMemberSelect'),periodSel=$('#kpiPeriodType'),weekSel=$('#kpiWeekSelect'),host=$('#kpiReportContent');if(!memberSel||!periodSel||!weekSel||!host)return;
@@ -1383,7 +1399,7 @@ let currentReport={type:'daily',data:null};async function generateReport(){try{i
 function downloadExcel(){if(!currentReport.data)return;const table=$('#reportOutput').innerHTML;const html=`<html><head><meta charset="utf-8"></head><body>${table}</body></html>`;const blob=new Blob([html],{type:'application/vnd.ms-excel'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`RND-${currentReport.type}-report.xls`;a.click();URL.revokeObjectURL(a.href)}
 function openIdea(){delete $('#ideaForm').dataset.editId;$('#ideaDialogTitle').textContent='Submit Daily Idea';$('#ideaForm').reset();if(isVisitor()){toast('Admin visitors are view-only and do not submit ideas.',true);return}const d=$('#ideaDialog');$('#ideaMember').value=activeUser();$('#ideaDate').value=today();d.showModal()}
 function openProgress(p){if(!canEditTask(p))return toast('This task is view only for your profile.',true);delete $('#progressForm').dataset.editId;$('#progressForm').reset();if(isVisitor()){toast('Admin visitors are view-only.',true);return}$('#progressDialogTitle').textContent=p.project_number+' — Daily Update';$('#progressMember').value=activeUser();$('#progressDate').value=today();$('#progressPercent').value=p.progress;$('#progressForm').dataset.projectId=p.id;$('#progressDialog').showModal()}
-function applyRoleAccess(){const visitor=isVisitor();$('#newWeekBtn')?.classList.toggle('role-hidden',!isLead());document.querySelector('[data-page="timesheet"]')?.classList.remove('role-hidden');if($('#ideaPriority'))$('#ideaPriority').disabled=!isLead();['#quickIdeaBtn','#newIdeaBtn'].forEach(id=>{const el=$(id);if(el)el.classList.toggle('role-hidden',visitor)});const note=$('#visitorNotice');if(note)note.classList.toggle('hidden',!visitor);document.body.classList.toggle('visitor-mode',visitor)}
+function applyRoleAccess(){const visitor=isVisitor();$('#newWeekBtn')?.classList.toggle('role-hidden',!isLead());if($('#ideaPriority'))$('#ideaPriority').disabled=!isLead();['#quickIdeaBtn','#newIdeaBtn'].forEach(id=>{const el=$(id);if(el)el.classList.toggle('role-hidden',visitor)});const note=$('#visitorNotice');if(note)note.classList.toggle('hidden',!visitor);document.body.classList.toggle('visitor-mode',visitor)}
 async function runMutationButton(btn,work,success){
   if(btn?.dataset.busy==='1')return;
   if(btn){btn.dataset.busy='1';btn.disabled=true;btn.classList.add('is-busy')}
@@ -1438,9 +1454,10 @@ function setupWeekPickerFromCycle(c){
 function openCycleEdit(id){const c=state.cycles.find(x=>x.id===id);if(!c)return;$('#weekForm').dataset.editId=id;$('#weekDialogTitle').textContent='Edit Working Week';setupWeekPickerFromCycle(c);$('#weekDialog').showModal()}
 function openProgressEdit(id){const u=state.progress.find(x=>x.id===id);if(!u)return;if(!canEditTask(state.projects.find(p=>Number(p.id)===Number(u.project_id))))return toast('This task is view only for your profile.',true);const p=state.projects.find(x=>x.id===u.project_id);$('#progressForm').dataset.editId=id;$('#progressForm').dataset.projectId=u.project_id;$('#progressDialogTitle').textContent=(p?.project_number||'Project')+' — Edit Update';$('#progressMember').value=u.user_id;$('#progressDate').value=u.update_date;$('#progressPercent').value=u.progress_percent;$('#progressWork').value=u.work_done;$('#progressRemarks').value=u.remarks||'';$('#progressBlocker').value=u.blocker||'';$('#progressNext').value=u.next_action||'';$('#progressDialog').showModal()}
 function openProjectEdit(id){if(!isLead())return toast('Only the R&D Lead can manage assignments.',true);const p=state.projects.find(x=>x.id===Number(id));if(!p)return;$('#projectEditId').value=p.id;$('#projectEditTitle').value=p.title;$('#projectEditOwner').innerHTML=workingMembers().map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');$('#projectEditOwner').value=p.owner_id;$('#projectEditPriority').value=taskPriority(p);$('#projectEditStart').value=p.start_date;$('#projectEditEnd').value=p.end_date;$('#projectEditDialog').showModal()}
-function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',timesheet:'Timesheet',chat:'Team Chat',kpi:'KPI Report',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
+function showPage(name){if(name==='reports')name='settings';const target=$(`#${name}Page`);if(!target)name='dashboard';state.page=name;$$('.page').forEach(p=>p.classList.remove('active'));$(`#${name}Page`).classList.add('active');$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));const titles={dashboard:'Dashboard',ideas:'Daily Ideas',weekly:'Weekly Tasks',progress:'Work Tracking',timeconsume:'Time Sheet',chat:'Team Chat',kpi:'KPI Report',settings:'Settings'};$('#pageTitle').textContent=titles[name]||'Dashboard';setTeamChatOpen(name==='chat');if(name==='sheet')startMasterSheet();if(name!=='progress')selectedManualTrackerRow=null;$('#sidebar').classList.remove('open');if(name==='ideas'){const dateFilter=$('#ideaDateFilter');if(dateFilter)dateFilter.value=today();syncIdeaDateDisplay()}if(name==='weekly'||name==='progress'){syncPeriodFromDailyReference();state.selectedProject=null}renderPage(name)}
 function bind(){
-  $('#backToDepartmentsBtn').onclick=showDepartmentGate;
+  $('#backToDepartmentsBtn').onclick=()=>showDepartmentGate();
+  window.addEventListener('popstate',restoreDepartmentRoute);
   window.addEventListener('online',()=>scheduleCloudReconnect(true));
   window.addEventListener('offline',()=>setCloudRuntimeStatus('offline','No internet connection · changes are saved locally.'));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&cloudRuntimeStatus!=='live')scheduleCloudReconnect(true)});
