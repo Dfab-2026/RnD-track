@@ -3,8 +3,8 @@
   const trackedKinds=['iso','audit','kpi','training','documents','incoming','coordination','cost','attrition','kaizen'];
   let root,records=[],timeEntries=[],stops=[],generation=0,ready=false,serverConnected=false,cloudMessage='Connecting…',page='dashboard',editId='',busy=false,reportMonth='';
   const $=id=>document.getElementById('q'+id),adminView=()=>Boolean(window.adminSession?.active?.()),person=()=>adminView()?window.adminSession.name():window.qualitySession.current(),clean=s=>String(s||'').trim().toLowerCase();
-  const qualityRole=()=>clean(person())==='mohan'?'Quality Lead':'Member';
-  const qualityRoleLabel=()=>clean(person())==='mohan'?'QUALITY LEAD':'MEMBER';
+  const qualityRole=()=>window.qualitySession?.role?.(person())==='lead'?'Quality Lead':'Member';
+  const qualityRoleLabel=()=>window.qualitySession?.role?.(person())==='lead'?'QUALITY LEAD':'MEMBER';
   const options=()=>activeDepartments().map(d=>`<option value="${Number(d.id)}">${esc(d.name)}</option>`).join('');
   let pendingPopupShownThisOpen=false,lastNotificationSignature='';
   function qualityExpectedDailyPending(){
@@ -191,6 +191,6 @@
       if(token===generation){serverConnected=false;ready=false;cloudMessage=error?.message||'Firebase connection failed.';paint()}
     }
   }
-  window.openQuality=open;window.closeQuality=close;window.qualityValidation={validate,weekRange,overviewRows,pages,qualityRole,qualityRoleLabel};window.qualityHourlyTimesheetReminder=qualityHourlyTimesheetReminder;
+  window.openQuality=open;window.closeQuality=close;window.openQualitySettings=()=>{page='settings';open()};window.qualityValidation={validate,weekRange,overviewRows,pages,qualityRole,qualityRoleLabel};window.qualityHourlyTimesheetReminder=qualityHourlyTimesheetReminder;
   window.setInterval?.(qualityHourlyTimesheetReminder,30000);window.addEventListener?.('focus',qualityHourlyTimesheetReminder);document.addEventListener?.('visibilitychange',qualityHourlyTimesheetReminder);
 })();

@@ -138,3 +138,20 @@ R&D remains on its dedicated workflow. Quality remains on its dedicated workflow
 - Quality routes to its existing dedicated KPI component so its ISO/training/manual KPI logic remains single-source.
 - R&D remains on its existing separate KPI flow.
 - Time Summary and Analytics continue to read the same Quality/department Time Sheet and KPI Firebase records; no duplicate analytics collections were introduced.
+
+
+## v198 Admin Time Control
+- Time Control is individual-only: Month -> Department -> Person.
+- Shows exact selected person Time Sheet rows: date, task, from, to, duration, status, remarks.
+- CSV export is scoped to that selected person only.
+- Leader Center return control goes directly to department cards and explicitly closes any sidebar state.
+
+## v199 — Admin Member Master + Month-End Cleanup
+- Admin profile now includes **Manage members**.
+- R&D member changes continue through the existing R&D members collection; Kabil stays the fixed R&D Lead.
+- Quality and all shared departments store approved name-only login credentials and Lead/Member roles as compact `department_access_member` records in `app_meta`.
+- Existing Quality (Mohan/Navarasu) and Outsourcing (Sai/Sakthi/Venkatachala/Mithilesh) credentials seed automatically if the access registry is empty.
+- Admin Time Control uses the same Firebase member source.
+- KPI/Time/Analytics leader pages suppress the R&D left sidebar/reopen control.
+- On the last day of each month, leaders receive a red backup/cleanup reminder. Month deletion is still available only after a confirmed downloaded backup and the existing double confirmation.
+- See `PRODUCTION-READINESS-v199.txt` before deployment. The packaged `firebase-config.js` still contains placeholders and must be replaced with the real project config.

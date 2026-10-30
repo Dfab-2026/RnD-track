@@ -584,12 +584,19 @@ function departmentAdminActive(){return Boolean(departmentAdminName())}
 function departmentAdminLogin(name){const found=DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name));if(!found)throw new Error('Wrong / Not authorized');localStorage.setItem(DEPARTMENT_ADMIN_KEY,JSON.stringify({name:found}));renderDepartmentGate();return found}
 function departmentAdminLogout(){const current=currentMember();localStorage.removeItem(DEPARTMENT_ADMIN_KEY);if(current?.role==='visitor')clearLogin();document.getElementById('departmentAdminLoginGate')?.remove();renderDepartmentGate()}
 window.adminSession={active:departmentAdminActive,name:departmentAdminName,login:departmentAdminLogin,logout:departmentAdminLogout,names:[...DEPARTMENT_ADMIN_NAMES]};
+
+window.rndMemberAdmin={
+  list:()=>state.members.filter(m=>Number(m.active)!==0).map(m=>({id:m.id,name:m.name,role:isLead(m)?'lead':m.role==='visitor'?'visitor':'member'})).sort((a,b)=>String(a.name).localeCompare(String(b.name))),
+  save:async data=>{if(!departmentAdminActive())throw new Error('Admin login required.');let name=String(data?.name||'').trim().replace(/\s+/g,' '),role=String(data?.role||'member');if(name.length<2||name.length>80)throw new Error('Enter a valid R&D member name.');const normalized=normalizeName(name),id=Number(data?.id)||0,current=id?state.members.find(m=>Number(m.id)===id):null;if(role==='lead'&&normalized!=='kabil')throw new Error('Kabil remains the fixed R&D Lead. Add other R&D users as Member or Visitor.');if(current&&isLead(current)&&normalized!=='kabil')throw new Error('The R&D Lead profile cannot be renamed here.');if(state.members.some(m=>Number(m.active)!==0&&Number(m.id)!==id&&normalizeName(m.name)===normalized))throw new Error('That R&D login already exists.');const now=new Date().toISOString();let row=current;if(row){row.name=name;row.role=normalized==='kabil'?'member':role==='visitor'?'visitor':'member';row.updated_at=now}else{row={id:nextId(state.members),name,role:normalized==='kabil'?'member':role==='visitor'?'visitor':'member',active:1,sort_order:Math.max(0,...state.members.map(x=>Number(x.sort_order)||0))+1,created_at:now,updated_at:now};state.members.push(row)}await persistThenSync([{collection:'members',row}]);return row},
+  delete:async id=>{if(!departmentAdminActive())throw new Error('Admin login required.');const row=state.members.find(m=>Number(m.id)===Number(id));if(!row||Number(row.active)===0)throw new Error('R&D login not found.');if(isLead(row))throw new Error('Kabil · R&D Lead cannot be deleted.');row.active=0;row.updated_at=new Date().toISOString();await persistThenSync([{collection:'members',row}]);return true}
+};
+
 function renderDepartmentAdminControl(){
   const card=document.querySelector('#departmentGate .department-gate-card');if(!card)return;
   let host=card.querySelector('.department-admin-control');if(!host){host=document.createElement('div');host.className='department-admin-control';card.prepend(host)}
   const name=departmentAdminName();
-  host.innerHTML=name?`<div class="department-admin-profile"><button type="button" class="department-admin-profile-btn" aria-expanded="false"><span>${esc(name.charAt(0))}</span><div><strong>${esc(name)}</strong><small>ALL DEPARTMENTS LEADER</small></div></button><div class="department-admin-menu hidden"><b>${esc(name)}</b><span>Leader access across all departments</span><button type="button" class="danger-btn">Admin logout</button></div></div>`:`<button type="button" class="secondary-btn department-admin-login-btn">Admin</button>`;
-  if(name){const btn=host.querySelector('.department-admin-profile-btn'),menu=host.querySelector('.department-admin-menu');btn.onclick=()=>{const show=menu.classList.contains('hidden');menu.classList.toggle('hidden',!show);btn.setAttribute('aria-expanded',String(show))};menu.querySelector('button').onclick=departmentAdminLogout}
+  host.innerHTML=name?`<div class="department-admin-profile"><button type="button" class="department-admin-profile-btn" aria-expanded="false"><span>${esc(name.charAt(0))}</span><div><strong>${esc(name)}</strong><small>ALL DEPARTMENTS LEADER</small></div></button><div class="department-admin-menu hidden"><b>${esc(name)}</b><span>Leader access across all departments</span><button type="button" class="secondary-btn" data-manage-members>Manage members</button><button type="button" class="danger-btn" data-admin-logout>Admin logout</button></div></div>`:`<button type="button" class="secondary-btn department-admin-login-btn">Admin</button>`;
+  if(name){const btn=host.querySelector('.department-admin-profile-btn'),menu=host.querySelector('.department-admin-menu');btn.onclick=()=>{const show=menu.classList.contains('hidden');menu.classList.toggle('hidden',!show);btn.setAttribute('aria-expanded',String(show))};menu.querySelector('[data-manage-members]').onclick=()=>{menu.classList.add('hidden');window.leaderCenter?.openMembers?.()};menu.querySelector('[data-admin-logout]').onclick=departmentAdminLogout}
   else host.querySelector('.department-admin-login-btn').onclick=openDepartmentAdminLogin;
 }
 function openDepartmentAdminLogin(){
@@ -615,11 +622,11 @@ function openDepartmentAdminLogin(){
 }
 
 function renderDepartmentGate(){
-  const grid=$('#departmentGateGrid');if(!grid)return;renderDepartmentAdminControl();
+  const grid=$('#departmentGateGrid');if(!grid)return;document.getElementById('sidebar')?.classList.remove('open');document.getElementById('sidebarReopenBtn')?.classList.remove('show');renderDepartmentAdminControl();
   const departments=activeDepartments();
   grid.innerHTML=departments.length?departments.map(department=>{const available=isRndDepartment(department)||normalizeName(department.name)==='quality'||window.departmentWorkspace?.has?.(department.name);return `<button type="button" class="department-choice ${available?'available':''}" data-department-id="${department.id}" aria-label="${esc(department.name)} dashboard${available?'':' setup pending'}"><strong>${esc(department.name)}</strong><span>${available?'OPEN DASHBOARD →':'SETUP PENDING'}</span></button>`}).join(''):'<div class="empty-state">No active departments are configured.</div>';
   grid.querySelectorAll('[data-department-id]').forEach(button=>button.onclick=()=>selectDepartment(Number(button.dataset.departmentId)));
-  window.leaderCenter?.renderCards?.();
+  window.leaderCenter?.renderCards?.();if(departmentAdminActive())setTimeout(()=>window.leaderCenter?.maybeMonthEndReminder?.(),50);
 }
 function departmentHistory(kind,id,replace=false){
   const route={rndDepartmentRoute:kind,departmentId:id||null,departmentHistoryReady:true},url=kind==='workspace'?'#department='+id:'#departments';

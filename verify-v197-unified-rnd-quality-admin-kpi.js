@@ -1,0 +1,18 @@
+const fs=require('fs');
+const assert=require('assert');
+const leader=fs.readFileSync('leader-center.js','utf8');
+const quality=fs.readFileSync('quality-review.js','utf8');
+assert(!leader.includes('Open exact R&D KPI Report'),'R&D special open-report placeholder still exists');
+assert(leader.includes("<h3>R&D KPI Report</h3>"),'R&D unified KPI heading missing');
+assert(leader.includes('rndUnifiedCards(model)'),'R&D unified Quality-style cards missing');
+assert(leader.includes('leaderRndMember'),'R&D member selector missing');
+assert(leader.includes('leaderRndPdf'),'R&D PDF action missing');
+assert(leader.includes("title.textContent='Quality KPI Report'"),'Quality unified admin title missing');
+assert(leader.includes("host.querySelector('.section-toolbar')?.remove()"),'Quality duplicate toolbar not removed');
+assert(leader.includes("host.querySelector('.q-review-filter')?.remove()"),'Quality duplicate filter not removed');
+assert(quality.includes('setReportState'),'Quality external report-state setter missing');
+assert(quality.includes('getReportState'),'Quality report-state getter missing');
+assert(leader.includes("window.qualityReview?.setReportState?.({month,period,week})"),'Admin Quality month/period/week sync missing');
+assert(leader.includes("watchReportData"),'R&D live KPI listener missing');
+assert(leader.includes("watchQualityTime('records'"),'Quality live KPI listener missing');
+console.log('v197 unified R&D + Quality Admin KPI verification passed');

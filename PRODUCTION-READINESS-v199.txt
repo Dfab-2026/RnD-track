@@ -1,0 +1,23 @@
+DFAB KPI TRACK — v199 PRODUCTION READINESS
+
+Implemented
+- Admin -> Manage members for R&D, Quality and all shared departments.
+- R&D uses its existing members collection; Kabil remains fixed R&D Lead.
+- Quality and shared departments use compact app_meta department_access_member documents.
+- Quality/Outsourcing existing users are automatically migrated/seeded into the access registry.
+- Name + role saved in Firebase becomes the allowed name-only department login.
+- Admin Time Control reads the same member registry.
+- Leader KPI/Time/Analytics pages suppress the R&D sidebar/reopen control.
+- Last calendar day: red month-end Firebase cleanup reminder for leaders.
+- Month deletion remains locked behind confirmed monthly backup history and double confirmation.
+- Operational records remain compact; backups are downloaded as JSON/GZIP where supported and only lightweight history stays in Firebase.
+
+REQUIRED BEFORE PUBLIC PRODUCTION DEPLOYMENT
+1. firebase-config.js in this ZIP still contains PASTE_* placeholders. Copy the REAL Web App config from the currently working Firebase project.
+2. Firebase Authentication -> enable Anonymous sign-in (this project currently uses anonymous Firebase Auth).
+3. Publish the included firestore.rules.
+4. Open the app as a leader and use Firebase/Test Connection. It must report Auth OK + Firestore OK + the expected projectId.
+5. Test one member add, login, Time Sheet save, KPI save, backup download and backup-history read-back on the live project before announcing production.
+
+SECURITY NOTE
+The requested login model is name-only. It is suitable as an internal convenience/access workflow, but it is NOT strong identity authentication on a public Internet site. Anyone who knows an authorized name can impersonate that person. For true production identity/security, move to Firebase Auth accounts (email/OTP/SSO) and server-enforced roles/custom claims. The current Firestore rules require Firebase authentication but anonymous authentication does not prove the entered display name.
