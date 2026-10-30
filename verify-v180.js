@@ -1,0 +1,16 @@
+const fs=require('fs');
+const check=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+const daily=fs.readFileSync('quality-daily.js','utf8');
+const review=fs.readFileSync('quality-review.js','utf8');
+const quality=fs.readFileSync('quality.js','utf8');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8');
+check(daily.includes('weekTarget=6*480'),'weekly target is six 8-hour working days');
+check(daily.includes('Target ${fmtHours(weekTarget)}h'),'weekly dashboard card displays target hours');
+check(review.includes('data-qw-delete="${esc(r.id)}"'),'training history has delete x action');
+check(review.includes("deleteQualityRecord(r.id)"),'training delete removes exact Firebase record');
+check(review.includes('ctx.remove(r.id);weeklyRefresh()'),'training delete immediately refreshes Weekly/KPI source data');
+check(quality.includes("const date=today(),taskOwner='Navarasu';"),'Kaizen pending ownership matches shared Navarasu record');
+check(quality.includes("notifyUser('Quality Track · My Pending'"),'pending browser notification trigger remains');
+check(quality.includes("notifyUser('Quality · Time Sheet Reminder'"),'hourly Time Sheet browser notification remains');
+check(cloud.includes("ref.get({source:'server'})"),'Quality saves use server read-back verification');
+console.log('v180 targeted verification complete');

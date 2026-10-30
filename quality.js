@@ -8,9 +8,9 @@
   const options=()=>activeDepartments().map(d=>`<option value="${Number(d.id)}">${esc(d.name)}</option>`).join('');
   let pendingPopupShownThisOpen=false,lastNotificationSignature='';
   function qualityExpectedDailyPending(){
-    const date=today(),member=person();
-    const found=records.find(r=>r.kind==='daily_idea'&&r.date===date&&clean(r.person)===clean(member));
-    return found?[]:[{id:`missing_kaizen_${date}_${encodeURIComponent(clean(member))}`,kind:'ideas',person:member,date,status:'pending',title:"Submit today's Kaizen Idea",synthetic:true}];
+    const date=today(),taskOwner='Navarasu';
+    const found=records.find(r=>r.kind==='daily_idea'&&r.date===date&&clean(r.person)===clean(taskOwner));
+    return found?[]:[{id:`missing_kaizen_${date}_${encodeURIComponent(clean(taskOwner))}`,kind:'ideas',person:taskOwner,date,status:'pending',title:"Submit today's Kaizen Idea",synthetic:true}];
   }
   function qualityPendingSummary(){
     const me=clean(person());
