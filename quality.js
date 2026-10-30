@@ -1,23 +1,16 @@
 (function(){
-  const pages={dashboard:'Dashboard',ideas:'Daily Ideas',daily:'Daily Task',weekly:'Weekly Report',report:'KPI Report',settings:'Settings'};
+  const pages={dashboard:'Dashboard',ideas:'Kaizen Ideas',weekly:'Weekly Report',report:'KPI Report',settings:'Settings'};
   const trackedKinds=['iso','audit','kpi','training','documents','incoming','coordination','cost','attrition','kaizen'];
-  let root,records=[],stop=null,generation=0,ready=false,serverConnected=false,cloudMessage='Connecting…',page='dashboard',editId='',busy=false,reportMonth='';
+  let root,records=[],timeEntries=[],stops=[],generation=0,ready=false,serverConnected=false,cloudMessage='Connecting…',page='dashboard',editId='',busy=false,reportMonth='';
   const $=id=>document.getElementById('q'+id),person=()=>window.qualitySession.current(),clean=s=>String(s||'').trim().toLowerCase();
   const qualityRole=()=>clean(person())==='mohan'?'Quality Lead':'Member';
   const qualityRoleLabel=()=>clean(person())==='mohan'?'QUALITY LEAD':'MEMBER';
   const options=()=>activeDepartments().map(d=>`<option value="${Number(d.id)}">${esc(d.name)}</option>`).join('');
   let pendingPopupShownThisOpen=false,lastNotificationSignature='';
   function qualityExpectedDailyPending(){
-    const date=today(),members=['Navarasu','Mohan'],expected=window.qualityDaily?.tasks||[];
-    const found=(kind,name)=>records.find(r=>r.kind===kind&&r.date===date&&clean(r.person)===clean(name));
-    const missing=[];
-    if(!found('daily_idea','Navarasu'))missing.push({id:`missing_idea_${date}_navarasu`,kind:'ideas',person:'Navarasu',date,status:'pending',title:"Submit today's Daily Idea",synthetic:true});
-    expected.forEach(task=>{if(!found(task.kind,'Navarasu'))missing.push({id:`missing_${task.kind}_${date}_navarasu`,kind:'daily',person:'Navarasu',date,status:'pending',title:task.title,synthetic:true})});
-    if(clean(person())==='mohan'){
-      const updated=expected.filter(task=>found(task.kind,'Navarasu')).length;
-      if(updated<expected.length)missing.push({id:`mohan_daily_task_update_${date}`,kind:'daily',person:'Mohan',date,status:'pending',title:`Daily Task Update · ${updated}/${expected.length} updated`,synthetic:true});
-    }
-    return missing;
+    const date=today(),member=person();
+    const found=records.find(r=>r.kind==='daily_idea'&&r.date===date&&clean(r.person)===clean(member));
+    return found?[]:[{id:`missing_kaizen_${date}_${encodeURIComponent(clean(member))}`,kind:'ideas',person:member,date,status:'pending',title:"Submit today's Kaizen Idea",synthetic:true}];
   }
   function qualityPendingSummary(){
     const me=clean(person());
@@ -32,8 +25,7 @@
   }
   function qualityNoticeLabel(row){
     if(row.kind==='report')return 'KPI REVIEW';
-    if(row.kind==='ideas')return 'DAILY IDEA';
-    if(row.kind==='daily')return 'DAILY TASK';
+    if(row.kind==='ideas')return 'KAIZEN IDEA';
     return String(pages[row.kind]||row.title||'QUALITY').toUpperCase();
   }
   function qualityNoticeTitle(row){
@@ -74,16 +66,17 @@
     if(document.hidden){if(typeof notificationsEnabled==='function'&&notificationsEnabled())localStorage.setItem(reminderKey,'1');return}
     if(document.querySelector('dialog[open]')||/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||''))return;
     const dialog=document.createElement('dialog');dialog.className='modal tc-reminder';dialog.id='qHourlyTimesheetReminder';dialog.innerHTML='<div class="tc-clock-inner"><span class="kicker">HOURLY TIME SHEET</span><h2>Update your Time Sheet</h2><p>Please record the work completed during the past hour.</p><div class="tc-clock-actions"><button class="ghost-btn" type="button" data-later>Close</button><button class="primary-btn" type="button" data-enter>Open Time Sheet</button></div></div>';document.body.append(dialog);
-    dialog.querySelector('[data-later]').onclick=()=>dialog.close();dialog.querySelector('[data-enter]').onclick=()=>{dialog.close();$('Time')?.click();setTimeout(()=>document.getElementById('qtWork')?.focus(),0)};dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();localStorage.setItem(reminderKey,'1');
+    dialog.querySelector('[data-later]').onclick=()=>dialog.close();dialog.querySelector('[data-enter]').onclick=()=>{dialog.close();$('Time')?.click();setTimeout(()=>document.getElementById('qtTask')?.focus(),0)};dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();localStorage.setItem(reminderKey,'1');
   }
   function weekRange(date=today()){const d=new Date(date+'T12:00:00'),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);const start=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');d.setDate(d.getDate()+6);return{start,end:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}}
   const field=(label,name,type='text',required=true)=>`<label>${label}<input name="${name}" type="${type}" ${required?'required':''} maxlength="200"></label>`;
   const area=(label,name,required=true)=>`<label class="q-full">${label}<textarea name="${name}" maxlength="2000" rows="3" ${required?'required':''}></textarea></label>`;
   function renderForm(){
+    root?.classList.toggle('q-dashboard-page',page==='dashboard');
     const personBar=root?.querySelector('.quality-person');if(personBar)personBar.hidden=page==='report';
-    $('FormHost').parentElement.classList.toggle('q-unwrapped',['dashboard','ideas','daily','weekly','report'].includes(page));
-    if($('SavedPanel'))$('SavedPanel').hidden=['settings','dashboard','report','daily','ideas','weekly'].includes(page);
-    if(['dashboard','daily','ideas'].includes(page)){window.qualityDaily.render(page,$('FormHost'),dailyContext());return}
+    $('FormHost').parentElement.classList.toggle('q-unwrapped',['dashboard','ideas','weekly','report'].includes(page));
+    if($('SavedPanel'))$('SavedPanel').hidden=['settings','dashboard','report','ideas','weekly'].includes(page);
+    if(['dashboard','ideas'].includes(page)){window.qualityDaily.render(page,$('FormHost'),dailyContext());return}
     if(['weekly','report'].includes(page)){window.qualityReview.render(page,$('FormHost'),dailyContext());return}
     if(page==='settings'){$('FormHost').innerHTML=`<div class="settings-card-head"><div><span class="kicker">CURRENT SESSION</span><h3>Settings</h3></div></div><div class="setting-row"><span>Signed in as</span><strong>${esc(person())}</strong></div><div class="setting-row"><span>Role</span><strong>${esc(qualityRole())}</strong></div><div class="setting-row"><span>Firebase</span><strong id="qSettingsCloud">${ready?'Connected':'Connecting / offline'}</strong></div><div class="modal-actions"><button type="button" id="qTestCloud" class="ghost-btn">Test connection</button><button type="button" id="qLogout" class="primary-btn">Logout</button></div><p role="status" id="qSettingsStatus"></p>`;$('Logout').onclick=()=>{close();window.qualitySession.logout();page='dashboard';open()};$('TestCloud').onclick=async()=>{const button=$('TestCloud');button.disabled=true;try{const result=await window.rndCloud.test();$('SettingsStatus').textContent=result.message||'Connection checked.'}catch(error){$('SettingsStatus').textContent=error.message}finally{button.disabled=false}};return}
     editId='';const dept=`<label>Department<select name="department_id" required>${options()}</select></label>`,date=`<label>Date<input name="date" type="date" value="${today()}" readonly></label>`;
@@ -124,7 +117,7 @@
     if($('CloudDot'))$('CloudDot').className='profile-cloud-dot '+stateClass;
     if($('Connection'))$('Connection').textContent=serverConnected?'Firebase connected · live data':stateText;
     if(page==='settings'){if($('SettingsCloud'))$('SettingsCloud').textContent=stateText;return}
-    if(['dashboard','daily','ideas'].includes(page)){window.qualityDaily.render(page,$('FormHost'),dailyContext());return}
+    if(['dashboard','ideas'].includes(page)){window.qualityDaily.render(page,$('FormHost'),dailyContext());return}
     if(['weekly','report'].includes(page)){window.qualityReview.render(page,$('FormHost'),dailyContext());return}
     if(page==='kaizen'){const range=weekRange(),count=records.filter(r=>r.kind==='kaizen'&&clean(r.person)===owner&&r.date>=range.start&&r.date<=range.end).length;$('Summary').textContent=`${fmtDate(range.start)} – ${fmtDate(range.end)} · ${count}/5 ideas this week · ${count>=5?'Target completed':'1 idea per day'}`}
     else $('Summary').textContent='';
@@ -150,12 +143,12 @@
     if(page==='training'||page==='kaizen')row.status='completed';if(page==='audit'&&row.status==='completed')row.remarks='';
     try{validate(row);if(!editId&&page==='kaizen'&&records.some(r=>r.kind==='kaizen'&&r.date===today()&&clean(r.person)===clean(row.person)))throw Error('One idea per day is already saved. Use Edit to update it.');busy=true;paint();$('FormStatus').textContent='Saving to Firebase…';const id=editId||(page==='kaizen'?`kaizen_${today()}_${encodeURIComponent(clean(row.person))}`:crypto.randomUUID());const confirmed=await window.rndCloud.saveQualityTime('records',id,row);records=[...records.filter(r=>r.id!==id),{...row,...confirmed,id:confirmed?.id||id}];ready=true;serverConnected=true;cloudMessage='Firebase connected · live data';localStorage.setItem('qualityMemberName',row.person);renderForm();$('FormStatus').textContent='Saved and verified in Firebase.'}catch(error){$('FormStatus').textContent=error.message||'Unable to save.'}finally{busy=false;paint()}
   }
-  function close(){generation++;stop?.();stop=null;ready=false;serverConnected=false;pendingPopupShownThisOpen=false;lastNotificationSignature='';cloudMessage='Connecting…';root?._qualityResize?.();if(root)root.hidden=true;window.closeQualityTime?.();window.qualitySession.hide()}
-  function dailyContext(){return{records,ready,person,upsert:row=>{records=[...records.filter(r=>r.id!==row.id),row];paint()},remove:id=>{records=records.filter(r=>r.id!==id);paint()},navigate:id=>{const target=['incoming','documents','coordination','daily_inspection','daily_documents','daily_coordination'].includes(id)?'daily':['audit','kpi','training'].includes(id)?'weekly':pages[id]?id:'report';root.querySelector('[data-q-page="'+target+'"]').click()}}}
+  function close(){generation++;stops.forEach(stop=>stop?.());stops=[];ready=false;serverConnected=false;timeEntries=[];pendingPopupShownThisOpen=false;lastNotificationSignature='';cloudMessage='Connecting…';root?._qualityResize?.();if(root)root.hidden=true;window.closeQualityTime?.();window.qualitySession.hide()}
+  function dailyContext(){return{records,timeEntries,ready,person,upsert:row=>{records=[...records.filter(r=>r.id!==row.id),row];paint()},remove:id=>{records=records.filter(r=>r.id!==id);paint()},navigate:id=>{const target=['audit','kpi','training'].includes(id)?'weekly':pages[id]?id:'report';root.querySelector('[data-q-page="'+target+'"]')?.click()}}}
   async function open(){
     if(!window.qualitySession.current()){close();window.qualitySession.show(open);return}window.qualitySession.hide();
     close();window.closeProduction?.();const token=++generation;root=document.getElementById('qualityWorkspace');if(!root){root=document.createElement('main');root.id='qualityWorkspace';root.className='quality-workspace';document.body.append(root)}root.hidden=false;document.getElementById('appShell').classList.add('app-locked');document.getElementById('loginGate').classList.add('hidden');
-    root.innerHTML=`<div class="quality-shell"><aside class="sidebar q-sidebar" id="qSidebar"><div class="brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div class="brand-copy"><strong>QUALITY TRACK</strong><small>DFAB OPERATIONS</small></div><button type="button" id="qCollapse" class="q-collapse" aria-label="Collapse navigation">‹</button><button type="button" id="qCloseNav" class="q-close-nav" aria-label="Close navigation">×</button></div><nav aria-label="Quality pages">${Object.entries(pages).filter(([id])=>!['settings','incoming','documents','coordination'].includes(id)).map(([id,label],index)=>`<button type="button" data-q-page="${id}" aria-label="${label}" title="${label}" class="nav-btn ${id===page?'active':''}"><span>${String(index+1).padStart(2,'0')}</span><b>${label}</b></button>`).join('')}<button type="button" class="nav-btn" id="qTime" aria-label="Time Sheet" title="Time Sheet"><span>06</span><b>Time Sheet</b></button><button type="button" class="nav-btn" data-q-page="settings" aria-label="Settings" title="Settings"><span>07</span><b>Settings</b></button></nav><div class="side-note"><b>QUALITY TEAM</b><p>Audits, improvement and daily work records.</p></div><button type="button" class="nav-btn q-departments" id="qBack"><span>←</span><b>All departments</b></button></aside><button class="q-backdrop" id="qBackdrop" hidden aria-label="Close navigation"></button><div class="main q-main"><header class="topbar"><button type="button" class="q-open-nav" id="qOpenNav" aria-label="Open navigation" aria-controls="qSidebar" aria-expanded="false">☰</button><div><div class="eyebrow">QUALITY OPERATIONS</div><div class="dfab-page-heading"><img src="assets/dfab-logo.png" alt="DFAB" width="66" height="28"><h1 id="qTitle">${pages[page]}</h1></div></div><div class="top-actions compact-top-actions"><div class="notification-center-wrap header-tool-wrap"><button type="button" class="header-tool-btn notification-bell" id="qBell" aria-label="Open notifications" aria-expanded="false">🔔<span id="qBellBadge" class="notification-badge hidden">0</span></button><section class="notification-panel hidden" id="qNotifications" aria-label="Quality notifications"><div class="notification-panel-head"><h3>Notifications</h3><button type="button" class="icon-btn" id="qCloseNotifications" aria-label="Close notifications">×</button></div><div id="qNotificationItems" class="notification-panel-content"></div></section></div><div class="profile-quick-wrap"><button class="profile-quick-btn" id="qProfile" type="button" aria-label="Open profile" aria-expanded="false"><span>${esc(person().charAt(0))}</span><i class="profile-cloud-dot connecting" id="qCloudDot"></i></button><section class="profile-quick-panel hidden" id="qProfilePanel" aria-label="Profile details"><div class="profile-quick-head"><div class="profile-quick-avatar">${esc(person().charAt(0))}</div><div><strong>${esc(person())}</strong><small>${esc(qualityRoleLabel())}</small></div></div><div class="profile-quick-row"><span>Cloud</span><b id="qProfileCloud">Connecting</b></div><button type="button" class="ghost-btn profile-settings-link" id="qProfileSettings">Open Settings</button></section></div></div></header><div class="q-scroll" id="qScroll"><div id="qRecordArea"><div class="quality-person"><span class="q-signed-in">Signed in as <strong>${esc(person())}</strong></span><span id="qConnection" role="status">Connecting…</span></div><section class="panel tc-panel"><div id="qFormHost"></div></section><section class="panel tc-panel" id="qSavedPanel"><div class="panel-head"><h3>Saved records</h3><span id="qSummary"></span></div><div id="qRecords"></div></section></div><div id="qTimeHost" hidden></div></div></div></div>`;
+    root.innerHTML=`<div class="quality-shell"><aside class="sidebar q-sidebar" id="qSidebar"><div class="brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div class="brand-copy"><strong>QUALITY TRACK</strong><small>DFAB OPERATIONS</small></div><button type="button" id="qCollapse" class="q-collapse" aria-label="Collapse navigation">‹</button><button type="button" id="qCloseNav" class="q-close-nav" aria-label="Close navigation">×</button></div><nav aria-label="Quality pages">${Object.entries(pages).filter(([id])=>!['settings','incoming','documents','coordination'].includes(id)).map(([id,label],index)=>`<button type="button" data-q-page="${id}" aria-label="${label}" title="${label}" class="nav-btn ${id===page?'active':''}"><span>${String(index+1).padStart(2,'0')}</span><b>${label}</b></button>`).join('')}<button type="button" class="nav-btn" id="qTime" aria-label="Time Sheet" title="Time Sheet"><span>05</span><b>Time Sheet</b></button><button type="button" class="nav-btn" data-q-page="settings" aria-label="Settings" title="Settings"><span>06</span><b>Settings</b></button></nav><div class="side-note"><b>QUALITY TEAM</b><p>Audits, improvement and daily work records.</p></div><button type="button" class="nav-btn q-departments" id="qBack"><span>←</span><b>All departments</b></button></aside><button class="q-backdrop" id="qBackdrop" hidden aria-label="Close navigation"></button><div class="main q-main"><header class="topbar"><button type="button" class="q-open-nav" id="qOpenNav" aria-label="Open navigation" aria-controls="qSidebar" aria-expanded="false">☰</button><div><div class="eyebrow">QUALITY OPERATIONS</div><div class="dfab-page-heading"><img src="assets/dfab-logo.png" alt="DFAB" width="66" height="28"><h1 id="qTitle">${pages[page]}</h1></div></div><div class="top-actions compact-top-actions"><div class="notification-center-wrap header-tool-wrap"><button type="button" class="header-tool-btn notification-bell" id="qBell" aria-label="Open notifications" aria-expanded="false">🔔<span id="qBellBadge" class="notification-badge hidden">0</span></button><section class="notification-panel hidden" id="qNotifications" aria-label="Quality notifications"><div class="notification-panel-head"><h3>Notifications</h3><button type="button" class="icon-btn" id="qCloseNotifications" aria-label="Close notifications">×</button></div><div id="qNotificationItems" class="notification-panel-content"></div></section></div><div class="profile-quick-wrap"><button class="profile-quick-btn" id="qProfile" type="button" aria-label="Open profile" aria-expanded="false"><span>${esc(person().charAt(0))}</span><i class="profile-cloud-dot connecting" id="qCloudDot"></i></button><section class="profile-quick-panel hidden" id="qProfilePanel" aria-label="Profile details"><div class="profile-quick-head"><div class="profile-quick-avatar">${esc(person().charAt(0))}</div><div><strong>${esc(person())}</strong><small>${esc(qualityRoleLabel())}</small></div></div><div class="profile-quick-row"><span>Cloud</span><b id="qProfileCloud">Connecting</b></div><button type="button" class="ghost-btn profile-settings-link" id="qProfileSettings">Open Settings</button></section></div></div></header><div class="q-scroll" id="qScroll"><div id="qRecordArea"><div class="quality-person"><span class="q-signed-in">Signed in as <strong>${esc(person())}</strong></span><span id="qConnection" role="status">Connecting…</span></div><section class="panel tc-panel"><div id="qFormHost"></div></section><section class="panel tc-panel" id="qSavedPanel"><div class="panel-head"><h3>Saved records</h3><span id="qSummary"></span></div><div id="qRecords"></div></section></div><div id="qTimeHost" hidden></div></div></div></div>`;
     $('Back').onclick=()=>showDepartmentGate();
     const mobile=()=>window.matchMedia('(max-width:980px)').matches;
     function nav(open){$('Sidebar').classList.toggle('open',open);$('Backdrop').hidden=!open;$('OpenNav').setAttribute('aria-expanded',String(open));$('Sidebar').inert=mobile()&&!open}
@@ -165,7 +158,7 @@
     root.onkeydown=event=>{if(!mobile()||!$('Sidebar').classList.contains('open'))return;if(event.key==='Escape'){nav(false);$('OpenNav').focus()}if(event.key==='Tab'){const items=[...$('Sidebar').querySelectorAll('button')].filter(b=>b.getClientRects().length&&!b.disabled),first=items[0],last=items[items.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}}};
     const media=window.matchMedia('(max-width:980px)');const resize=()=>{if(root&&!root.hidden)nav(false)};media.addEventListener('change',resize);root._qualityResize=()=>media.removeEventListener('change',resize);
     $('Time').onclick=()=>{localStorage.setItem('qualityTimeMemberName',person());$('RecordArea').hidden=true;$('TimeHost').hidden=false;$('Title').textContent='Time Sheet';activate('time');window.openQualityTime($('TimeHost'))};
-    root.querySelectorAll('[data-q-page]').forEach(button=>button.onclick=()=>{window.closeQualityTime?.();$('TimeHost').hidden=true;$('RecordArea').hidden=false;page=button.dataset.qPage;$('Title').textContent=pages[page];activate(page);renderForm()});renderForm();
+    root.querySelectorAll('[data-q-page]').forEach(button=>button.onclick=()=>{window.closeQualityTime?.();$('TimeHost').hidden=true;$('RecordArea').hidden=false;const nextPage=button.dataset.qPage;if(nextPage!==page){const mount=$('FormHost');mount.innerHTML='';delete mount.dataset.qReview;delete mount.dataset.qdMode;delete mount.dataset.qdDate;delete mount.dataset.qdPage;}page=nextPage;$('Title').textContent=pages[page];activate(page);renderForm()});renderForm();
     function panelsClose(){$('ProfilePanel').classList.add('hidden');$('Notifications').classList.add('hidden');$('Profile').setAttribute('aria-expanded','false');$('Bell').setAttribute('aria-expanded','false')}
     $('Profile').onclick=()=>{const show=$('ProfilePanel').classList.contains('hidden');panelsClose();$('ProfilePanel').classList.toggle('hidden',!show);$('Profile').setAttribute('aria-expanded',String(show))};
     $('ProfileSettings').onclick=()=>{panelsClose();root.querySelector('[data-q-page="settings"]').click()};$('CloseNotifications').onclick=panelsClose;
@@ -173,11 +166,9 @@
     const outside=event=>{if(!event.target.closest?.('.profile-quick-wrap,.notification-center-wrap'))panelsClose()};document.addEventListener('pointerdown',outside);const oldCleanup=root._qualityResize;root._qualityResize=()=>{oldCleanup?.();document.removeEventListener('pointerdown',outside)};
     try{
       cloudMessage='Connecting to Firebase…';paint();
-      const unsub=await window.rndCloud.watchQualityTime('records',(rows,meta={})=>{
+      const recordStop=await window.rndCloud.watchQualityTime('records',(rows,meta={})=>{
         if(token!==generation)return;
         records=rows;
-        // Cached Firestore rows are useful and should be shown immediately, but
-        // only a server-backed snapshot earns the green connected indicator.
         ready=true;
         serverConnected=Boolean(meta.connected);
         cloudMessage=serverConnected?'Firebase connected · live data':'Showing cached data · checking Firebase…';
@@ -186,7 +177,13 @@
         if(token!==generation)return;
         serverConnected=false;ready=false;cloudMessage=error?.message||'Firebase connection interrupted.';paint();
       });
-      if(token!==generation)unsub();else stop=unsub
+      if(token!==generation)recordStop();else stops.push(recordStop);
+      const timeStop=await window.rndCloud.watchQualityTime('entries',(rows)=>{
+        if(token!==generation)return;
+        timeEntries=rows;
+        if(page==='dashboard'||page==='weekly')paint();
+      },()=>{});
+      if(token!==generation)timeStop();else stops.push(timeStop);
     }catch(error){
       if(token===generation){serverConnected=false;ready=false;cloudMessage=error?.message||'Firebase connection failed.';paint()}
     }

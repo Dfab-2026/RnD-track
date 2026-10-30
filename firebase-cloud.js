@@ -293,7 +293,7 @@
     const r=row||{},out={};
     const put=(k,v)=>{if(v!==undefined&&v!==null&&v!=='')out[k]=v};
     if(kind==='projects'){put('t',String(r.title||'').trim().slice(0,200));put('o',String(r.owner||'').trim().slice(0,80));put('c',tsToNumber(r.created_at)||Date.now());return out}
-    if(kind==='entries'){put('p',String(r.project_id||'').slice(0,160));put('o',String(r.owner||'').trim().slice(0,80));put('d',String(r.date||'').slice(0,10));put('f',String(r.from||'').slice(0,5));put('z',String(r.to||'').slice(0,5));put('w',String(r.work||'').slice(0,2000));put('r',String(r.remarks||'').slice(0,1000));put('m',Number(r.minutes)||0);put('c',tsToNumber(r.created_at)||Date.now());return out}
+    if(kind==='entries'){put('p',String(r.project_id||'').slice(0,160));put('o',String(r.owner||'').trim().slice(0,80));put('d',String(r.date||'').slice(0,10));put('f',String(r.from||'').slice(0,5));put('z',String(r.to||'').slice(0,5));put('w',String(r.work||'').slice(0,2000));put('r',String(r.remarks||'').slice(0,1000));put('m',Number(r.minutes)||0);put('s',String(r.status||'completed').slice(0,20));put('c',tsToNumber(r.created_at)||Date.now());return out}
     put('k',String(r.kind||'').slice(0,40));put('p',String(r.person||'').trim().slice(0,80));put('d',String(r.date||'').slice(0,10));
     if(r.department_id!==undefined&&r.department_id!==null&&r.department_id!=='')put('a',Number(r.department_id));
     put('s',String(r.status||'').slice(0,20));put('r',String(r.remarks||'').slice(0,2000));put('t',String(r.title||'').slice(0,300));put('c',String(r.candidate||'').slice(0,200));put('o',String(r.role||'').slice(0,200));put('f',String(r.start_date||'').slice(0,10));put('g',String(r.end_date||'').slice(0,10));put('x',String(r.outcomes||'').slice(0,2000));
@@ -304,7 +304,7 @@
   function decodeQuality(kind,doc){
     const d=doc.data?doc.data():doc||{},id=String(doc.id||d.id||'');
     if(kind==='projects'){if('title' in d)return{...d,id};return{id,title:d.t||'',owner:d.o||'',created_at:numberToIso(d.c)||''}}
-    if(kind==='entries'){if('project_id' in d)return{...d,id};return{id,project_id:d.p||'',owner:d.o||'',date:d.d||'',from:d.f||'',to:d.z||'',work:d.w||'',remarks:d.r||'',minutes:Number(d.m)||0,created_at:numberToIso(d.c)||''}}
+    if(kind==='entries'){if('project_id' in d)return{...d,id};return{id,project_id:d.p||'',owner:d.o||'',date:d.d||'',from:d.f||'',to:d.z||'',work:d.w||'',remarks:d.r||'',minutes:Number(d.m)||0,status:d.s||'completed',created_at:numberToIso(d.c)||''}}
     if('kind' in d)return{...d,id};
     const out={id,kind:d.k||'',person:d.p||'',date:d.d||'',status:d.s||'',updated_at:numberToIso(d.u)||''};
     if(d.a!==undefined)out.department_id=Number(d.a);if(d.r!==undefined)out.remarks=d.r;if(d.t!==undefined)out.title=d.t;if(d.c!==undefined)out.candidate=d.c;if(d.o!==undefined)out.role=d.o;if(d.f!==undefined)out.start_date=d.f;if(d.g!==undefined)out.end_date=d.g;if(d.x!==undefined)out.outcomes=d.x;if(d.b!==undefined)out.report_submitted=Boolean(d.b);if(d.q!==undefined)out.report_reference=d.q;if(d.i!==undefined)out.idea=d.i;if(d.m!==undefined)out.problem=d.m;if(d.n!==undefined)out.inspection_stage=d.n;if(d.w!==undefined)out.week_start=d.w;if(d.v!==undefined)out.value=Number(d.v);if(d.y!==undefined)out.review_key=d.y;if(d.h!==undefined)out.priority=d.h;if(d.j!==undefined)out.attachment=expandQualityAttachment(d.j);

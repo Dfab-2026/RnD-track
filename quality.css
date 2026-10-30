@@ -47,3 +47,105 @@
 
 /* Match Quality sidebar typography exactly to the R&D sidebar. */
 @media(min-width:981px){#qualityWorkspace .q-sidebar .nav-btn{font-size:inherit!important;line-height:normal!important;min-height:0!important;padding:13px 12px!important;gap:12px!important}#qualityWorkspace .q-sidebar .nav-btn b{font-size:inherit!important;font-weight:inherit!important}#qualityWorkspace .q-sidebar .nav-btn span{font-size:10px!important}}
+/* v169 — Quality dashboard + single-row Time Sheet only */
+#qualityWorkspace .qd-dashboard-two .qd-two-metrics{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+#qualityWorkspace .qd-dashboard-two .metric{min-height:150px}
+#qualityWorkspace .qd-dashboard-two .metric strong{font-size:clamp(28px,4vw,42px)}
+#qualityWorkspace .qd-dashboard-two .metric small{white-space:normal;line-height:1.35}
+#qualityTimeWorkspace .qt-inline-form{display:grid;grid-template-columns:150px 140px minmax(240px,1.7fr) 110px 110px 140px minmax(180px,1.2fr) auto;gap:10px;align-items:end}
+#qualityTimeWorkspace .qt-inline-form label{display:grid;gap:6px;min-width:0;font-size:11px;font-weight:700;color:var(--muted)}
+#qualityTimeWorkspace .qt-inline-form input,#qualityTimeWorkspace .qt-inline-form select{width:100%;min-width:0}
+#qualityTimeWorkspace .qt-inline-form .qt-inline-status{grid-column:1/-1;margin:0;min-height:18px}
+#qualityTimeWorkspace .qt-inline-form .primary-btn{min-height:42px;white-space:nowrap}
+#qualityTimeWorkspace .qt-filters{display:grid;grid-template-columns:160px 160px minmax(220px,1fr) 160px auto;gap:10px;align-items:end;margin-bottom:14px}
+#qualityTimeWorkspace .qt-filters label{display:grid;gap:6px;min-width:0;font-size:11px;font-weight:700;color:var(--muted)}
+#qualityTimeWorkspace .qt-filters input,#qualityTimeWorkspace .qt-filters select{width:100%;min-width:0}
+#qualityTimeWorkspace .qt-entry-row{display:grid;gap:8px}
+#qualityTimeWorkspace .qt-entry-meta{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:1200px){#qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}#qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field{grid-column:span 2}#qualityTimeWorkspace .qt-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){#qualityWorkspace .qd-dashboard-two .qd-two-metrics{grid-template-columns:1fr}#qualityTimeWorkspace .qt-inline-form,#qualityTimeWorkspace .qt-filters{grid-template-columns:1fr}#qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field{grid-column:auto}}
+
+/* v172 — Quality Time Sheet alignment only. No behavior/data changes. */
+#qualityTimeWorkspace .qt-rnd-sheet{width:min(100%,1540px);margin:0 auto}
+#qualityTimeWorkspace .tc-panel{overflow:visible}
+#qualityTimeWorkspace .qt-inline-form{
+  display:grid;
+  grid-template-columns:minmax(130px,.9fr) minmax(130px,.85fr) minmax(250px,1.8fr) minmax(105px,.72fr) minmax(105px,.72fr) minmax(135px,.9fr) minmax(210px,1.45fr) minmax(108px,.68fr);
+  gap:12px;
+  align-items:end;
+  width:100%;
+}
+#qualityTimeWorkspace .qt-inline-form label{display:grid;grid-template-rows:auto 42px;gap:7px;min-width:0;margin:0}
+#qualityTimeWorkspace .qt-inline-form input,
+#qualityTimeWorkspace .qt-inline-form select,
+#qualityTimeWorkspace .qt-inline-form .primary-btn{height:42px;min-height:42px;box-sizing:border-box;margin:0}
+#qualityTimeWorkspace .qt-inline-form .primary-btn{width:100%;align-self:end;padding:0 16px;display:inline-flex;align-items:center;justify-content:center}
+#qualityTimeWorkspace .qt-inline-form .qt-inline-status{grid-column:1/-1;margin:0;padding-top:2px;min-height:18px;line-height:18px}
+#qualityTimeWorkspace .qt-filters{grid-template-columns:minmax(145px,.8fr) minmax(145px,.8fr) minmax(260px,1.7fr) minmax(150px,.9fr) 110px;gap:12px;align-items:end}
+#qualityTimeWorkspace .qt-filters label{display:grid;grid-template-rows:auto 40px;gap:7px;margin:0}
+#qualityTimeWorkspace .qt-filters input,#qualityTimeWorkspace .qt-filters select,#qualityTimeWorkspace .qt-filters .ghost-btn{height:40px;box-sizing:border-box}
+#qualityTimeWorkspace .qt-filters .ghost-btn{align-self:end;margin:0}
+#qualityTimeWorkspace .qt-entry-row{padding:14px 16px;border-radius:14px}
+#qualityTimeWorkspace .qt-entry-row header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+#qualityTimeWorkspace .qt-entry-row header strong{min-width:0;overflow-wrap:anywhere}
+#qualityTimeWorkspace .qt-entry-row header span{text-align:right;white-space:nowrap}
+#qualityTimeWorkspace .qt-entry-meta{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+#qualityTimeWorkspace .qt-entry-meta small{min-width:0;flex:1;overflow-wrap:anywhere}
+@media(max-width:1280px){
+  #qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field{grid-column:span 2}
+  #qualityTimeWorkspace .qt-inline-form .primary-btn{grid-column:4}
+  #qualityTimeWorkspace .qt-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:860px){
+  #qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field{grid-column:1/-1}
+  #qualityTimeWorkspace .qt-inline-form .primary-btn{grid-column:2}
+  #qualityTimeWorkspace .qt-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #qualityTimeWorkspace .qt-filters .ghost-btn{width:100%}
+  #qualityTimeWorkspace .qt-entry-row header{grid-template-columns:1fr}
+  #qualityTimeWorkspace .qt-entry-row header span{text-align:left;white-space:normal}
+}
+@media(max-width:560px){
+  #qualityTimeWorkspace .qt-inline-form,#qualityTimeWorkspace .qt-filters{grid-template-columns:1fr}
+  #qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field,#qualityTimeWorkspace .qt-inline-form .primary-btn{grid-column:auto}
+  #qualityTimeWorkspace .qt-inline-form .primary-btn{width:100%}
+}
+
+/* v173 — requested Quality Time Sheet containment + Others + dashboard visual only */
+#qualityTimeWorkspace .tc-panel{min-width:0;overflow:hidden}
+#qualityTimeWorkspace .qt-inline-form{grid-template-columns:minmax(120px,.85fr) minmax(120px,.8fr) minmax(260px,1.75fr) minmax(92px,.65fr) minmax(92px,.65fr) minmax(125px,.82fr) minmax(180px,1.15fr) 108px;max-width:100%;box-sizing:border-box}
+#qualityTimeWorkspace .qt-inline-form>*{min-width:0}
+#qualityTimeWorkspace .qt-task-controls{display:grid;grid-template-columns:1fr;gap:6px;min-width:0;height:42px}
+#qualityTimeWorkspace .qt-task-controls:has(#qtOtherTask:not([hidden])){grid-template-columns:minmax(110px,.8fr) minmax(130px,1.2fr)}
+#qualityTimeWorkspace .qt-task-controls select,#qualityTimeWorkspace .qt-task-controls input{height:42px;min-width:0;width:100%;box-sizing:border-box}
+#qualityTimeWorkspace #qtSave{width:108px;max-width:108px;min-width:108px;justify-self:end;overflow:hidden}
+#qualityWorkspace .qd-dashboard-visual{margin-top:14px;overflow:hidden}
+#qualityWorkspace .qd-dashboard-visual .panel-head{align-items:center}
+#qualityWorkspace .qd-workload-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#qualityWorkspace .qd-workload-bars button{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:10px 12px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#fff,#f7fafd);color:var(--ink);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+#qualityWorkspace .qd-workload-bars button:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(22,58,96,.08);border-color:#a9c7e5}
+#qualityWorkspace .qd-workload-bars button span{min-width:0}
+#qualityWorkspace .qd-workload-bars button b{display:block;font-size:13px}
+#qualityWorkspace .qd-workload-bars button small{display:block;margin-top:3px;color:var(--muted)}
+#qualityWorkspace .qd-workload-bars button>strong{font-size:18px;align-self:start}
+#qualityWorkspace .qd-workload-bars i{grid-column:1/-1;height:8px;border-radius:999px;background:#e6edf5;overflow:hidden}
+#qualityWorkspace .qd-workload-bars i em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2b6fbe,#4ba3e5);transition:width .3s ease}
+@media(max-width:1280px){#qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}#qualityTimeWorkspace #qtSave{grid-column:4;width:100%;max-width:none;min-width:0;justify-self:stretch}#qualityWorkspace .qd-workload-bars{grid-template-columns:1fr}}
+@media(max-width:860px){#qualityTimeWorkspace #qtSave{grid-column:2}}
+@media(max-width:560px){#qualityTimeWorkspace #qtSave{grid-column:auto;width:100%}}
+
+/* v174 — Weekly Time Sheet Summary keeps card layout and adds one Others aggregate card. */
+#qualityWorkspace .q-weekly-timesheet-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch}
+#qualityWorkspace .q-weekly-task-summary{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:8px 12px;align-content:start;padding:15px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+#qualityWorkspace .q-weekly-task-summary>div:first-child{min-width:0}
+#qualityWorkspace .q-weekly-task-summary span{display:block;font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+#qualityWorkspace .q-weekly-task-summary strong{display:block;margin-top:4px;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+#qualityWorkspace .q-weekly-task-summary>b{font-size:20px;white-space:nowrap}
+#qualityWorkspace .q-weekly-task-summary>small{grid-column:1/-1;color:var(--muted);line-height:1.45}
+#qualityWorkspace .q-weekly-task-summary-other{border-style:dashed;background:#fbfcfe}
+#qualityWorkspace .q-weekly-other-list{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;padding-top:4px}
+#qualityWorkspace .q-weekly-other-list span{padding:5px 8px;border-radius:999px;background:#eef4fb;color:var(--ink);font-size:10px;text-transform:none;letter-spacing:0}
+#qualityWorkspace .q-weekly-other-list.empty{font-size:11px;color:var(--muted)}
+@media(max-width:1050px){#qualityWorkspace .q-weekly-timesheet-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#qualityWorkspace .q-weekly-timesheet-summary{grid-template-columns:1fr}}

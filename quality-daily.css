@@ -110,3 +110,107 @@
     font-size:27px;
   }
 }
+#qualityWorkspace .qd-dashboard-link{appearance:none;text-align:left;font:inherit;cursor:pointer;position:relative;border:0;border-right:1px solid var(--line);background:var(--panel);width:100%}#qualityWorkspace .qd-dashboard-link:hover,#qualityWorkspace .qd-dashboard-link:focus-visible{background:#f8fbff;outline:2px solid rgba(45,112,214,.18);outline-offset:-2px}#qualityWorkspace .qd-card-link{display:block;margin-top:8px;font-size:11px;font-weight:700;color:#2a6fd6}
+
+/* v174 — Dashboard: Kaizen + Daily/Weekly/Monthly cards and selectable task graph only. */
+#qualityWorkspace .qd-dashboard .qd-four-metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px;overflow:visible}
+#qualityWorkspace .qd-dashboard .qd-four-metrics .metric{border:1px solid var(--line)!important;border-radius:16px!important;min-height:112px;padding:16px!important;background:var(--panel)}
+#qualityWorkspace .qd-task-analytics{min-width:0;overflow:hidden}
+#qualityWorkspace .qd-task-analytics .panel-head{align-items:end;gap:16px;flex-wrap:wrap}
+#qualityWorkspace .qd-chart-filters{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-left:auto}
+#qualityWorkspace .qd-chart-filters label{display:grid;gap:5px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+#qualityWorkspace .qd-chart-filters select{min-width:150px;max-width:260px;height:38px}
+#qualityWorkspace .qd-chart-summary{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:8px 0 14px;font-size:11px;color:var(--muted)}
+#qualityWorkspace .qd-chart-summary span{display:flex;align-items:center;gap:6px}
+#qualityWorkspace .qd-chart-summary i{width:9px;height:9px;border-radius:50%;display:inline-block}
+#qualityWorkspace .qd-chart-summary .done,#qualityWorkspace .qd-task-chart-bar .done{background:#2f9d62}
+#qualityWorkspace .qd-chart-summary .progress,#qualityWorkspace .qd-task-chart-bar .progress{background:#e0a13b}
+#qualityWorkspace .qd-chart-summary .pending,#qualityWorkspace .qd-task-chart-bar .pending{background:#d65b67}
+#qualityWorkspace .qd-task-chart{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(42px,1fr);gap:8px;align-items:end;min-height:250px;padding:18px 4px 2px;overflow-x:auto;border-top:1px solid var(--line)}
+#qualityWorkspace .qd-task-chart-col{height:215px;display:grid;grid-template-rows:1fr auto auto;align-items:end;gap:5px;min-width:42px;text-align:center}
+#qualityWorkspace .qd-task-chart-bar{height:165px;width:min(28px,70%);margin:0 auto;display:flex;flex-direction:column-reverse;justify-content:flex-start;border-radius:8px 8px 3px 3px;background:#edf1f6;overflow:hidden}
+#qualityWorkspace .qd-task-chart-bar i{display:block;width:100%;min-height:0;transition:height .2s ease}
+#qualityWorkspace .qd-task-chart-col>b{font-size:10px;color:var(--ink);white-space:nowrap}
+#qualityWorkspace .qd-task-chart-col>span{font-size:9px;color:var(--muted);white-space:nowrap}
+@media(max-width:1180px){#qualityWorkspace .qd-dashboard .qd-four-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:680px){#qualityWorkspace .qd-dashboard .qd-four-metrics{grid-template-columns:1fr!important}#qualityWorkspace .qd-chart-filters{width:100%;margin-left:0}#qualityWorkspace .qd-chart-filters label{flex:1 1 140px}#qualityWorkspace .qd-chart-filters select{width:100%;max-width:none;min-width:0}#qualityWorkspace .qd-task-chart{grid-auto-columns:48px}}
+
+/* v177 — Quality dashboard only: remove hero and fit desktop dashboard in one viewport. */
+@media (min-width:981px){
+  #qualityWorkspace.q-dashboard-page .q-scroll{
+    overflow:hidden;
+    padding:14px 24px 16px;
+  }
+  #qualityWorkspace.q-dashboard-page #qRecordArea{
+    height:100%;
+    min-height:0;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    align-content:start;
+  }
+  #qualityWorkspace.q-dashboard-page .quality-person{
+    margin-bottom:8px;
+    min-height:24px;
+    align-items:center;
+  }
+  #qualityWorkspace.q-dashboard-page .quality-person>span{
+    padding-bottom:0;
+  }
+  #qualityWorkspace.q-dashboard-page #qFormHost{
+    height:100%;
+    min-height:0;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{
+    height:100%;
+    min-height:0;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    gap:10px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-dashboard .qd-four-metrics{
+    gap:10px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-dashboard .qd-four-metrics .metric{
+    min-height:82px;
+    padding:12px 14px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-dashboard .qd-four-metrics .metric strong{
+    font-size:26px;
+    margin-top:6px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{
+    min-height:0;
+    height:100%;
+    padding:14px 16px;
+    display:grid;
+    grid-template-rows:auto auto minmax(0,1fr);
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics .panel-head{
+    margin-bottom:4px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics .panel-head h3{
+    margin:3px 0 0;
+    font-size:16px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-chart-filters select{
+    height:34px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-chart-summary{
+    margin:4px 0 6px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{
+    min-height:0;
+    height:100%;
+    padding:8px 4px 0;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{
+    height:100%;
+    min-height:150px;
+    max-height:220px;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{
+    height:calc(100% - 42px);
+    min-height:100px;
+    max-height:165px;
+  }
+}

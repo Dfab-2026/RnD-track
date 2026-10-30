@@ -3,10 +3,10 @@
 // Firebase Console -> Project settings -> Your apps -> Web app.
 // This config is safe to include in browser code; security is enforced by Firebase rules.
 window.RND_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAbArRptyHA6u9KY-sQ24kRDYEhCXCznv4",
-  authDomain: "dfab-rnd-track.firebaseapp.com",
-  projectId: "dfab-rnd-track",
-  storageBucket: "dfab-rnd-track.firebasestorage.app",
-  messagingSenderId: "170289873748",
-  appId: "1:170289873748:web:d0196b9f911d3c2b913ec1"
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
+  projectId: "PASTE_PROJECT_ID",
+  storageBucket: "PASTE_PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "PASTE_MESSAGING_SENDER_ID",
+  appId: "PASTE_APP_ID"
 };

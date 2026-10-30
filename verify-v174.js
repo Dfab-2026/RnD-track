@@ -1,0 +1,12 @@
+const fs=require('fs');
+const daily=fs.readFileSync('quality-daily.js','utf8');
+const review=fs.readFileSync('quality-review.js','utf8');
+const css=fs.readFileSync('quality-daily.css','utf8')+fs.readFileSync('quality.css','utf8');
+const check=(v,m)=>{if(!v)throw new Error(m);console.log('PASS',m)};
+check(daily.includes('KAIZEN IDEAS')&&daily.includes('>DAILY<')&&daily.includes('>WEEKLY<')&&daily.includes('>MONTHLY<'),'dashboard four requested cards');
+check(daily.includes('qdDashboardTask')&&daily.includes('qdDashboardPeriod'),'selectable task/period graph controls');
+check(daily.includes('Completed ${fmtHours(selectedTotals.completed)}h')&&daily.includes('In progress ${fmtHours(selectedTotals.inProgress)}h')&&daily.includes('Pending ${fmtHours(selectedTotals.pending)}h'),'graph status data');
+check(review.includes("label:'Others'")&&review.includes('q-weekly-task-summary-other'),'weekly summary Others card');
+check(review.includes('No manual tasks this week'),'Others card empty state');
+check(css.includes('.qd-task-chart')&&css.includes('.q-weekly-task-summary-other'),'chart and Others styling');
+console.log('v174 verification complete');
