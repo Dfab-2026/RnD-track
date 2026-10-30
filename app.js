@@ -13,7 +13,7 @@ const SNAPSHOT_KEY='snapshot';
 const defaultMembers=['Kabil','Abinaya','Gautham','Akash'];
 const DEFAULT_ADMIN_NAME='Pramod';
 const DEFAULT_VISITOR_NAME='Admin';
-const defaultDepartments=['Production','NPD','R&D','Marketing','Purchase','Accounts','Quality','RFQ'];
+const defaultDepartments=['Production','NPD','R&D','Outsourcing','Quality','Purchase','Stores','HR & Admin','Accounts','Finance','Maintenance','Digital Marketing','RFQ'];
 function openDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,DB_VERSION);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE);if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta')};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function readSnapshot(){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(SNAPSHOT_KEY);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error)})}
 async function writeSnapshot(data){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(data,SNAPSHOT_KEY);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}
@@ -69,9 +69,12 @@ function migrateSnapshot(data){
   }
   const seen=new Set();
   snap.departments=(snap.departments.length?snap.departments:defaultDepartments.map((name,i)=>({id:i+1,name,active:1,sort_order:i+1,created_at:now,updated_at:now})))
-    .map((d,i)=>({id:Number(d.id)||i+1,name:String(d.name||'').trim().replace(/\s+/g,' '),active:Number(d.active)===0?0:1,sort_order:Number(d.sort_order)||i+1,created_at:d.created_at||now,updated_at:d.updated_at||d.created_at||now}))
+    .map((d,i)=>({id:Number(d.id)||i+1,name:normalizeName(d.name)==='marketing'?'Digital Marketing':String(d.name||'').trim().replace(/\s+/g,' '),active:Number(d.active)===0?0:1,sort_order:Number(d.sort_order)||i+1,created_at:d.created_at||now,updated_at:d.updated_at||d.created_at||now}))
     .filter(d=>d.name&&(!seen.has(normalizeName(d.name))&&seen.add(normalizeName(d.name))))
     .sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id);
+  let nextDepartmentId=Math.max(0,...snap.departments.map(d=>Number(d.id)||0))+1;
+  for(const name of defaultDepartments){if(snap.departments.some(d=>normalizeName(d.name)===normalizeName(name)))continue;snap.departments.push({id:nextDepartmentId++,name,active:1,sort_order:snap.departments.length+1,created_at:now,updated_at:now})}
+  snap.departments.sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id).forEach((d,i)=>d.sort_order=i+1);
   // Keep legacy assignments visible while the cloud repair is being persisted.
   snap.projects=snap.projects.map(project=>{
     if(snap.cycles.some(c=>Number(c.id)===Number(project.cycle_id)))return project;
@@ -573,33 +576,93 @@ function persistLogin(member){if(activeUser()!==Number(member.id))state.selected
 function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.removeItem('rndActiveUser')}
 function activeDepartments(){return state.departments.filter(d=>Number(d.active)!==0).sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||Number(a.id)-Number(b.id))}
 function isRndDepartment(department){return ['rd','rnd','r and d','research and development'].includes(normalizeName(department?.name))}
+
+const DEPARTMENT_ADMIN_NAMES=['Kabil','Suresh Kumar','Pramod Kumar'];
+const DEPARTMENT_ADMIN_KEY='dfabDepartmentAdminSession';
+function departmentAdminName(){try{const name=JSON.parse(localStorage.getItem(DEPARTMENT_ADMIN_KEY)||'null')?.name||'';return DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name))||''}catch{return ''}}
+function departmentAdminActive(){return Boolean(departmentAdminName())}
+function departmentAdminLogin(name){const found=DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name));if(!found)throw new Error('Wrong / Not authorized');localStorage.setItem(DEPARTMENT_ADMIN_KEY,JSON.stringify({name:found}));renderDepartmentGate();return found}
+function departmentAdminLogout(){const current=currentMember();localStorage.removeItem(DEPARTMENT_ADMIN_KEY);if(current?.role==='visitor')clearLogin();document.getElementById('departmentAdminLoginGate')?.remove();renderDepartmentGate()}
+window.adminSession={active:departmentAdminActive,name:departmentAdminName,login:departmentAdminLogin,logout:departmentAdminLogout,names:[...DEPARTMENT_ADMIN_NAMES]};
+function renderDepartmentAdminControl(){
+  const card=document.querySelector('#departmentGate .department-gate-card');if(!card)return;
+  let host=card.querySelector('.department-admin-control');if(!host){host=document.createElement('div');host.className='department-admin-control';card.prepend(host)}
+  const name=departmentAdminName();
+  host.innerHTML=name?`<div class="department-admin-profile"><button type="button" class="department-admin-profile-btn" aria-expanded="false"><span>${esc(name.charAt(0))}</span><div><strong>${esc(name)}</strong><small>ALL DEPARTMENTS LEADER</small></div></button><div class="department-admin-menu hidden"><b>${esc(name)}</b><span>Leader access across all departments</span><button type="button" class="danger-btn">Admin logout</button></div></div>`:`<button type="button" class="secondary-btn department-admin-login-btn">Admin</button>`;
+  if(name){const btn=host.querySelector('.department-admin-profile-btn'),menu=host.querySelector('.department-admin-menu');btn.onclick=()=>{const show=menu.classList.contains('hidden');menu.classList.toggle('hidden',!show);btn.setAttribute('aria-expanded',String(show))};menu.querySelector('button').onclick=departmentAdminLogout}
+  else host.querySelector('.department-admin-login-btn').onclick=openDepartmentAdminLogin;
+}
+function openDepartmentAdminLogin(){
+  let gate=document.getElementById('departmentAdminLoginGate');
+  if(!gate){gate=document.createElement('section');gate.id='departmentAdminLoginGate';gate.className='login-gate';gate.setAttribute('aria-label','Admin name login');document.body.append(gate)}
+  document.getElementById('appShell').classList.add('app-locked');
+  document.getElementById('loginGate').classList.add('hidden');
+  document.getElementById('departmentGate').classList.add('hidden');
+  const base=document.querySelector('#loginGate .login-card');
+  const card=base.cloneNode(true);
+  card.querySelectorAll('[id]').forEach(el=>el.id='admin'+el.id.charAt(0).toUpperCase()+el.id.slice(1));
+  const brand=card.querySelector('.login-brand strong');if(brand)brand.textContent='ADMIN ACCESS';
+  const intro=card.querySelector('p');if(intro)intro.textContent='Enter your name to access all departments as a company leader. Only authorized leaders can continue. You will stay signed in on this device until logout.';
+  const label=card.querySelector('label');if(label&&label.firstChild)label.firstChild.textContent='Your name';
+  const input=card.querySelector('input');input.value='';input.placeholder='Enter your name';input.setAttribute('autocomplete','name');
+  const submit=card.querySelector('button[type="submit"]');if(submit)submit.textContent='CONTINUE →';
+  const message=card.querySelector('.login-message');message.textContent='';
+  const suggestion=card.querySelector('[id$="LoginSuggestion"]');if(suggestion)suggestion.innerHTML='';
+  const back=card.querySelector('[id$="BackToDepartmentsBtn"]');if(back){back.textContent='← All departments';back.onclick=()=>{gate.remove();showDepartmentGate()}}
+  const form=card.querySelector('form');
+  form.onsubmit=event=>{event.preventDefault();message.textContent='';try{departmentAdminLogin(input.value);gate.remove();showDepartmentGate()}catch(error){message.textContent='Wrong / Not authorized'}};
+  gate.replaceChildren(card);gate.hidden=false;input.focus();
+}
+
 function renderDepartmentGate(){
-  const grid=$('#departmentGateGrid');if(!grid)return;
+  const grid=$('#departmentGateGrid');if(!grid)return;renderDepartmentAdminControl();
   const departments=activeDepartments();
-  grid.innerHTML=departments.length?departments.map(department=>{const available=isRndDepartment(department)||['production','quality'].includes(normalizeName(department.name));return `<button type="button" class="department-choice ${available?'available':''}" data-department-id="${department.id}" aria-label="${esc(department.name)} dashboard${available?'':' setup pending'}"><strong>${esc(department.name)}</strong><span>${available?'OPEN DASHBOARD →':'SETUP PENDING'}</span></button>`}).join(''):'<div class="empty-state">No active departments are configured.</div>';
+  grid.innerHTML=departments.length?departments.map(department=>{const available=isRndDepartment(department)||normalizeName(department.name)==='quality'||window.departmentWorkspace?.has?.(department.name);return `<button type="button" class="department-choice ${available?'available':''}" data-department-id="${department.id}" aria-label="${esc(department.name)} dashboard${available?'':' setup pending'}"><strong>${esc(department.name)}</strong><span>${available?'OPEN DASHBOARD →':'SETUP PENDING'}</span></button>`}).join(''):'<div class="empty-state">No active departments are configured.</div>';
   grid.querySelectorAll('[data-department-id]').forEach(button=>button.onclick=()=>selectDepartment(Number(button.dataset.departmentId)));
+  window.leaderCenter?.renderCards?.();
 }
 function departmentHistory(kind,id,replace=false){
   const route={rndDepartmentRoute:kind,departmentId:id||null,departmentHistoryReady:true},url=kind==='workspace'?'#department='+id:'#departments';
   if(replace)history.replaceState({...history.state,...route},'',url);
   else if(history.state?.rndDepartmentRoute!==kind||Number(history.state?.departmentId)!==Number(id||0))history.pushState({...history.state,...route},'',url);
 }
-function showDepartmentGate(navigate=true){window.closeProduction?.();window.closeQuality?.();if(navigate)departmentHistory('departments',null);localStorage.removeItem('selectedDepartmentId');stopTeamChat();document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());$('#appShell').classList.add('app-locked');$('#loginGate').classList.add('hidden');$('#departmentGate').classList.remove('hidden');$('#departmentGateMessage').textContent='';renderDepartmentGate()}
+function showDepartmentGate(navigate=true){window.closeProduction?.();window.closeQuality?.();window.departmentWorkspace?.close?.();if(navigate)departmentHistory('departments',null);localStorage.removeItem('selectedDepartmentId');stopTeamChat();document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());document.getElementById('departmentAdminLoginGate')?.remove();$('#appShell').classList.add('app-locked');$('#loginGate').classList.add('hidden');$('#departmentGate').classList.remove('hidden');$('#departmentGateMessage').textContent='';renderDepartmentGate()}
+function openDepartmentForAdmin(department,generic){
+  if(!departmentAdminActive())return false;
+  // R&D keeps its existing dedicated login/session flow. If an older build left an
+  // admin visitor session behind, remove only that visitor session before continuing.
+  if(isRndDepartment(department)){const saved=storedLogin();if(saved?.role==='visitor')clearLogin();return false}
+  // Admin is already authenticated at the department gate. For Quality and every
+  // shared department, bypass member login and route directly to Dashboard with company-leader access.
+  $('#loginGate').classList.add('hidden');
+  const adminGate=document.getElementById('departmentAdminLoginGate');if(adminGate)adminGate.hidden=true;
+  if(normalizeName(department.name)==='quality'){
+    window.departmentWorkspace?.close?.();window.closeProduction?.();window.openQuality?.();return true;
+  }
+  window.closeQuality?.();
+  if(generic){window.closeProduction?.();window.departmentWorkspace.open(department);return true}
+  window.departmentWorkspace?.close?.();window.closeProduction?.();
+  const visitor=state.members.find(m=>m.role==='visitor'&&Number(m.active)!==0);
+  if(visitor){persistLogin(visitor);state.page='dashboard';showApp();return true}
+  return false;
+}
 function selectDepartment(id,navigate=true){
   const department=activeDepartments().find(d=>Number(d.id)===Number(id));if(!department)return;
-  if(!isRndDepartment(department)&&!['production','quality'].includes(normalizeName(department.name))){$('#departmentGateMessage').textContent=`${department.name} dashboard will be configured in the next update.`;return}
+  const generic=window.departmentWorkspace?.has?.(department.name);
+  if(!isRndDepartment(department)&&normalizeName(department.name)!=='quality'&&!generic){$('#departmentGateMessage').textContent=`${department.name} dashboard setup is not available.`;return}
   if(navigate)departmentHistory('workspace',department.id);
   localStorage.setItem('selectedDepartmentId',String(department.id));$('#departmentGate').classList.add('hidden');
-  if(normalizeName(department.name)==='quality'){window.closeProduction?.();window.openQuality?.();return}
+  if(openDepartmentForAdmin(department,generic))return;
+  if(normalizeName(department.name)==='quality'){window.departmentWorkspace?.close?.();window.closeProduction?.();window.openQuality?.();return}
   window.closeQuality?.();
-  if(normalizeName(department.name)==='production'){window.openProduction?.();return}
-  window.closeProduction?.();
+  if(generic){window.closeProduction?.();window.departmentWorkspace.open(department);return}
+  window.departmentWorkspace?.close?.();window.closeProduction?.();
   const saved=storedLogin(),member=saved?state.members.find(m=>Number(m.id)===Number(saved.id)&&Number(m.active)!==0):null;
   if(member){persistLogin(member);showApp()}else showLogin();
 }
 function restoreDepartmentRoute(){
   const route=history.state,id=route?.rndDepartmentRoute==='departments'?0:Number(route?.departmentId||localStorage.getItem('selectedDepartmentId'));
-  const selected=activeDepartments().find(d=>Number(d.id)===id&&(isRndDepartment(d)||['production','quality'].includes(normalizeName(d.name))));
+  const selected=activeDepartments().find(d=>Number(d.id)===id&&(isRndDepartment(d)||normalizeName(d.name)==='quality'||window.departmentWorkspace?.has?.(d.name)));
   if(selected){if(!route?.departmentHistoryReady){departmentHistory('departments',null,true);departmentHistory('workspace',selected.id)}else departmentHistory('workspace',selected.id,true);selectDepartment(selected.id,false)}
   else{departmentHistory('departments',null,true);showDepartmentGate(false)}
 }
@@ -608,8 +671,9 @@ function updateCompactProfile(){
   const member=currentMember();if(!member)return;
   const initial=(member.name||'R').trim().charAt(0).toUpperCase()||'R';
   const initialEl=$('#profileQuickInitial'),avatar=$('#profileQuickAvatar'),name=$('#profileQuickName'),role=$('#profileQuickRole');
-  if(initialEl)initialEl.textContent=initial;if(avatar)avatar.textContent=initial;if(name)name.textContent=member.name;
-  if(role)role.textContent=memberRoleLabel(member);
+  const adminName=departmentAdminActive()&&member.role==='visitor'?departmentAdminName():'';const shownName=adminName||member.name;const shownInitial=(shownName||'R').trim().charAt(0).toUpperCase()||'R';
+  if(initialEl)initialEl.textContent=shownInitial;if(avatar)avatar.textContent=shownInitial;if(name)name.textContent=shownName;
+  if(role)role.textContent=adminName?'ALL DEPARTMENTS LEADER':memberRoleLabel(member);
   const settingsName=$('#settingsSignedInName');if(settingsName)settingsName.textContent=member.name;
 }
 function showApp(){const member=currentMember();if(!member){showLogin();return}$('#departmentGate').classList.add('hidden');$('#loginGate').classList.add('hidden');$('#appShell').classList.remove('app-locked');updateCompactProfile();try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);maybeShowPendingTaskPopup();updateTeamChatIdentity();setTimeout(startTeamChat,120)}

@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync(__dirname+'/app.js','utf8');
+assert(app.includes('function openDepartmentForAdmin(department,generic)'), 'missing centralized admin router');
+assert(app.includes("if(!departmentAdminActive())return false"), 'admin active guard missing');
+assert(app.includes("$('#loginGate').classList.add('hidden')"), 'normal login gate not forcibly hidden');
+assert(app.includes("if(openDepartmentForAdmin(department,generic))return;"), 'admin router must run before normal login branches');
+assert(/normalizeName\(department\.name\)==='quality'[\s\S]*window\.openQuality\?\.\(\)/.test(app), 'quality direct admin route missing');
+assert(/if\(generic\)\{window\.closeProduction\?\.\(\);window\.departmentWorkspace\.open\(department\);return true\}/.test(app), 'generic direct admin route missing');
+assert(/persistLogin\(visitor\);state\.page='dashboard';showApp\(\);return true/.test(app), 'R&D direct dashboard route missing');
+console.log('PASS v187: active Admin session opens every department card directly to its dashboard without department login.');

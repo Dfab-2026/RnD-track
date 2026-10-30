@@ -1,0 +1,22 @@
+const fs=require('fs'),path=require('path');
+const root=__dirname;
+const app=fs.readFileSync(path.join(root,'app.js'),'utf8');
+const dept=fs.readFileSync(path.join(root,'department-workspace.js'),'utf8');
+const quality=fs.readFileSync(path.join(root,'quality.js'),'utf8');
+const cloud=fs.readFileSync(path.join(root,'firebase-cloud.js'),'utf8');
+function ok(v,m){if(!v)throw new Error(m);console.log('PASS',m)}
+['Kabil','Suresh Kumar','Pramod Kumar'].forEach(n=>ok(app.includes(`'${n}'`),`leader ${n}`));
+ok(app.includes('ALL DEPARTMENTS LEADER'),'leader profile label');
+ok(app.includes('if(isRndDepartment(department))'),'R&D remains separate');
+ok(dept.includes("actor_role:adminView()?'all_departments_leader':'department_member'"),'generic leader audit role');
+ok(dept.includes("actor_scope:adminView()?'all_departments':deptKey"),'generic leader audit scope');
+ok(!dept.includes("throw Error('Admin access is view only.')"),'generic leader writes enabled');
+ok(dept.includes("function applyAdminReadonly(){if(!root)return;root.classList.remove('admin-view-only');}"),'generic readonly removed');
+ok(quality.includes("actor_role:adminView()?'all_departments_leader':'quality_member'"),'quality leader audit role');
+ok(!quality.includes("Admin access is view only."),'quality leader writes enabled');
+ok(quality.includes("function applyAdminReadonly(){root?.classList.remove('admin-view-only');}"),'quality readonly removed');
+ok(cloud.includes("role:leaderName?'all_departments_leader':'quality_member'"),'quality firebase audit envelope');
+ok(cloud.includes("role:String(row?.actor_role||'department_member')"),'department firebase audit envelope');
+ok(cloud.includes("ref.get({source:'server'})"),'server read-back verification');
+ok(cloud.includes('flushPendingWrites()'),'pending writes flushed');
+console.log('v189 leader + firebase verification complete');

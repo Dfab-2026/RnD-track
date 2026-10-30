@@ -1,0 +1,17 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync(__dirname+'/app.js','utf8');
+const quality=fs.readFileSync(__dirname+'/quality.js','utf8');
+const dept=fs.readFileSync(__dirname+'/department-workspace.js','utf8');
+const css=fs.readFileSync(__dirname+'/styles.css','utf8');
+for(const n of ['Kabil','Suresh Kumar','Pramod Kumar'])assert(app.includes(n),`missing admin ${n}`);
+assert(app.includes("dfabDepartmentAdminSession"),'admin persistence missing');
+assert(app.includes('renderDepartmentAdminControl'),'admin gate profile missing');
+assert(app.includes('openDepartmentAdminLogin'),'admin login dialog missing');
+assert(app.includes("member.role==='visitor'"),'R&D visitor view-only reuse missing');
+assert(quality.includes("adminView=()=>Boolean(window.adminSession?.active?.())"),'Quality admin bypass missing');
+assert(quality.includes('Admin access is view only'),'Quality write guard missing');
+assert(dept.includes("const adminView=()=>Boolean(window.adminSession?.active?.())"),'generic admin mode missing');
+assert(dept.includes("if(adminView())throw Error('Admin access is view only.')"),'generic write guard missing');
+assert(dept.includes("if(adminView())return[]"),'admin notifications should not show personal pending');
+assert(css.includes('.department-admin-control'),'admin top-right styling missing');
+console.log('PASS v185 admin: persistent 3-name admin login, top-right profile, all-department bypass and view-only guards.');

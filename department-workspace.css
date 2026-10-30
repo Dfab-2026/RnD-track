@@ -1,0 +1,604 @@
+.department-workspace{position:fixed;inset:0;background:#eef4fb;z-index:70;overflow:auto;color:#0b2447}.department-workspace[hidden]{display:none}.dw-shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr)}.dw-sidebar{background:#071d38;color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh}.dw-brand{display:flex;gap:10px;align-items:center}.dw-brand img{width:48px;height:auto}.dw-brand div{display:grid}.dw-brand small{font-size:9px;letter-spacing:.16em;opacity:.65}.dw-sidebar nav{display:grid;gap:6px}.dw-sidebar nav button,.dw-dept-back{border:0;background:transparent;color:#c8d7ea;text-align:left;padding:12px 13px;border-radius:12px;font-weight:700;cursor:pointer}.dw-sidebar nav button.active,.dw-sidebar nav button:hover{background:#173c68;color:#fff}.dw-dept-back{margin-top:auto;border:1px solid rgba(255,255,255,.15)}.dw-main{min-width:0}.dw-top{height:86px;background:#fff;border-bottom:1px solid #dbe5f0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:2}.dw-top span{font-size:10px;letter-spacing:.14em;color:#66809d;font-weight:800}.dw-top h1{margin:3px 0 0;font-size:25px}.dw-user{display:grid;grid-template-columns:auto auto;column-gap:8px;align-items:center}.dw-user>span{width:9px;height:9px;border-radius:50%;background:#e0a300;grid-row:1/3}.dw-user>span.online{background:#1cac64}.dw-user small{font-size:10px;color:#75889f}.dw-content{padding:22px 28px 40px}.dw-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid #d8e3ef;border-radius:18px;background:#fff;overflow:hidden;margin-bottom:18px}.dw-metrics button{background:#fff;border:0;border-right:1px solid #d8e3ef;padding:18px;text-align:left;cursor:pointer}.dw-metrics button:last-child{border-right:0}.dw-metrics span{display:block;font-size:10px;letter-spacing:.12em;font-weight:800;color:#607b99}.dw-metrics b{display:block;font-size:25px;margin:16px 0 6px}.dw-metrics small{color:#7f91a5}.dw-analytics{min-height:270px}.dw-bars{display:grid;gap:13px}.dw-bars>div{display:grid;grid-template-columns:minmax(140px,230px) minmax(150px,1fr) 62px;gap:12px;align-items:center}.dw-bars>div>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.dw-bars i{height:10px;border-radius:999px;background:#e8eef6;overflow:hidden}.dw-bars i b{display:block;height:100%;background:#3e83df;border-radius:999px}.dw-kaizen-form{display:grid;grid-template-columns:150px 1fr 1fr auto;gap:12px;align-items:end}.dw-kaizen-form label{display:grid;gap:6px;font-size:11px}.dw-kaizen-form textarea{min-height:72px}.dw-record-list{display:grid;gap:10px}.dw-record-list article{display:flex;align-items:center;justify-content:space-between;border:1px solid #dce5ef;border-radius:14px;padding:12px 14px}.dw-record-list article>div{display:grid;gap:3px}.dw-record-list strong{font-size:13px}.dw-record-list small{color:#71869d}.dw-weekly-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.dw-weekly-summary article,.dw-summary-grid article{background:#fff;border:1px solid #d8e3ef;border-radius:16px;padding:16px;display:grid;gap:7px}.dw-weekly-summary span{font-size:10px;font-weight:800;letter-spacing:.12em;color:#66809d}.dw-weekly-summary b{font-size:24px}.dw-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.dw-summary-grid b{font-size:20px}.dw-weekly-kpis{display:grid;gap:8px}.dw-weekly-kpis>div{display:grid;grid-template-columns:1fr 1fr 60px;gap:12px;padding:10px 12px;border-bottom:1px solid #e5ecf4}.dw-weekly-kpis small{color:#73869b}.dw-kpi-filter{display:flex;gap:18px;align-items:center;margin-bottom:15px}.dw-kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dw-kpi-card{background:#fff;border:1px solid #d8e3ef;border-top:4px solid #df5a5a;border-radius:16px;padding:14px;display:grid;gap:9px}.dw-kpi-card.passed{border-top-color:#2daa6a}.dw-kpi-top{display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:#607790}.dw-kpi-card h3{font-size:14px;margin:0}.dw-kpi-target{background:#f4f7fb;border-radius:10px;padding:10px;display:grid;gap:3px}.dw-kpi-target small{font-size:9px;font-weight:800;color:#6a8097}.dw-kpi-target strong{font-size:12px}.dw-kpi-card p{font-size:11px;color:#73869c;min-height:28px}.dw-kpi-bar{height:7px;background:#e8edf3;border-radius:999px;overflow:hidden}.dw-kpi-bar i{display:block;height:100%;background:#4184df}.dw-kpi-card form{display:grid;gap:7px}.dw-kpi-card label{display:grid;gap:4px;font-size:10px}.dw-kpi-card textarea{min-height:52px}.dw-timesheet-panel{overflow:hidden}.dw-time-row{display:grid;grid-template-columns:125px 115px minmax(180px,1.7fr) 100px 100px 125px minmax(180px,1.2fr) 92px;gap:10px;align-items:end}.dw-time-row label{display:grid;gap:5px;font-size:10px;min-width:0}.dw-time-row input,.dw-time-row select,.dw-time-row button{height:42px;min-width:0}.dw-time-row label:nth-child(3){grid-template-columns:1fr}.dw-time-row .dw-other{margin-top:5px}.dw-settings{display:grid;grid-template-columns:1fr 1fr;gap:15px}.dw-login{min-height:100vh;display:grid;place-items:center;padding:20px}.dw-login-card{width:min(430px,100%);background:#fff;border:1px solid #d8e3ef;border-radius:22px;padding:28px;display:grid;gap:14px;box-shadow:0 18px 60px rgba(15,41,70,.12)}.dw-login-card img{width:82px}.dw-login-card label{display:grid;gap:6px}.dw-login-card form{display:grid;gap:12px}@media(max-width:1100px){.dw-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dw-time-row{grid-template-columns:repeat(4,minmax(0,1fr))}.dw-time-row button{grid-column:4}.dw-kaizen-form{grid-template-columns:1fr 1fr}.dw-kaizen-form button{align-self:end}}@media(max-width:760px){.dw-shell{grid-template-columns:1fr}.dw-sidebar{position:relative;height:auto}.dw-sidebar nav{grid-template-columns:repeat(3,1fr)}.dw-dept-back{margin-top:0}.dw-top{position:relative;padding:0 16px}.dw-content{padding:16px}.dw-metrics{grid-template-columns:repeat(2,1fr)}.dw-metrics button:nth-child(2){border-right:0}.dw-metrics button:nth-child(-n+2){border-bottom:1px solid #d8e3ef}.dw-weekly-summary,.dw-summary-grid,.dw-kpi-grid,.dw-settings{grid-template-columns:1fr}.dw-time-row{grid-template-columns:1fr 1fr}.dw-time-row button{grid-column:2}.dw-kaizen-form{grid-template-columns:1fr}.dw-bars>div{grid-template-columns:110px 1fr 52px}}@media(max-width:480px){.dw-sidebar nav{grid-template-columns:1fr 1fr}.dw-metrics{grid-template-columns:1fr}.dw-metrics button{border-right:0!important;border-bottom:1px solid #d8e3ef}.dw-time-row{grid-template-columns:1fr}.dw-time-row button{grid-column:1}.dw-top{height:auto;min-height:80px}.dw-user{display:none}}
+.dw-kpi-filter label{display:grid;gap:5px;font-size:10px;font-weight:800;color:#607790}.dw-kpi-filter label input,.dw-kpi-filter label select{min-width:140px}.dw-kpi-filter>div{display:grid;gap:5px}.dw-kpi-filter>div span{font-size:10px;font-weight:800;color:#607790}.dw-kpi-filter .hidden{display:none!important}
+
+
+/* Generic department workspace: Quality-reference shell/components */
+#departmentWorkspace .dw-login{min-height:100vh;display:grid;place-items:center;padding:20px;background:#eef4fb}
+#departmentWorkspace .dw-login-card{width:min(430px,100%);background:#fff;border:1px solid #d8e3ef;border-radius:22px;padding:28px;display:grid;gap:14px;box-shadow:0 18px 60px rgba(15,41,70,.12)}
+#departmentWorkspace .dw-login-card img{width:82px}#departmentWorkspace .dw-login-card label,#departmentWorkspace .dw-login-card form{display:grid;gap:8px}
+#departmentWorkspace .dw-record-list{display:grid;gap:10px}#departmentWorkspace .dw-record-list article{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--paper)}#departmentWorkspace .dw-record-list article>div:first-child{display:grid;gap:3px;min-width:0}#departmentWorkspace .dw-record-list strong{font-size:13px;overflow-wrap:anywhere}#departmentWorkspace .dw-record-list small{color:var(--muted);overflow-wrap:anywhere}#departmentWorkspace .dw-record-list .panel-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+#departmentWorkspace .dw-weekly-kpis{display:grid;gap:8px}#departmentWorkspace .dw-weekly-kpis>div{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,.7fr) 70px;gap:12px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}#departmentWorkspace .dw-weekly-kpis small{color:var(--muted)}#departmentWorkspace .dw-weekly-kpis b{text-align:right}
+#departmentWorkspace .dw-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+#departmentWorkspace .q-week-selector{display:grid;gap:5px;font-size:10px;font-weight:750;color:var(--muted)}
+#departmentWorkspace .q-weekly-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}#departmentWorkspace .q-weekly-overview article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;align-items:center;min-height:72px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}#departmentWorkspace .q-weekly-overview span{font-size:8px;font-weight:850;letter-spacing:.1em;color:var(--muted)}#departmentWorkspace .q-weekly-overview strong{grid-row:1/3;grid-column:2;font-size:20px;color:#1f609f}#departmentWorkspace .q-weekly-overview small{font-size:9px;color:var(--muted)}
+#departmentWorkspace .q-weekly-section{margin-top:14px}#departmentWorkspace .q-weekly-task-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}#departmentWorkspace .q-weekly-task-cards article{display:grid;gap:6px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}#departmentWorkspace .q-weekly-task-cards span{font-size:10px;font-weight:800;color:var(--ink)}#departmentWorkspace .q-weekly-task-cards b{font-size:22px;color:#1f609f}#departmentWorkspace .q-weekly-task-cards small{font-size:9px;line-height:1.5;color:var(--muted)}
+@media(max-width:800px){#departmentWorkspace .q-weekly-overview,#departmentWorkspace .q-weekly-task-cards,#departmentWorkspace .dw-settings{grid-template-columns:1fr}#departmentWorkspace .dw-weekly-kpis>div{grid-template-columns:1fr auto}#departmentWorkspace .dw-weekly-kpis small{grid-column:1/-1}}
+.qd-dashboard{display:grid;gap:16px}.qd-dashboard .metric-grid{margin:0}.qd-dashboard .hero-strip{min-height:130px;padding:22px}.qd-dashboard .hero-strip h2{font-size:28px;margin:14px 0 0}.qd-lights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.qd-light-card{color:var(--ink);text-align:left;display:grid;grid-template-columns:14px 1fr auto;gap:12px;align-items:start}.qd-light-card strong{font-size:13px;line-height:1.5}.qd-light-card small{grid-column:2/-1;color:var(--muted);font-size:11px}.qd-light{width:12px;height:12px;border-radius:50%;margin-top:4px}.qd-light.red{background:#d83343;box-shadow:0 0 0 4px #d833431c}.qd-light.green{background:#249f58;box-shadow:0 0 0 4px #249f5820}.qd-pill{font-size:11px;padding:5px 9px;border-radius:20px;white-space:nowrap}.qd-pill.green{background:#dcf3e5;color:#1b6338}.qd-pill.red{background:#ffe1e5;color:#a22335}.qd-task-stack{display:grid;grid-template-columns:1fr;gap:16px}.qd-task-card{width:100%;margin:0}.qd-task-card>header{display:grid;grid-template-columns:1fr auto;gap:5px 12px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}.qd-task-card h3{grid-column:1/-1}.qd-task-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.qd-task-fields label{display:grid;gap:6px;font-size:12px;font-weight:600}.qd-task-fields [hidden]{display:none!important}.qd-task-fields textarea{min-height:65px}.qd-form-actions{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}.qd-form-actions p{flex:1;min-width:130px;font-size:12px;margin:0;color:var(--muted)}.qd-form-actions [hidden]{display:none!important}.qd-task-card input:read-only{background:#edf1f5}.qd-dashboard .setting-row{gap:15px;font-size:12px}.qd-dashboard .setting-row>span{max-width:75%;text-align:right;color:var(--muted)}#qdIdeaForm{margin-bottom:0}.qd-idea-kpis{margin-top:18px}.qd-idea-kpis .panel-head span{font-size:11px;color:var(--muted)}@media(max-width:760px){.qd-lights{grid-template-columns:1fr}.qd-task-fields{grid-template-columns:1fr}.qd-pill{white-space:normal}.qd-task-card>header{grid-template-columns:1fr}.qd-task-card h3{grid-column:auto}.qd-dashboard .hero-strip h2{font-size:23px}.qd-dashboard .activity-grid{grid-template-columns:1fr}.qd-dashboard .metric-grid{grid-template-columns:1fr 1fr}}
+
+/* v161 — Quality dashboard responsive layout only. Prevent cards/sections collapsing at intermediate widths. */
+#departmentWorkspace .qd-dashboard{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow:visible;
+}
+#departmentWorkspace .qd-dashboard > *,
+#departmentWorkspace .qd-dashboard .panel,
+#departmentWorkspace .qd-dashboard .metric,
+#departmentWorkspace .qd-dashboard .activity-person,
+#departmentWorkspace .qd-dashboard .qd-light-card{
+  min-width:0;
+  max-width:100%;
+}
+#departmentWorkspace .qd-dashboard .q-overview-metrics{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:100%;
+  overflow:hidden;
+}
+#departmentWorkspace .qd-dashboard .activity-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  width:100%;
+}
+#departmentWorkspace .qd-dashboard .activity-person{
+  gap:10px;
+  flex-wrap:wrap;
+}
+#departmentWorkspace .qd-dashboard .activity-person > strong,
+#departmentWorkspace .qd-dashboard .activity-person > span{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+#departmentWorkspace .qd-dashboard .qd-lights{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  width:100%;
+}
+#departmentWorkspace .qd-dashboard .qd-light-card{
+  width:100%;
+  overflow:hidden;
+}
+#departmentWorkspace .qd-dashboard .qd-light-card b,
+#departmentWorkspace .qd-dashboard .qd-light-card small,
+#departmentWorkspace .qd-dashboard .setting-row > *{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+@media (max-width:1180px){
+  #departmentWorkspace .qd-dashboard .q-overview-metrics{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  #departmentWorkspace .qd-dashboard .qd-lights{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+@media (max-width:760px){
+  #departmentWorkspace .qd-dashboard{
+    gap:12px;
+  }
+  #departmentWorkspace .qd-dashboard .q-overview-metrics,
+  #departmentWorkspace .qd-dashboard .activity-grid,
+  #departmentWorkspace .qd-dashboard .qd-lights{
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  #departmentWorkspace .qd-dashboard .metric,
+  #departmentWorkspace .qd-dashboard .panel,
+  #departmentWorkspace .qd-dashboard .qd-light-card{
+    width:100%!important;
+  }
+  #departmentWorkspace .qd-dashboard .activity-person:nth-child(odd){
+    border-right:0!important;
+  }
+  #departmentWorkspace .qd-dashboard .panel-head{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  #departmentWorkspace .qd-dashboard .panel-head > button{
+    max-width:100%;
+    white-space:normal;
+  }
+  #departmentWorkspace .qd-dashboard .setting-row{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  #departmentWorkspace .qd-dashboard .setting-row > span{
+    max-width:100%;
+    text-align:left;
+  }
+}
+
+@media (max-width:420px){
+  #departmentWorkspace .qd-dashboard .hero-strip{
+    padding:16px!important;
+  }
+  #departmentWorkspace .qd-dashboard .hero-strip h2{
+    font-size:21px!important;
+    line-height:1.2!important;
+  }
+  #departmentWorkspace .qd-dashboard .metric{
+    padding:14px!important;
+    min-height:96px;
+  }
+  #departmentWorkspace .qd-dashboard .metric strong{
+    font-size:27px;
+  }
+}
+#departmentWorkspace .qd-dashboard-link{appearance:none;text-align:left;font:inherit;cursor:pointer;position:relative;border:0;border-right:1px solid var(--line);background:var(--panel);width:100%}#departmentWorkspace .qd-dashboard-link:hover,#departmentWorkspace .qd-dashboard-link:focus-visible{background:#f8fbff;outline:2px solid rgba(45,112,214,.18);outline-offset:-2px}#departmentWorkspace .qd-card-link{display:block;margin-top:8px;font-size:11px;font-weight:700;color:#2a6fd6}
+
+/* v174 — Dashboard: Kaizen + Daily/Weekly/Monthly cards and selectable task graph only. */
+#departmentWorkspace .qd-dashboard .qd-four-metrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px;overflow:visible}
+#departmentWorkspace .qd-dashboard .qd-four-metrics .metric{border:1px solid var(--line)!important;border-radius:16px!important;min-height:112px;padding:16px!important;background:var(--panel)}
+#departmentWorkspace .qd-task-analytics{min-width:0;overflow:hidden}
+#departmentWorkspace .qd-task-analytics .panel-head{align-items:end;gap:16px;flex-wrap:wrap}
+#departmentWorkspace .qd-chart-filters{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-left:auto}
+#departmentWorkspace .qd-chart-filters label{display:grid;gap:5px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+#departmentWorkspace .qd-chart-filters select{min-width:150px;max-width:260px;height:38px}
+#departmentWorkspace .qd-chart-summary{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:8px 0 14px;font-size:11px;color:var(--muted)}
+#departmentWorkspace .qd-chart-summary span{display:flex;align-items:center;gap:6px}
+#departmentWorkspace .qd-chart-summary i{width:9px;height:9px;border-radius:50%;display:inline-block}
+#departmentWorkspace .qd-chart-summary .done,#departmentWorkspace .qd-task-chart-bar .done{background:#2f9d62}
+#departmentWorkspace .qd-chart-summary .progress,#departmentWorkspace .qd-task-chart-bar .progress{background:#e0a13b}
+#departmentWorkspace .qd-chart-summary .pending,#departmentWorkspace .qd-task-chart-bar .pending{background:#d65b67}
+#departmentWorkspace .qd-task-chart{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(42px,1fr);gap:8px;align-items:end;min-height:250px;padding:18px 4px 2px;overflow-x:auto;border-top:1px solid var(--line)}
+#departmentWorkspace .qd-task-chart-col{height:215px;display:grid;grid-template-rows:1fr auto auto;align-items:end;gap:5px;min-width:42px;text-align:center}
+#departmentWorkspace .qd-task-chart-bar{height:165px;width:min(28px,70%);margin:0 auto;display:flex;flex-direction:column-reverse;justify-content:flex-start;border-radius:8px 8px 3px 3px;background:#edf1f6;overflow:hidden}
+#departmentWorkspace .qd-task-chart-bar i{display:block;width:100%;min-height:0;transition:height .2s ease}
+#departmentWorkspace .qd-task-chart-col>b{font-size:10px;color:var(--ink);white-space:nowrap}
+#departmentWorkspace .qd-task-chart-col>span{font-size:9px;color:var(--muted);white-space:nowrap}
+@media(max-width:1180px){#departmentWorkspace .qd-dashboard .qd-four-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:680px){#departmentWorkspace .qd-dashboard .qd-four-metrics{grid-template-columns:1fr!important}#departmentWorkspace .qd-chart-filters{width:100%;margin-left:0}#departmentWorkspace .qd-chart-filters label{flex:1 1 140px}#departmentWorkspace .qd-chart-filters select{width:100%;max-width:none;min-width:0}#departmentWorkspace .qd-task-chart{grid-auto-columns:48px}}
+
+/* v177 — Quality dashboard only: remove hero and fit desktop dashboard in one viewport. */
+@media (min-width:981px){
+  #departmentWorkspace.q-dashboard-page .q-scroll{
+    overflow:hidden;
+    padding:14px 24px 16px;
+  }
+  #departmentWorkspace.q-dashboard-page #qRecordArea{
+    height:100%;
+    min-height:0;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    align-content:start;
+  }
+  #departmentWorkspace.q-dashboard-page .quality-person{
+    margin-bottom:8px;
+    min-height:24px;
+    align-items:center;
+  }
+  #departmentWorkspace.q-dashboard-page .quality-person>span{
+    padding-bottom:0;
+  }
+  #departmentWorkspace.q-dashboard-page #qFormHost{
+    height:100%;
+    min-height:0;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-dashboard{
+    height:100%;
+    min-height:0;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr);
+    gap:10px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-dashboard .qd-four-metrics{
+    gap:10px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-dashboard .qd-four-metrics .metric{
+    min-height:82px;
+    padding:12px 14px!important;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-dashboard .qd-four-metrics .metric strong{
+    font-size:26px;
+    margin-top:6px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-task-analytics{
+    min-height:0;
+    height:100%;
+    padding:14px 16px;
+    display:grid;
+    grid-template-rows:auto auto minmax(0,1fr);
+  }
+  #departmentWorkspace.q-dashboard-page .qd-task-analytics .panel-head{
+    margin-bottom:4px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-task-analytics .panel-head h3{
+    margin:3px 0 0;
+    font-size:16px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-chart-filters select{
+    height:34px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-chart-summary{
+    margin:4px 0 6px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-task-chart{
+    min-height:0;
+    height:100%;
+    padding:8px 4px 0;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-col{
+    height:100%;
+    min-height:150px;
+    max-height:220px;
+  }
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-bar{
+    height:calc(100% - 42px);
+    min-height:100px;
+    max-height:165px;
+  }
+}
+
+.q-weekly-stack{display:grid;gap:18px}.q-review-filter{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:16px}.q-review-filter label{display:grid;gap:6px;font-size:11px;min-width:130px}.q-review-filter>span{font-size:11px;color:var(--muted)}#departmentWorkspace .kpi-filter-panel.q-review-filter{padding:12px;margin:0 0 16px}#departmentWorkspace .kpi101-card{min-width:0}#departmentWorkspace .kpi101-card textarea{min-height:65px}#departmentWorkspace .kpi101-card form{display:grid;gap:9px}#departmentWorkspace .kpi101-card form label{display:grid;gap:5px;font-size:11px}#departmentWorkspace .kpi101-card input,#departmentWorkspace .kpi101-card select{min-width:0;width:100%}#departmentWorkspace .kpi101-grid{margin-bottom:18px}@media(max-width:600px){.q-review-filter label{min-width:0;flex:1 1 120px}#departmentWorkspace .kpi101-grid{grid-template-columns:1fr!important}}
+
+/* Weekly Report is a report workspace, visually separate from Daily Task cards. */
+#departmentWorkspace .q-weekly-command{display:grid;grid-template-columns:minmax(0,1fr) 190px 210px;gap:18px;align-items:end;padding:22px 24px;border:1px solid #c9dbef;border-radius:18px;background:linear-gradient(135deg,#f8fbff 0%,#eaf3ff 100%);box-shadow:0 8px 26px rgba(22,75,126,.07)}
+#departmentWorkspace .q-weekly-command h2{font-size:24px;letter-spacing:-.025em;margin:4px 0 5px}
+#departmentWorkspace .q-weekly-command p{font-size:11px;line-height:1.5;color:var(--muted);margin:0}
+#departmentWorkspace .q-weekly-command label{display:grid;gap:6px;font-size:8px;font-weight:850;letter-spacing:.1em;color:#58718d}
+#departmentWorkspace .q-weekly-command input{height:38px;background:#fff}
+#departmentWorkspace .q-week-range{display:grid;gap:6px;padding:8px 12px;border-left:1px solid #bfd4eb}
+#departmentWorkspace .q-week-range span{font-size:8px;font-weight:850;letter-spacing:.1em;color:#58718d}
+#departmentWorkspace .q-week-range strong{font-size:12px;color:#174f87}
+#departmentWorkspace .q-weekly-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+#departmentWorkspace .q-weekly-overview article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;align-items:center;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+#departmentWorkspace .q-weekly-overview span{font-size:8px;font-weight:850;letter-spacing:.1em;color:var(--muted)}
+#departmentWorkspace .q-weekly-overview strong{grid-row:1/3;grid-column:2;font-size:20px;color:#1f609f}
+#departmentWorkspace .q-weekly-overview small{font-size:9px;color:var(--muted)}
+#departmentWorkspace .q-weekly-tabs{display:flex;gap:6px;padding:5px;margin-bottom:12px;border:1px solid var(--line);border-radius:12px;background:#e9eef3}
+#departmentWorkspace .q-weekly-tabs button{flex:1;min-height:38px;border:0;border-radius:8px;background:transparent;color:#667687;font-size:11px;font-weight:800;cursor:pointer}
+#departmentWorkspace .q-weekly-tabs button.active{background:#fff;color:#174f87;box-shadow:0 3px 10px rgba(20,65,107,.1)}
+#departmentWorkspace .q-weekly-report-panel[hidden]{display:none!important}
+#departmentWorkspace .q-weekly-report-panel{height:auto;padding:0;overflow:hidden}
+#departmentWorkspace .q-weekly-panel-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:17px 20px;border-bottom:1px solid var(--line);background:#f7f9fb}
+#departmentWorkspace .q-weekly-panel-head h3{font-size:17px;margin:4px 0}
+#departmentWorkspace .q-weekly-panel-head p{font-size:10px;color:var(--muted);margin:0}
+#departmentWorkspace .q-weekly-panel-head>b{font-size:10px;padding:7px 10px;border-radius:99px;background:#e6f1fd;color:#225b91;white-space:nowrap}
+#departmentWorkspace .q-weekly-panel-grid{display:grid;grid-template-columns:minmax(320px,.85fr) minmax(340px,1.15fr);gap:0}
+#departmentWorkspace .q-weekly-panel-grid>form{display:grid;align-content:start;gap:12px;padding:20px;border-right:1px solid var(--line)}
+#departmentWorkspace .q-weekly-panel-grid .q-fields{gap:12px}
+#departmentWorkspace .q-weekly-panel-grid textarea{min-height:74px}
+#departmentWorkspace .q-weekly-history{min-width:0;padding:20px;background:#fbfcfd}
+#departmentWorkspace .q-weekly-history>.kicker{display:block;margin-bottom:8px}
+#departmentWorkspace .q-weekly-history .tc-entry{padding:11px 0}
+#departmentWorkspace .q-weekly-history .empty-state{padding:24px 15px;background:#fff}
+@media(max-width:900px){#departmentWorkspace .q-weekly-command{grid-template-columns:minmax(0,1fr) 180px}#departmentWorkspace .q-week-range{grid-column:1/-1;border-left:0;border-top:1px solid #bfd4eb;padding:10px 0 0}#departmentWorkspace .q-weekly-panel-grid{grid-template-columns:1fr}#departmentWorkspace .q-weekly-panel-grid>form{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:650px){#departmentWorkspace .q-weekly-command{grid-template-columns:1fr;padding:18px}#departmentWorkspace .q-weekly-overview{grid-template-columns:1fr}#departmentWorkspace .q-weekly-tabs{overflow-x:auto}#departmentWorkspace .q-weekly-tabs button{min-width:125px}#departmentWorkspace .q-weekly-panel-head{align-items:flex-start;flex-direction:column}#departmentWorkspace .q-weekly-panel-grid>form,#departmentWorkspace .q-weekly-history{padding:16px}}
+
+/* Quality KPI uses the same report card, filter and metric language as R&D. */
+#departmentWorkspace .q-rnd-kpi-filter{grid-template-columns:2fr 1fr 1fr!important;padding:14px!important;margin-bottom:14px!important}
+#departmentWorkspace .q-rnd-kpi-card{height:auto;padding:20px!important}
+#departmentWorkspace .q-rnd-kpi-card .kpi-report-head{position:relative}
+#departmentWorkspace .q-kpi-save-notice{margin-left:auto;font-size:10px;font-weight:750;color:#1c7b49}
+#departmentWorkspace .q-quality-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#departmentWorkspace .q-quality-kpi-grid article{position:relative;min-width:0;border-top:3px solid #d85a5e}
+#departmentWorkspace .q-quality-kpi-grid article.q-kpi-pass{border-top-color:#24a368}
+#departmentWorkspace .q-quality-kpi-grid article>strong{color:#bd3d43;overflow-wrap:anywhere}
+#departmentWorkspace .q-quality-kpi-grid article.q-kpi-pass>strong{color:#15834b}
+#departmentWorkspace .q-quality-kpi-grid article>small{display:block;line-height:1.45;margin-top:4px}
+#departmentWorkspace .q-kpi-update{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+#departmentWorkspace .q-kpi-update summary{cursor:pointer;color:#1b5f9e;font-size:9px;font-weight:850;list-style-position:inside}
+#departmentWorkspace .q-kpi-update form{display:grid;gap:7px;margin-top:9px}
+#departmentWorkspace .q-kpi-update label{display:grid;gap:4px;font-size:8px;font-weight:750;color:var(--muted)}
+#departmentWorkspace .q-kpi-update input,#departmentWorkspace .q-kpi-update select{height:31px;min-height:31px;padding:5px 7px;font-size:10px}
+#departmentWorkspace .q-kpi-update textarea{height:48px;min-height:48px;padding:6px 7px;font-size:10px}
+#departmentWorkspace .q-kpi-update button{min-height:29px}
+#departmentWorkspace .q-kpi-update [role=status]{font-size:8px;color:var(--muted)}
+@media(max-width:1100px){#departmentWorkspace .q-quality-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){#departmentWorkspace .q-rnd-kpi-filter{grid-template-columns:1fr!important}#departmentWorkspace .q-quality-kpi-grid{grid-template-columns:1fr}#departmentWorkspace .q-rnd-kpi-card .kpi-report-head{align-items:flex-start}#departmentWorkspace .q-kpi-save-notice{position:absolute;right:0;bottom:-12px}}
+
+/* R&D-style Quality KPI filters: member, period, month, week and visible date range. */
+#departmentWorkspace .q-rnd-kpi-filter{grid-template-columns:minmax(150px,1.35fr) minmax(105px,.75fr) minmax(135px,.9fr) minmax(95px,.65fr) minmax(165px,1fr)!important;align-items:center!important}
+#departmentWorkspace .q-rnd-kpi-filter>label{min-width:0!important;margin:0!important}
+#departmentWorkspace .q-rnd-kpi-filter input,#departmentWorkspace .q-rnd-kpi-filter select{width:100%;height:38px}
+#departmentWorkspace .q-kpi-range{min-width:0;border-left:1px solid var(--line);padding-left:12px;display:grid;gap:5px}
+#departmentWorkspace .q-kpi-range>span{font-size:8px;font-weight:900;letter-spacing:.09em;color:#71869a}
+#departmentWorkspace .q-kpi-range>strong{font-size:10px;color:var(--ink);white-space:nowrap}
+@media(max-width:1050px){#departmentWorkspace .q-rnd-kpi-filter{grid-template-columns:repeat(4,minmax(0,1fr))!important}#departmentWorkspace .q-kpi-range{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:8px 0 0}}
+@media(max-width:700px){#departmentWorkspace .q-rnd-kpi-filter{grid-template-columns:1fr 1fr!important}#departmentWorkspace .q-kpi-range{grid-column:1/-1}}
+
+/* v141: Quality KPI report uses the same visual structure as the R&D KPI report. */
+#departmentWorkspace .q-rnd-kpi-filter-exact{
+  display:grid!important;
+  grid-template-columns:2fr 1fr 1fr!important;
+  gap:12px!important;
+  padding:14px!important;
+  margin:0 0 14px!important;
+  align-items:end!important;
+}
+#departmentWorkspace .q-rnd-kpi-filter-exact label{display:block!important;min-width:0!important;margin:0!important}
+#departmentWorkspace .q-rnd-kpi-filter-exact label>span{display:block;font-size:8px;font-weight:900;letter-spacing:.09em;color:#71869a;margin-bottom:6px}
+#departmentWorkspace .q-rnd-kpi-filter-exact select{width:100%;height:38px;min-height:38px}
+#departmentWorkspace .q-rnd-kpi-card-exact{padding:20px!important;height:auto!important}
+#departmentWorkspace .q-rnd-kpi-card-exact .kpi-report-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+#departmentWorkspace .q-rnd-kpi-card-exact .q-kpi-save-notice{margin-left:auto;color:#1c7b49;font-size:9px;font-weight:750}
+#departmentWorkspace .q-rnd-kpi-grid-exact{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+#departmentWorkspace .q-rnd-kpi-grid-exact article{border:1px solid #dfe8f0!important;border-top:1px solid #dfe8f0!important;border-radius:14px!important;padding:14px!important;background:#fff!important;min-width:0}
+#departmentWorkspace .q-rnd-kpi-grid-exact article>span{display:block;min-height:22px;font-size:8px;font-weight:900;color:#70859a}
+#departmentWorkspace .q-rnd-kpi-grid-exact article>strong{display:block;font-size:25px;margin:6px 0;color:var(--ink)!important;overflow-wrap:anywhere}
+#departmentWorkspace .q-rnd-kpi-grid-exact article>small{display:block;font-size:8px;color:#7d90a2;line-height:1.45;margin-top:2px}
+#departmentWorkspace .q-rnd-kpi-detail{min-height:24px}
+#departmentWorkspace .q-rnd-kpi-card-exact .q-kpi-update{margin-top:9px;border-top:1px solid #e4ebf1;padding-top:8px}
+#departmentWorkspace .q-rnd-kpi-card-exact .q-kpi-update summary{font-size:8px;font-weight:800;color:#0f65ae;cursor:pointer}
+#departmentWorkspace .q-rnd-kpi-card-exact .q-kpi-update form{display:grid;gap:7px;margin-top:8px}
+#departmentWorkspace .q-rnd-kpi-card-exact .q-kpi-update label{display:grid;gap:4px;font-size:8px;color:#7d90a2}
+#departmentWorkspace .q-rnd-kpi-card-exact .q-kpi-update textarea{min-height:48px}
+@media(max-width:900px){
+  #departmentWorkspace .q-rnd-kpi-grid-exact{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #departmentWorkspace .q-rnd-kpi-filter-exact{grid-template-columns:1fr!important}
+}
+@media(max-width:600px){#departmentWorkspace .q-rnd-kpi-grid-exact{grid-template-columns:1fr!important}}
+
+/* v150 weekly department board: one independent Firebase-backed card per department */
+#departmentWorkspace .q-department-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;background:#f7f9fc}
+#departmentWorkspace .q-department-card{min-width:0;display:grid;gap:11px;padding:15px;border:1px solid #d9e3ee;border-top:4px solid #d99a28;border-radius:14px;background:#fff;box-shadow:0 5px 16px rgba(27,65,101,.05)}
+#departmentWorkspace .q-department-card.completed{border-top-color:#2f9a67}
+#departmentWorkspace .q-department-card-head{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;padding-bottom:9px;border-bottom:1px solid #edf1f5}
+#departmentWorkspace .q-department-avatar{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#e7f1fb;color:#155790;font-size:15px;font-weight:900}
+#departmentWorkspace .q-department-card-head strong{display:block;font-size:12px;color:#203e5b}
+#departmentWorkspace .q-department-card-head small{display:block;margin-top:2px;font-size:8px;color:#8797a7}
+#departmentWorkspace .q-department-state{padding:5px 8px;border-radius:999px;background:#fff4df;color:#956113;font-size:7px;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+#departmentWorkspace .q-department-card.completed .q-department-state{background:#e8f7ef;color:#23734d}
+#departmentWorkspace .q-department-card>label{display:grid;gap:5px;font-size:8px;font-weight:850;letter-spacing:.06em;color:#64788d}
+#departmentWorkspace .q-department-card select,#departmentWorkspace .q-department-card textarea{width:100%;min-width:0;background:#fff}
+#departmentWorkspace .q-department-card textarea{min-height:68px;resize:vertical}
+#departmentWorkspace .q-department-save{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:auto}
+#departmentWorkspace .q-department-save>span{min-width:0;font-size:8px;color:#6e8194}
+#departmentWorkspace .q-department-save .primary-btn{min-height:34px;padding:0 12px;white-space:nowrap}
+@media(max-width:900px){#departmentWorkspace .q-department-board{grid-template-columns:1fr}}
+@media(max-width:520px){#departmentWorkspace .q-department-board{padding:10px}.q-department-card-head{grid-template-columns:34px minmax(0,1fr)!important}.q-department-state{grid-column:2;justify-self:start}.q-department-save{align-items:stretch;flex-direction:column}.q-department-save .primary-btn{width:100%}}
+#departmentWorkspace .q-weekly-head-actions{display:grid;grid-template-columns:auto auto;align-items:center;justify-items:end;gap:7px 9px;min-width:190px}
+#departmentWorkspace .q-weekly-head-actions>b{font-size:10px;padding:7px 10px;border-radius:99px;background:#e6f1fd;color:#225b91;white-space:nowrap}
+#departmentWorkspace .q-weekly-head-actions .q-all-complete{min-height:31px;padding:0 11px;font-size:8px;font-weight:900;letter-spacing:.04em;white-space:nowrap}
+#departmentWorkspace .q-weekly-head-actions>[role=status]{grid-column:1/-1;min-height:12px;max-width:250px;text-align:right;font-size:8px;color:#65788c}
+@media(max-width:650px){#departmentWorkspace .q-weekly-head-actions{width:100%;grid-template-columns:1fr auto;justify-items:start}#departmentWorkspace .q-weekly-head-actions>[role=status]{text-align:left}}
+/* v154 Training is a single KPI record card, not a department completion board. */
+#departmentWorkspace .q-training-record-card{background:#fff;border:1px solid #dce5ef;border-radius:14px;margin:18px;overflow:hidden;box-shadow:0 8px 24px rgba(25,54,92,.06)}
+#departmentWorkspace .q-training-record-grid>form{border-right:1px solid var(--line);padding:0}
+#departmentWorkspace .q-training-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #e8edf3;background:linear-gradient(180deg,#fbfdff,#f7faff)}
+#departmentWorkspace .q-training-card-head h4{margin:3px 0 0;font-size:16px}
+#departmentWorkspace .q-training-kpi-chip{display:inline-flex;align-items:center;min-height:28px;padding:5px 9px;border-radius:999px;background:#e7f6ed;color:#207044;font-size:10px;font-weight:800;letter-spacing:.04em}
+#departmentWorkspace .q-training-record-card .q-fields{padding:18px}
+#departmentWorkspace .q-training-record-card .qd-form-actions{padding:0 18px 18px}
+#departmentWorkspace .q-training-record-card input[readonly]{background:#f4f7fa;color:#31445a;font-weight:700}
+@media(max-width:900px){#departmentWorkspace .q-training-record-grid>form{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:520px){#departmentWorkspace .q-training-card-head{align-items:flex-start;flex-direction:column}#departmentWorkspace .q-training-record-card{margin:10px}}
+
+#departmentWorkspace .kpi101-card h4,#departmentWorkspace .kpi101-card p,#departmentWorkspace .kpi101-card label,#departmentWorkspace .kpi101-card small{overflow-wrap:anywhere;word-break:normal}#departmentWorkspace .kpi101-card{overflow:hidden}#departmentWorkspace .kpi104-manual-value{min-width:0}#departmentWorkspace .kpi104-manual-value input{max-width:100%}
+#departmentWorkspace .kpi105-iso-picker{display:grid;gap:10px;min-width:0}#departmentWorkspace .kpi105-iso-dropdown{border:1px solid rgba(19,48,89,.14);border-radius:14px;background:#fff;overflow:hidden}#departmentWorkspace .kpi105-iso-dropdown summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--ink)}#departmentWorkspace .kpi105-iso-dropdown summary::-webkit-details-marker{display:none}#departmentWorkspace .kpi105-iso-dropdown summary b{font-size:11px;color:var(--muted);white-space:nowrap}#departmentWorkspace .kpi105-iso-list{display:grid;gap:6px;padding:0 10px 10px;max-height:230px;overflow:auto}#departmentWorkspace .kpi105-iso-option{display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:9px;padding:9px 10px;border:1px solid rgba(19,48,89,.1);border-radius:12px;background:#fff;cursor:pointer}#departmentWorkspace .kpi105-iso-option input{position:absolute;opacity:0;pointer-events:none}#departmentWorkspace .kpi105-iso-circle{width:17px;height:17px;border-radius:50%;border:2px solid #8aa2c4;display:inline-block;position:relative;background:#fff}#departmentWorkspace .kpi105-iso-option input:checked + .kpi105-iso-circle{border-color:#2a6fd6}#departmentWorkspace .kpi105-iso-option input:checked + .kpi105-iso-circle::after{content:"";position:absolute;inset:3px;border-radius:50%;background:#2a6fd6}#departmentWorkspace .kpi105-iso-text{min-width:0;font-size:12px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}#departmentWorkspace .kpi105-iso-empty{padding:10px;font-size:12px;color:var(--muted)}#departmentWorkspace .kpi105-iso-summary{display:grid;gap:7px;padding:10px 12px;border-radius:14px;background:#f7f9fc;min-width:0}#departmentWorkspace .kpi105-iso-summary>b{font-size:12px}#departmentWorkspace .kpi105-iso-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}#departmentWorkspace .kpi105-iso-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 8px;border-radius:999px;background:#eef7f1;color:#276947;font-size:11px;font-weight:700}#departmentWorkspace .kpi105-iso-chip button{border:0;background:transparent;color:#276947;font-size:15px;line-height:1;cursor:pointer;padding:0}#departmentWorkspace .kpi105-iso-none{font-size:11px;color:var(--muted)}
+
+#departmentWorkspace .kpi106-business-target{display:inline-flex;align-items:center;max-width:100%;padding:6px 9px;border-radius:10px;background:#f1f5fb;color:#385173;font-size:11px;font-weight:800;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
+#departmentWorkspace .q-weekly-timesheet-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#departmentWorkspace .q-weekly-task-summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:14px;border:1px solid rgba(19,48,89,.12);border-radius:16px;background:#fff;min-width:0}#departmentWorkspace .q-weekly-task-summary div{min-width:0}#departmentWorkspace .q-weekly-task-summary span{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted)}#departmentWorkspace .q-weekly-task-summary strong{display:block;margin-top:4px;font-size:13px;overflow-wrap:anywhere}#departmentWorkspace .q-weekly-task-summary>b{font-size:18px;align-self:center}#departmentWorkspace .q-weekly-task-summary small{grid-column:1/-1;color:var(--muted);overflow-wrap:anywhere}#departmentWorkspace .q-inspection-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}#departmentWorkspace .q-inspection-card{padding:16px;border:1px solid rgba(19,48,89,.12);border-radius:18px;background:#fff}#departmentWorkspace .q-inspection-record{margin-bottom:10px}@media(max-width:820px){#departmentWorkspace .q-weekly-timesheet-summary,#departmentWorkspace .q-inspection-grid{grid-template-columns:1fr}}
+
+/* v172 — Weekly Report visual alignment only. No weekly/Firebase logic changes. */
+#departmentWorkspace .q-weekly-command{grid-template-columns:minmax(0,1fr) 180px minmax(190px,220px);gap:16px;align-items:end;padding:20px 22px}
+#departmentWorkspace .q-weekly-command>div:first-child{min-width:0}
+#departmentWorkspace .q-week-range{min-width:0}
+#departmentWorkspace .q-weekly-overview{gap:12px;margin:14px 0}
+#departmentWorkspace .q-weekly-overview article{min-height:72px;padding:14px 16px;align-content:center}
+#departmentWorkspace .q-weekly-tabs{gap:8px;padding:6px;margin-bottom:14px}
+#departmentWorkspace .q-weekly-tabs button{min-height:42px;padding:0 12px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.25}
+#departmentWorkspace .q-weekly-report-panel{border-radius:16px}
+#departmentWorkspace .q-weekly-panel-head{padding:18px 20px;align-items:center}
+#departmentWorkspace .q-weekly-panel-head>div{min-width:0}
+#departmentWorkspace .q-weekly-panel-head p{max-width:720px;line-height:1.5}
+#departmentWorkspace .q-weekly-head-actions{min-width:auto}
+#departmentWorkspace .q-weekly-panel-grid{grid-template-columns:minmax(360px,.9fr) minmax(0,1.1fr);align-items:stretch}
+#departmentWorkspace .q-weekly-panel-grid>form,#departmentWorkspace .q-weekly-history{min-width:0;padding:20px}
+#departmentWorkspace .q-weekly-panel-grid>form{align-content:start}
+#departmentWorkspace .q-weekly-panel-grid .q-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#departmentWorkspace .q-weekly-panel-grid .q-fields label{min-width:0}
+#departmentWorkspace .q-weekly-panel-grid .q-fields input,#departmentWorkspace .q-weekly-panel-grid .q-fields select{width:100%;min-width:0;height:42px;box-sizing:border-box}
+#departmentWorkspace .q-weekly-panel-grid .q-fields textarea{width:100%;min-width:0;box-sizing:border-box;resize:vertical}
+#departmentWorkspace .q-weekly-panel-grid .q-full{grid-column:1/-1}
+#departmentWorkspace .qd-form-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin-top:4px}
+#departmentWorkspace .qd-form-actions p{min-height:18px;margin:0;line-height:18px;overflow-wrap:anywhere}
+#departmentWorkspace .qd-form-actions .primary-btn{min-width:150px;min-height:40px;justify-self:end}
+#departmentWorkspace .q-weekly-history{overflow:hidden}
+#departmentWorkspace .q-weekly-history [data-qw-history]{display:grid;gap:10px}
+#departmentWorkspace .q-weekly-timesheet-summary{gap:12px;padding:18px}
+#departmentWorkspace .q-weekly-task-summary{min-height:86px;align-content:center}
+#departmentWorkspace .q-inspection-card,#departmentWorkspace .q-training-record-card{border:0;border-radius:0;background:transparent;padding:0}
+@media(max-width:980px){
+  #departmentWorkspace .q-weekly-command{grid-template-columns:minmax(0,1fr) 180px}
+  #departmentWorkspace .q-week-range{grid-column:1/-1;padding-top:12px;border-top:1px solid #bfd4eb;border-left:0}
+  #departmentWorkspace .q-weekly-panel-grid{grid-template-columns:1fr}
+  #departmentWorkspace .q-weekly-panel-grid>form{border-right:0;border-bottom:1px solid var(--line)}
+}
+@media(max-width:700px){
+  #departmentWorkspace .q-weekly-command{grid-template-columns:1fr;padding:18px}
+  #departmentWorkspace .q-weekly-overview{grid-template-columns:1fr}
+  #departmentWorkspace .q-weekly-tabs{overflow-x:auto;justify-content:flex-start}
+  #departmentWorkspace .q-weekly-tabs button{flex:0 0 auto;min-width:145px}
+  #departmentWorkspace .q-weekly-panel-head{align-items:flex-start;flex-direction:column}
+  #departmentWorkspace .q-weekly-panel-grid .q-fields{grid-template-columns:1fr}
+  #departmentWorkspace .q-weekly-panel-grid .q-full{grid-column:auto}
+  #departmentWorkspace .qd-form-actions{grid-template-columns:1fr}
+  #departmentWorkspace .qd-form-actions .primary-btn{width:100%;justify-self:stretch}
+  #departmentWorkspace .q-weekly-panel-grid>form,#departmentWorkspace .q-weekly-history{padding:16px}
+  #departmentWorkspace .q-weekly-timesheet-summary{grid-template-columns:1fr;padding:16px}
+}
+
+/* v173 — saved Inspection Register filters only */
+#departmentWorkspace .q-inspection-filters{display:grid;grid-template-columns:minmax(130px,.9fr) minmax(140px,1fr) minmax(135px,.9fr) minmax(120px,.8fr) 86px;gap:8px;align-items:end;margin:10px 0 14px;padding:10px;border:1px solid rgba(19,48,89,.1);border-radius:14px;background:#fff}
+#departmentWorkspace .q-inspection-filters label{display:grid;gap:5px;min-width:0;font-size:10px;font-weight:800;color:var(--muted)}
+#departmentWorkspace .q-inspection-filters input,#departmentWorkspace .q-inspection-filters select,#departmentWorkspace .q-inspection-filters button{width:100%;min-width:0;height:38px;box-sizing:border-box}
+@media(max-width:1050px){#departmentWorkspace .q-inspection-filters{grid-template-columns:repeat(2,minmax(0,1fr))}#departmentWorkspace .q-inspection-filters button{grid-column:1/-1}}
+@media(max-width:560px){#departmentWorkspace .q-inspection-filters{grid-template-columns:1fr}}
+
+/* v178 — inspection saved-record filter Clear button alignment only */
+#departmentWorkspace .q-inspection-filters input,
+#departmentWorkspace .q-inspection-filters select,
+#departmentWorkspace .q-inspection-filters > .ghost-btn{
+  height:42px;
+  min-height:42px;
+  box-sizing:border-box;
+}
+#departmentWorkspace .q-inspection-filters > .ghost-btn{
+  align-self:end;
+  margin:0;
+  transform:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 14px;
+}
+#departmentWorkspace .q-inspection-filters > .ghost-btn:hover{
+  transform:none;
+}
+/* v179 — compact X clear control for inspection filters only */
+#departmentWorkspace .q-inspection-filters .q-inspection-clear-x{width:44px;min-width:44px;padding:0;font-size:24px;line-height:1;font-weight:700;display:inline-grid;place-items:center;align-self:end}
+#departmentWorkspace .q-training-row-actions{display:flex;align-items:center;gap:8px;margin-top:10px}#departmentWorkspace .q-training-delete-x{width:34px;min-width:34px;height:34px;padding:0;display:inline-grid;place-items:center;font-size:20px;line-height:1}
+
+.quality-workspace{min-height:100dvh;background:var(--bg);padding:24px 18px;color:var(--ink)}.quality-workspace[hidden]{display:none!important}.quality-inner{max-width:1100px;margin:auto}.quality-nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.quality-nav button{font-size:12px;min-height:38px}.quality-nav .q-active{background:var(--dark);color:#fff}.quality-person{display:flex;align-items:end;gap:18px;margin-bottom:18px}.quality-person label{display:grid;gap:6px;font-size:12px;font-weight:600;width:min(320px,100%)}.quality-person>span{font-size:12px;color:var(--muted);padding-bottom:10px}.q-fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}.q-full{grid-column:1/-1}.q-check{display:flex!important;align-items:center;gap:8px!important}.q-check input{width:18px;height:18px}.q-status{display:inline-block;border-radius:20px;padding:4px 8px}.q-status.done{background:#def3e5;color:#21633c}.q-status.open{background:#fff0d2;color:#885800}#qSummary{font-size:12px;color:var(--muted)}@media(max-width:600px){.q-fields{grid-template-columns:1fr}.quality-person{align-items:start;flex-direction:column;gap:5px}.quality-nav{gap:6px}.quality-nav button{font-size:11px;padding:8px}.quality-workspace .panel-head{flex-wrap:wrap;gap:8px}}
+.quality-workspace{padding:0!important;height:100dvh;min-height:0;overflow:hidden}
+.quality-shell{height:100%;display:grid;grid-template-columns:240px minmax(0,1fr);transition:grid-template-columns .2s ease}
+#departmentWorkspace .q-sidebar{position:relative!important;inset:auto!important;width:240px!important;height:100%;min-height:0;overflow:hidden;transform:none!important;opacity:1!important;padding:24px 18px;display:flex;flex-direction:column;z-index:1002}
+#departmentWorkspace .q-sidebar nav{display:grid;gap:5px}.q-sidebar .nav-btn{width:100%;text-align:left;white-space:normal;line-height:1.4;min-height:44px}.q-sidebar .nav-btn b{font-size:12px;font-weight:600}.q-sidebar .brand{padding-right:24px!important;flex-shrink:0}.q-sidebar .brand-copy strong{font-size:13px}.q-sidebar .brand-copy small{font-size:8px}.q-sidebar .side-note{margin-top:auto}.q-sidebar .q-departments{margin-top:16px}
+#departmentWorkspace .q-main{min-width:0;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;padding:0!important}
+#departmentWorkspace .topbar{position:relative!important;flex-shrink:0;min-height:80px;padding:16px 28px;margin:0;display:flex;align-items:center;border-bottom:1px solid var(--line)}
+#departmentWorkspace .topbar h1{font-size:26px;margin:0;line-height:1.2}.q-header-label{margin-left:auto;font-size:10px;color:var(--muted);letter-spacing:.1em;white-space:nowrap}
+.q-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;padding:24px 28px 36px;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#b5c9e0 transparent}.q-scroll::-webkit-scrollbar,.q-sidebar::-webkit-scrollbar{width:7px}.q-scroll::-webkit-scrollbar-thumb,.q-sidebar::-webkit-scrollbar-thumb{background:#b5c9e0;border-radius:8px}
+.q-collapse,.q-close-nav,.q-open-nav{border:1px solid var(--line);border-radius:7px;min-width:30px;height:30px;display:grid;place-items:center;cursor:pointer}.q-collapse{position:absolute;right:0;top:4px;background:transparent;color:#dceaff}.q-close-nav,.q-open-nav{display:none}
+.quality-workspace.q-collapsed .quality-shell{grid-template-columns:72px minmax(0,1fr)}#departmentWorkspace.q-collapsed .q-sidebar{width:72px!important;padding:24px 8px}.q-collapsed .q-sidebar .brand-copy,.q-collapsed .q-sidebar .brand-mark,.q-collapsed .q-sidebar .nav-btn b,.q-collapsed .q-sidebar .side-note{display:none}.q-collapsed .q-sidebar .brand{min-height:44px}.q-collapsed .q-sidebar .q-collapse{position:static;transform:rotate(180deg)}.q-collapsed .q-sidebar .nav-btn{justify-content:center;padding:12px 6px}.q-collapsed .q-sidebar .nav-btn span{margin:0}
+#qTimeHost>[hidden],#qRecordArea[hidden],#qTimeHost[hidden],.q-backdrop[hidden]{display:none!important}#qTimeHost .production-workspace{padding:0;min-height:0;background:transparent}#qTimeHost .production-inner{max-width:none}#qTimeHost .production-header{display:none}
+.q-backdrop{position:fixed;inset:0;background:#071d38aa;border:0;z-index:1001;backdrop-filter:blur(2px)}
+@media(max-width:980px){.quality-shell,.quality-workspace.q-collapsed .quality-shell{grid-template-columns:minmax(0,1fr)}#departmentWorkspace .q-sidebar,#departmentWorkspace.q-collapsed .q-sidebar{position:fixed!important;top:0!important;bottom:0!important;left:0!important;width:240px!important;padding:24px 18px;transform:translateX(-100%)!important;transition:transform .2s ease}#departmentWorkspace .q-sidebar.open{transform:translateX(0)!important}.q-collapsed .q-sidebar .brand-copy,.q-collapsed .q-sidebar .brand-mark,.q-collapsed .q-sidebar .nav-btn b,.q-collapsed .q-sidebar .side-note{display:revert}.q-collapsed .q-sidebar .nav-btn{justify-content:flex-start;padding:12px 14px}.q-collapsed .q-sidebar .nav-btn span{margin-right:10px}.q-collapse{display:none}.q-close-nav{display:grid;position:absolute;right:0;top:3px;background:transparent;color:white}.q-open-nav{display:grid;flex-shrink:0;width:36px;height:36px;background:var(--paper);color:var(--ink);margin-right:10px}#departmentWorkspace .topbar{padding:14px 18px;min-height:74px}.q-scroll{padding:18px}.q-header-label{display:none}}
+@media(max-width:600px){#departmentWorkspace .topbar{padding:12px;min-height:66px}#departmentWorkspace .topbar h1{font-size:19px}.q-scroll{padding:14px 12px 24px}.q-sidebar .nav-btn{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.quality-shell,#departmentWorkspace .q-sidebar{transition:none}.q-scroll{scroll-behavior:auto}}
+.q-profile{display:flex;align-items:center;gap:12px;margin-left:auto}.q-profile strong,.q-signed-in{font-size:12px}.q-profile button{font-size:11px;min-height:34px}.quality-person .q-signed-in{padding-bottom:10px}.q-signed-in strong{margin-left:5px}#qualityLoginGate[hidden]{display:none!important}@media(max-width:600px){.q-profile{gap:6px}.q-profile strong{font-size:10px}.q-profile button{padding:5px 8px}}
+.quality-workspace.q-collapsed .quality-shell{grid-template-columns:0 minmax(0,1fr)}#departmentWorkspace.q-collapsed .q-sidebar{width:240px!important;padding:26px 18px;transform:translateX(-100%)!important;opacity:0!important;pointer-events:none}#departmentWorkspace .q-sidebar{padding-top:26px;padding-bottom:26px}.q-sidebar .nav-btn b{font-weight:inherit;font-size:inherit}.q-sidebar .nav-btn{padding:13px 12px}.q-reopen{display:none;position:fixed;left:4px;top:14px;z-index:1003;width:24px;height:30px;border:1px solid #ceddf0;border-radius:6px;background:#0f5599;color:white;cursor:pointer}.q-collapsed .q-reopen{display:grid;place-items:center}#departmentWorkspace .topbar .top-actions{margin-left:auto}#departmentWorkspace .profile-quick-panel,#departmentWorkspace .notification-panel{z-index:1100}#qSavedPanel[hidden]{display:none!important}
+@media(max-width:980px){.quality-workspace.q-collapsed .quality-shell{grid-template-columns:minmax(0,1fr)}#departmentWorkspace.q-collapsed .q-sidebar{opacity:1!important;pointer-events:auto}#departmentWorkspace.q-collapsed .q-sidebar.open{transform:translateX(0)!important}.q-reopen,.q-collapsed .q-reopen{display:none}.q-sidebar .nav-btn b{font-size:inherit}}
+/* Quality-only navigation: fixed panel, R&D controls, content-only scrolling. */
+#departmentWorkspace .q-sidebar{overflow:hidden!important;overscroll-behavior:none}
+#departmentWorkspace .q-sidebar nav{min-height:0;flex-shrink:1}
+#departmentWorkspace .q-collapse{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:21px;min-width:21px;height:21px;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:6px;background:rgba(255,255,255,.06);color:#dceaff;font-size:14px;font-weight:900}
+#departmentWorkspace .q-reopen{left:0;top:50%;transform:translateY(-50%);width:30px;height:62px;padding:0;margin:0;border:1px solid #b9d0e7;border-left:0;border-radius:0 13px 13px 0;background:#0f5599;color:#fff;box-shadow:5px 0 18px rgba(12,60,105,.25);font-size:22px;line-height:1;font-weight:900}
+@media(max-height:760px){#departmentWorkspace .q-sidebar,#departmentWorkspace.q-collapsed .q-sidebar{padding:16px 18px}#departmentWorkspace .q-sidebar .brand{padding-bottom:14px}#departmentWorkspace .q-sidebar nav{margin-top:14px;gap:3px}#departmentWorkspace .q-sidebar .nav-btn{min-height:32px;padding:8px 10px;font-size:11px}#departmentWorkspace .q-sidebar .side-note{display:none}#departmentWorkspace .q-sidebar .q-departments{margin-top:auto}}
+@media(max-height:500px){#departmentWorkspace .q-sidebar,#departmentWorkspace.q-collapsed .q-sidebar{padding:8px 14px}#departmentWorkspace .q-sidebar .brand{padding-bottom:8px;min-height:40px}#departmentWorkspace .q-sidebar nav{margin-top:8px;gap:1px}#departmentWorkspace .q-sidebar .nav-btn{min-height:24px;padding:4px 8px;font-size:10px;line-height:1.15}#departmentWorkspace .q-sidebar .brand-mark{width:30px;height:30px}#departmentWorkspace .q-sidebar .brand-copy small{display:none}}
+@media(max-width:980px){#departmentWorkspace .q-sidebar,#departmentWorkspace.q-collapsed .q-sidebar{width:min(290px,85vw)!important;max-width:85vw}#departmentWorkspace .q-close-nav{display:grid;place-items:center;min-width:36px;width:36px;min-height:36px;height:36px;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:rgba(255,255,255,.05);color:#dbe8f7;font-size:18px}#departmentWorkspace .q-open-nav{width:40px;min-width:40px;height:40px;min-height:40px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:22px}}
+/* The confirmed 14-item Quality menu stays fixed without scrolling. */
+#departmentWorkspace .q-sidebar .side-note{display:none}#departmentWorkspace .q-sidebar{padding:16px 12px!important}#departmentWorkspace .q-sidebar .brand{padding-bottom:16px}#departmentWorkspace .q-sidebar nav{margin-top:12px;gap:2px}#departmentWorkspace .q-sidebar .nav-btn{font-size:11px;line-height:1.2;min-height:30px;padding:7px 8px;gap:8px}#departmentWorkspace .q-sidebar .q-departments{margin-top:auto}#departmentWorkspace .q-sidebar .nav-btn span{flex-shrink:0}
+.q-overview-metrics{margin-top:0}.q-overview-list{display:grid;gap:0}.q-overview-row{display:grid;grid-template-columns:minmax(0,1fr) auto 18px;gap:14px;align-items:center;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);padding:15px 0}.q-overview-row strong{font-size:13px}.q-overview-row span{font-size:11px;color:var(--muted)}.q-report-filter{display:flex;gap:18px;align-items:end;margin-bottom:18px}.q-report-filter label{display:grid;gap:6px;font-size:12px}.q-report-filter>span{font-size:11px;color:var(--muted)}
+@media(max-height:650px){#departmentWorkspace .q-sidebar .brand{padding-bottom:8px}#departmentWorkspace .q-sidebar nav{margin-top:8px;gap:1px}#departmentWorkspace .q-sidebar .nav-btn{font-size:10px;min-height:25px;padding:4px 7px}#departmentWorkspace .q-sidebar .brand-copy small{display:none}}
+@media(max-height:500px){#departmentWorkspace .q-sidebar{padding:8px!important}#departmentWorkspace .q-sidebar nav{grid-template-columns:1fr 1fr;gap:3px}#departmentWorkspace .q-sidebar .nav-btn{min-height:30px;white-space:nowrap;overflow:hidden;font-size:9px;padding:5px;gap:4px}#departmentWorkspace .q-sidebar .nav-btn b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#departmentWorkspace .q-sidebar .q-departments{min-height:24px}}
+@media(max-width:600px){.q-overview-row{grid-template-columns:minmax(0,1fr) 18px;gap:6px}.q-overview-row span{grid-column:1;grid-row:2}.q-overview-row b{grid-column:2;grid-row:1/3}.q-report-filter{flex-wrap:wrap}.q-overview-metrics{grid-template-columns:1fr 1fr}}
+/* Seven-link Quality sidebar now follows R&D's standard spacing. */
+@media(min-height:651px){#departmentWorkspace .q-sidebar{padding:26px 18px!important}#departmentWorkspace .q-sidebar .brand{padding-bottom:26px}#departmentWorkspace .q-sidebar nav{margin-top:24px;gap:7px}#departmentWorkspace .q-sidebar .nav-btn{font-size:12px;line-height:1.4;min-height:44px;padding:13px 12px;gap:12px}}
+@media(max-height:500px){#departmentWorkspace .q-sidebar nav{grid-template-columns:1fr;gap:1px}#departmentWorkspace .q-sidebar .nav-btn{min-height:24px;padding:4px 8px;font-size:10px}}
+
+/* Quality Time Sheet mirrors the R&D work-log layout while keeping Quality Firebase collections. */
+#qTimeHost .qt-rnd-sheet{width:100%}
+#qTimeHost .qt-rnd-sheet>.section-toolbar{min-height:74px}
+#qTimeHost .qt-sheet-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+#qTimeHost .qt-sheet-tools .tc-person{background:var(--paper);white-space:nowrap}
+#qTimeHost #qtAddProject{min-height:36px;padding:0 13px;font-size:10px}
+#qTimeHost .tc-panel{height:auto}
+#qTimeHost .tc-panel .panel-head>span{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+@media(max-width:650px){#qTimeHost .qt-sheet-tools{width:100%;justify-content:space-between;flex-wrap:wrap}#qTimeHost #qtAddProject{flex:1}#qTimeHost .tc-top,#qTimeHost .tc-times{grid-template-columns:1fr}}
+
+/* Match Quality sidebar typography exactly to the R&D sidebar. */
+@media(min-width:981px){#departmentWorkspace .q-sidebar .nav-btn{font-size:inherit!important;line-height:normal!important;min-height:0!important;padding:13px 12px!important;gap:12px!important}#departmentWorkspace .q-sidebar .nav-btn b{font-size:inherit!important;font-weight:inherit!important}#departmentWorkspace .q-sidebar .nav-btn span{font-size:10px!important}}
+/* v169 — Quality dashboard + single-row Time Sheet only */
+#departmentWorkspace .qd-dashboard-two .qd-two-metrics{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+#departmentWorkspace .qd-dashboard-two .metric{min-height:150px}
+#departmentWorkspace .qd-dashboard-two .metric strong{font-size:clamp(28px,4vw,42px)}
+#departmentWorkspace .qd-dashboard-two .metric small{white-space:normal;line-height:1.35}
+#departmentWorkspace .qt-inline-form{display:grid;grid-template-columns:150px 140px minmax(240px,1.7fr) 110px 110px 140px minmax(180px,1.2fr) auto;gap:10px;align-items:end}
+#departmentWorkspace .qt-inline-form label{display:grid;gap:6px;min-width:0;font-size:11px;font-weight:700;color:var(--muted)}
+#departmentWorkspace .qt-inline-form input,#departmentWorkspace .qt-inline-form select{width:100%;min-width:0}
+#departmentWorkspace .qt-inline-form .qt-inline-status{grid-column:1/-1;margin:0;min-height:18px}
+#departmentWorkspace .qt-inline-form .primary-btn{min-height:42px;white-space:nowrap}
+#departmentWorkspace .qt-filters{display:grid;grid-template-columns:160px 160px minmax(220px,1fr) 160px auto;gap:10px;align-items:end;margin-bottom:14px}
+#departmentWorkspace .qt-filters label{display:grid;gap:6px;min-width:0;font-size:11px;font-weight:700;color:var(--muted)}
+#departmentWorkspace .qt-filters input,#departmentWorkspace .qt-filters select{width:100%;min-width:0}
+#departmentWorkspace .qt-entry-row{display:grid;gap:8px}
+#departmentWorkspace .qt-entry-meta{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:1200px){#departmentWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}#departmentWorkspace .qt-task-field,#departmentWorkspace .qt-remarks-field{grid-column:span 2}#departmentWorkspace .qt-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){#departmentWorkspace .qd-dashboard-two .qd-two-metrics{grid-template-columns:1fr}#departmentWorkspace .qt-inline-form,#departmentWorkspace .qt-filters{grid-template-columns:1fr}#departmentWorkspace .qt-task-field,#departmentWorkspace .qt-remarks-field{grid-column:auto}}
+
+/* v172 — Quality Time Sheet alignment only. No behavior/data changes. */
+#departmentWorkspace .qt-rnd-sheet{width:min(100%,1540px);margin:0 auto}
+#departmentWorkspace .tc-panel{overflow:visible}
+#departmentWorkspace .qt-inline-form{
+  display:grid;
+  grid-template-columns:minmax(130px,.9fr) minmax(130px,.85fr) minmax(250px,1.8fr) minmax(105px,.72fr) minmax(105px,.72fr) minmax(135px,.9fr) minmax(210px,1.45fr) minmax(108px,.68fr);
+  gap:12px;
+  align-items:end;
+  width:100%;
+}
+#departmentWorkspace .qt-inline-form label{display:grid;grid-template-rows:auto 42px;gap:7px;min-width:0;margin:0}
+#departmentWorkspace .qt-inline-form input,
+#departmentWorkspace .qt-inline-form select,
+#departmentWorkspace .qt-inline-form .primary-btn{height:42px;min-height:42px;box-sizing:border-box;margin:0}
+#departmentWorkspace .qt-inline-form .primary-btn{width:100%;align-self:end;padding:0 16px;display:inline-flex;align-items:center;justify-content:center}
+#departmentWorkspace .qt-inline-form .qt-inline-status{grid-column:1/-1;margin:0;padding-top:2px;min-height:18px;line-height:18px}
+#departmentWorkspace .qt-filters{grid-template-columns:minmax(145px,.8fr) minmax(145px,.8fr) minmax(260px,1.7fr) minmax(150px,.9fr) 110px;gap:12px;align-items:end}
+#departmentWorkspace .qt-filters label{display:grid;grid-template-rows:auto 40px;gap:7px;margin:0}
+#departmentWorkspace .qt-filters input,#departmentWorkspace .qt-filters select,#departmentWorkspace .qt-filters .ghost-btn{height:40px;box-sizing:border-box}
+#departmentWorkspace .qt-filters .ghost-btn{align-self:end;margin:0}
+#departmentWorkspace .qt-entry-row{padding:14px 16px;border-radius:14px}
+#departmentWorkspace .qt-entry-row header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+#departmentWorkspace .qt-entry-row header strong{min-width:0;overflow-wrap:anywhere}
+#departmentWorkspace .qt-entry-row header span{text-align:right;white-space:nowrap}
+#departmentWorkspace .qt-entry-meta{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+#departmentWorkspace .qt-entry-meta small{min-width:0;flex:1;overflow-wrap:anywhere}
+@media(max-width:1280px){
+  #departmentWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #departmentWorkspace .qt-task-field,#departmentWorkspace .qt-remarks-field{grid-column:span 2}
+  #departmentWorkspace .qt-inline-form .primary-btn{grid-column:4}
+  #departmentWorkspace .qt-filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:860px){
+  #departmentWorkspace .qt-inline-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #departmentWorkspace .qt-task-field,#departmentWorkspace .qt-remarks-field{grid-column:1/-1}
+  #departmentWorkspace .qt-inline-form .primary-btn{grid-column:2}
+  #departmentWorkspace .qt-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #departmentWorkspace .qt-filters .ghost-btn{width:100%}
+  #departmentWorkspace .qt-entry-row header{grid-template-columns:1fr}
+  #departmentWorkspace .qt-entry-row header span{text-align:left;white-space:normal}
+}
+@media(max-width:560px){
+  #departmentWorkspace .qt-inline-form,#departmentWorkspace .qt-filters{grid-template-columns:1fr}
+  #departmentWorkspace .qt-task-field,#departmentWorkspace .qt-remarks-field,#departmentWorkspace .qt-inline-form .primary-btn{grid-column:auto}
+  #departmentWorkspace .qt-inline-form .primary-btn{width:100%}
+}
+
+/* v173 — requested Quality Time Sheet containment + Others + dashboard visual only */
+#departmentWorkspace .tc-panel{min-width:0;overflow:hidden}
+#departmentWorkspace .qt-inline-form{grid-template-columns:minmax(120px,.85fr) minmax(120px,.8fr) minmax(260px,1.75fr) minmax(92px,.65fr) minmax(92px,.65fr) minmax(125px,.82fr) minmax(180px,1.15fr) 108px;max-width:100%;box-sizing:border-box}
+#departmentWorkspace .qt-inline-form>*{min-width:0}
+#departmentWorkspace .qt-task-controls{display:grid;grid-template-columns:1fr;gap:6px;min-width:0;height:42px}
+#departmentWorkspace .qt-task-controls:has(#qtOtherTask:not([hidden])){grid-template-columns:minmax(110px,.8fr) minmax(130px,1.2fr)}
+#departmentWorkspace .qt-task-controls select,#departmentWorkspace .qt-task-controls input{height:42px;min-width:0;width:100%;box-sizing:border-box}
+#departmentWorkspace #qtSave{width:108px;max-width:108px;min-width:108px;justify-self:end;overflow:hidden}
+#departmentWorkspace .qd-dashboard-visual{margin-top:14px;overflow:hidden}
+#departmentWorkspace .qd-dashboard-visual .panel-head{align-items:center}
+#departmentWorkspace .qd-workload-bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#departmentWorkspace .qd-workload-bars button{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:10px 12px;text-align:left;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#fff,#f7fafd);color:var(--ink);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+#departmentWorkspace .qd-workload-bars button:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(22,58,96,.08);border-color:#a9c7e5}
+#departmentWorkspace .qd-workload-bars button span{min-width:0}
+#departmentWorkspace .qd-workload-bars button b{display:block;font-size:13px}
+#departmentWorkspace .qd-workload-bars button small{display:block;margin-top:3px;color:var(--muted)}
+#departmentWorkspace .qd-workload-bars button>strong{font-size:18px;align-self:start}
+#departmentWorkspace .qd-workload-bars i{grid-column:1/-1;height:8px;border-radius:999px;background:#e6edf5;overflow:hidden}
+#departmentWorkspace .qd-workload-bars i em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2b6fbe,#4ba3e5);transition:width .3s ease}
+@media(max-width:1280px){#departmentWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}#departmentWorkspace #qtSave{grid-column:4;width:100%;max-width:none;min-width:0;justify-self:stretch}#departmentWorkspace .qd-workload-bars{grid-template-columns:1fr}}
+@media(max-width:860px){#departmentWorkspace #qtSave{grid-column:2}}
+@media(max-width:560px){#departmentWorkspace #qtSave{grid-column:auto;width:100%}}
+
+/* v174 — Weekly Time Sheet Summary keeps card layout and adds one Others aggregate card. */
+#departmentWorkspace .q-weekly-timesheet-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch}
+#departmentWorkspace .q-weekly-task-summary{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:8px 12px;align-content:start;padding:15px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+#departmentWorkspace .q-weekly-task-summary>div:first-child{min-width:0}
+#departmentWorkspace .q-weekly-task-summary span{display:block;font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+#departmentWorkspace .q-weekly-task-summary strong{display:block;margin-top:4px;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+#departmentWorkspace .q-weekly-task-summary>b{font-size:20px;white-space:nowrap}
+#departmentWorkspace .q-weekly-task-summary>small{grid-column:1/-1;color:var(--muted);line-height:1.45}
+#departmentWorkspace .q-weekly-task-summary-other{border-style:dashed;background:#fbfcfe}
+#departmentWorkspace .q-weekly-other-list{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;padding-top:4px}
+#departmentWorkspace .q-weekly-other-list span{padding:5px 8px;border-radius:999px;background:#eef4fb;color:var(--ink);font-size:10px;text-transform:none;letter-spacing:0}
+#departmentWorkspace .q-weekly-other-list.empty{font-size:11px;color:var(--muted)}
+@media(max-width:1050px){#departmentWorkspace .q-weekly-timesheet-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#departmentWorkspace .q-weekly-timesheet-summary{grid-template-columns:1fr}}

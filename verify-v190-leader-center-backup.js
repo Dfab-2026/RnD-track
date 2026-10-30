@@ -1,0 +1,11 @@
+const fs=require('fs');const assert=require('assert');
+const app=fs.readFileSync('app.js','utf8'),html=fs.readFileSync('index.html','utf8'),firebase=fs.readFileSync('firebase-cloud.js','utf8'),dept=fs.readFileSync('department-workspace.js','utf8'),quality=fs.readFileSync('quality.js','utf8'),leader=fs.readFileSync('leader-center.js','utf8'),backup=fs.readFileSync('backup-tools.js','utf8');
+assert(app.includes('window.leaderCenter?.renderCards?.()'),'leader cards not wired to gate');
+for(const x of ['All Department KPI Reports','Person-wise Time Sheet Summary','Company Analytics'])assert(leader.includes(x),'missing '+x);
+for(const x of ['loadDepartmentRecordsOnce','loadQualityRecordsOnce','loadReportDataOnce','loadMonthBackup','saveBackupHistory','loadBackupHistory','deleteMonthData'])assert(firebase.includes(x),'missing Firebase '+x);
+assert(dept.includes('dMonthlyBackup')&&dept.includes("mode:'department'"),'department monthly backup missing');
+assert(quality.includes('qMonthlyBackup')&&quality.includes("mode:'quality'"),'quality monthly backup missing');
+assert(backup.includes("CompressionStream('gzip')"),'gzip backup missing');
+assert(backup.includes('Final confirmation'),'month delete double confirmation missing');
+assert(html.includes('leader-center.css')&&html.includes('leader-center.js')&&html.includes('backup-tools.js'),'assets not loaded');
+console.log('PASS v190 leader center + compact monthly backup');

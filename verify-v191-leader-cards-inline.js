@@ -1,0 +1,11 @@
+const fs=require('fs'),assert=require('assert');
+const leader=fs.readFileSync('leader-center.js','utf8'),app=fs.readFileSync('app.js','utf8'),css=fs.readFileSync('leader-center.css','utf8');
+assert(leader.includes("document.querySelector('#departmentGateGrid')"),'leader tools not mounted in department grid');
+assert(!leader.includes("className='leader-tools-wrap'"),'separate leader tools wrapper still created');
+for(const x of ['14 · KPI CONTROL','15 · TIME CONTROL','16 · ANALYTICS']) assert(leader.includes(x),'missing inline leader card '+x);
+assert(leader.includes("grid.querySelectorAll('[data-leader-tool]').forEach(el=>el.remove())"),'leader-only card cleanup missing');
+assert(leader.includes("if(!window.adminSession?.active?.())return"),'leader cards not restricted to admin session');
+assert(app.includes("document.getElementById('departmentAdminLoginGate')?.remove()"),'admin login gate cleanup missing');
+assert(app.includes("gate.remove();showDepartmentGate()"),'temporary admin gate not destroyed after login/back');
+for(const x of ['leader-tool-kpi','leader-tool-time','leader-tool-analytics']) assert(css.includes(x),'missing premium inline card CSS '+x);
+console.log('PASS v191 inline leader cards + admin login cleanup');

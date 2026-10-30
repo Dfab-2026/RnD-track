@@ -2,7 +2,9 @@
   let root,entries=[],stop=null,session=0,connected=false,saving=false;
   const $=id=>document.getElementById('qt'+id),owner=()=>window.qualitySession.current(),key=s=>String(s||'').trim().toLowerCase();
   const TASKS=[
-    {group:'Daily',value:'daily_inspection',label:'Incoming / In-process / Final Inspection'},
+    {group:'Daily',value:'daily_incoming_inspection',label:'Incoming Inspection'},
+    {group:'Daily',value:'daily_inprocess_inspection',label:'In-Process Inspection'},
+    {group:'Daily',value:'daily_final_inspection',label:'Final Inspection'},
     {group:'Daily',value:'daily_documents',label:'ORG Document for Audit Readiness'},
     {group:'Daily',value:'daily_coordination',label:'Internal & External Coordination'},
     {group:'Daily',value:'kaizen_idea',label:'Kaizen Idea / Continuous Improvement'},
@@ -15,7 +17,8 @@
     {group:'ISO / Periodic',value:'iso_implementation',label:'ISO Process Implementation'},
     {group:'Other',value:'other',label:'Others'}
   ];
-  const taskLabel=(value,row)=>value==='other'?(String(row?.work||row?.custom_task||'Other task').trim()||'Other task'):(TASKS.find(t=>t.value===value)?.label||value||'Task');
+  const LEGACY_TASK_LABELS={daily_inspection:'Incoming / In-process / Final Inspection'};
+  const taskLabel=(value,row)=>value==='other'?(String(row?.work||row?.custom_task||'Other task').trim()||'Other task'):(TASKS.find(t=>t.value===value)?.label||LEGACY_TASK_LABELS[value]||value||'Task');
   function status(message){if($('Status'))$('Status').textContent=message}
   function monthOf(date){return String(date||today()).slice(0,7)}
   function options(){return [...new Set(TASKS.map(t=>t.group))].map(group=>`<optgroup label="${esc(group)}">${TASKS.filter(t=>t.group===group).map(t=>`<option value="${esc(t.value)}">${esc(t.label)}</option>`).join('')}</optgroup>`).join('')}

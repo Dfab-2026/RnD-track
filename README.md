@@ -98,3 +98,43 @@ Work Tracking now inherits the active month from Daily Ideas / Weekly Tasks and 
 - The reminder opens the correct department Time Sheet directly.
 - If Chrome notifications are enabled, a desktop Time Sheet reminder is also sent.
 - Reminder keys are isolated by department, user, date, and hour to prevent duplicate prompts in the same hour.
+
+## v181 — Company-wide department KPI workspaces
+
+R&D and Quality keep their existing dedicated workflows. Production, NPD, RFQ, Outsourcing, Purchase, Stores, HR & Admin, Accounts, Finance, Maintenance, and Digital Marketing now open a shared department workspace with Dashboard, Kaizen Ideas, Weekly Report, KPI Report, Time Sheet, and Settings.
+
+Department KPI definitions follow KPI-Master.pptx. New department records use the existing Firestore `app_meta` collection with a per-department `kind` namespace and server read-back verification. This keeps all departments in the same Firebase database while preventing cross-department record mixing.
+
+Production's existing project-based Time Sheet remains accessible from the Production department Time Sheet page.
+
+## v182 — Quality-reference workspaces for all non-R&D departments
+R&D remains on its dedicated workflow. Quality remains on its dedicated workflow. Production, NPD, RFQ, Outsourcing, Purchase, Stores, HR & Admin, Accounts, Finance, Maintenance and Digital Marketing now use the Quality reference structure for Dashboard, Kaizen Ideas, Weekly Report, KPI Report, Time Sheet and Settings. Each department keeps isolated Firebase records in the existing app_meta collection through the department_<key>_record namespace, with server read-back verification. The compact department encoder now persists task_type, custom_task and Kaizen benefit fields as well.
+
+## Admin name-only access (v186)
+- Department cards screen Admin uses the same name-only login-card style as existing logins.
+- Authorized all-department admins: Kabil, Suresh Kumar, Pramod Kumar.
+- Wrong names are rejected with `Wrong / Not authorized`.
+- Admin session persists until Admin Logout and remains view-only.
+- R&D and Quality keep their existing member logins.
+- Shared department member allowlists are intentionally empty until approved names are supplied; arbitrary names cannot open those departments.
+
+
+## v188
+- Quality Time Sheet Daily inspection task split into Incoming Inspection, In-Process Inspection, and Final Inspection.
+- Admin direct-dashboard bypass applies to Quality and shared departments; R&D retains its dedicated login/session flow.
+
+## v189 - All Departments Leaders + Firebase Audit
+- Kabil, Suresh Kumar and Pramod Kumar are company-level leaders for Quality and all shared non-R&D departments.
+- Leader session still bypasses department member login and opens dashboards directly.
+- Leaders can Save/Edit/Delete in Quality and shared department workspaces; R&D keeps its separate existing authorization flow.
+- Generic department records persist actor_role, actor_scope, actor_name and department_key in compact data and audit metadata.
+- Quality writes persist an audit envelope with actor, role, scope and department.
+- All affected saves still flush Firebase pending writes and verify the saved document with a server-source read-back before success.
+
+
+## v192 Leader KPI exact-source update
+- KPI Control no longer uses a separate company-average KPI renderer for shared departments.
+- Department selector renders the same KPI card fields, period keys, Firebase IDs and PDF model as each department KPI page.
+- Quality routes to its existing dedicated KPI component so its ISO/training/manual KPI logic remains single-source.
+- R&D remains on its existing separate KPI flow.
+- Time Summary and Analytics continue to read the same Quality/department Time Sheet and KPI Firebase records; no duplicate analytics collections were introduced.
