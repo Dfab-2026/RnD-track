@@ -44,3 +44,34 @@ body.leader-center-active #menuBtn{display:none!important;visibility:hidden!impo
 .month-end-cleanup-card select{min-height:42px;border:1px solid #e0aab0;border-radius:10px;background:#fff;padding:8px 10px}
 .month-end-cleanup-card>div{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}
 @media(max-width:720px){.member-admin-add,.member-admin-row{grid-template-columns:1fr}.member-admin-row .danger-member{width:42px}.member-admin-add [role=status]{grid-column:1/-1}}
+
+/* v206 · admin-only tools are inline cards 14–16, each with a distinct non-blue theme */
+.department-gate-grid .leader-tool-kpi{background:linear-gradient(145deg,#9a4b12,#d97706)!important}
+.department-gate-grid .leader-tool-time{background:linear-gradient(145deg,#176556,#2f9c79)!important}
+.department-gate-grid .leader-tool-analytics{background:linear-gradient(145deg,#62408e,#9a63c6)!important}
+/* Keep the admin profile menu floating above the grid instead of visually dropping into the HR & Admin card. */
+.department-admin-control .department-admin-menu{position:fixed!important;top:78px!important;right:max(18px,calc((100vw - min(960px,100vw - 32px))/2 + 26px))!important;z-index:1300!important}
+/* Shared interaction rhythm across Quality/shared departments and the gate cards. */
+#qualityWorkspace button,#departmentWorkspace button,.department-gate-grid button{transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease,filter .16s ease}
+#qualityWorkspace button:not(:disabled):active,#departmentWorkspace button:not(:disabled):active,.department-gate-grid button:not(:disabled):active{transform:translateY(1px) scale(.995)}
+
+/* v207 · Normal department sidebars stay visible; only leader control pages suppress navigation. */
+body.leader-center-active #sidebar,
+body.leader-center-active #sidebarReopenBtn,
+body.leader-center-active #menuBtn,
+body.leader-center-active #qualityWorkspace .q-sidebar,
+body.leader-center-active #qualityWorkspace .q-reopen,
+body.leader-center-active #departmentWorkspace .q-sidebar,
+body.leader-center-active #departmentWorkspace .q-reopen{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* v215 — leader tools remain visible for everyone but unlock only for Admin/All Departments Leader. */
+.department-gate-grid .leader-tool-card.leader-tool-locked{
+  cursor:not-allowed!important;
+  filter:saturate(.35) brightness(.98);
+  opacity:.62;
+  box-shadow:0 8px 20px rgba(20,54,91,.08);
+  transform:none!important;
+}
+.department-gate-grid .leader-tool-card.leader-tool-locked::after{content:'LOCKED';width:auto;padding:0 8px;font-size:7px;letter-spacing:.08em}
+.department-gate-grid .leader-tool-card.leader-tool-locked:hover{transform:none!important;box-shadow:0 8px 20px rgba(20,54,91,.08);filter:saturate(.35) brightness(.98)}
+.department-gate-grid .leader-tool-lock{position:absolute;right:14px;bottom:12px;font-style:normal;font-size:13px;opacity:.85}

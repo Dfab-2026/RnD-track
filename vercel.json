@@ -3,23 +3,75 @@
   "headers": [
     {
       "source": "/(.*)\\.html",
-      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
     },
     {
       "source": "/",
-      "headers": [{"key":"Cache-Control","value":"no-store, max-age=0"}]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
     },
     {
       "source": "/app.js",
-      "headers": [{"key":"Cache-Control","value":"no-cache, max-age=0, must-revalidate"}]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/firebase-cloud.js",
-      "headers": [{"key":"Cache-Control","value":"no-cache, max-age=0, must-revalidate"}]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/styles.css",
-      "headers": [{"key":"Cache-Control","value":"no-cache, max-age=0, must-revalidate"}]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/notification-sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/push-notifications.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/firebase-config.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, max-age=0, must-revalidate"
+        }
+      ]
     }
   ]
 }

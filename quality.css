@@ -149,3 +149,189 @@
 #qualityWorkspace .q-weekly-other-list.empty{font-size:11px;color:var(--muted)}
 @media(max-width:1050px){#qualityWorkspace .q-weekly-timesheet-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){#qualityWorkspace .q-weekly-timesheet-summary{grid-template-columns:1fr}}
+
+/* v210 — desktop viewport containment only. Keep long data accessible inside its own table. */
+@media (min-width:981px){
+  #qualityWorkspace.q-dashboard-page .q-scroll{
+    overflow:hidden;
+    padding:14px 24px 16px;
+  }
+  #qualityWorkspace.q-dashboard-page #qRecordArea{
+    height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);align-content:start;
+  }
+  #qualityWorkspace.q-dashboard-page .quality-person{margin-bottom:8px;min-height:24px;align-items:center}
+  #qualityWorkspace.q-dashboard-page .quality-person>span{padding-bottom:0}
+  #qualityWorkspace.q-dashboard-page #qFormHost{height:100%;min-height:0}
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px}
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics{gap:10px}
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics .metric{min-height:82px;padding:12px 14px!important}
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics .metric strong{font-size:26px;margin-top:6px}
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{min-height:0;height:100%;padding:14px 16px;display:grid;grid-template-rows:auto auto minmax(0,1fr);overflow:hidden}
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics .panel-head{margin-bottom:4px}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{min-height:0;height:100%;padding:8px 4px 0;overflow-x:auto;overflow-y:hidden}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{height:100%;min-height:145px;max-height:215px}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{height:calc(100% - 42px);min-height:96px;max-height:160px}
+
+  #qualityWorkspace.q-kaizen-page .q-scroll{overflow:hidden;padding:14px 24px 16px}
+  #qualityWorkspace.q-kaizen-page #qRecordArea{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr)}
+  #qualityWorkspace.q-kaizen-page .quality-person{margin-bottom:8px;min-height:24px;align-items:center}
+  #qualityWorkspace.q-kaizen-page .quality-person>span{padding-bottom:0}
+  #qualityWorkspace.q-kaizen-page #qFormHost{height:100%;min-height:0}
+  #qualityWorkspace.q-kaizen-page #qiRegister{height:100%;min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto}
+  #qualityWorkspace.q-kaizen-page #qiRegister .section-toolbar{min-height:58px;margin-bottom:10px;padding-bottom:10px}
+  #qualityWorkspace.q-kaizen-page #qiRegister .section-toolbar h2{font-size:22px;margin:2px 0 3px}
+  #qualityWorkspace.q-kaizen-page #qiRegister .section-toolbar p{font-size:10px;line-height:1.35}
+  #qualityWorkspace.q-kaizen-page #qiRegister .filter-line{margin-bottom:10px}
+  #qualityWorkspace.q-kaizen-page #qiRegister .table-wrap{min-height:0;max-height:none;height:100%;overflow:auto}
+  #qualityWorkspace.q-kaizen-page #qiRegister .table-wrap thead th{position:sticky;top:0;z-index:2;background:var(--paper)}
+}
+
+/* v213 — final dashboard graph-card height override. Must stay after older containment rules. */
+@media (min-width:981px) and (min-height:650px){
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{
+    grid-template-rows:auto minmax(375px,1fr);
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{
+    height:100%!important;
+    min-height:375px!important;
+    max-height:none!important;
+    padding:18px 20px 20px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{
+    height:100%!important;
+    min-height:245px!important;
+    max-height:none!important;
+    padding:14px 8px 6px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{
+    height:100%!important;
+    min-height:245px!important;
+    max-height:none!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{
+    height:calc(100% - 44px)!important;
+    min-height:185px!important;
+    max-height:none!important;
+  }
+}
+@media (min-width:981px) and (min-height:820px){
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{grid-template-rows:auto minmax(445px,1fr)}
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{min-height:445px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{min-height:310px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{min-height:310px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{min-height:245px!important}
+}
+
+/* v216 — use the real remaining desktop viewport for the dashboard analytics card. */
+@media (min-width:981px){
+  #qualityWorkspace.q-dashboard-page .q-scroll{
+    padding:10px 18px 12px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .quality-person{
+    margin-bottom:6px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{
+    height:100%!important;
+    min-height:0!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    gap:8px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics .metric{
+    min-height:74px!important;
+    padding:10px 13px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:stretch!important;
+    padding:16px 18px 18px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:10px 6px 4px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{
+    height:calc(100% - 38px)!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+}
+
+/* v217 — unified responsive dashboard line chart. */
+.qd-line-chart-wrap{height:100%;min-height:0;overflow-x:auto;overflow-y:hidden;border-top:1px solid var(--line);padding-top:8px}
+.qd-line-chart{display:block;width:100%;height:100%;min-width:640px;overflow:visible}
+.qd-line-grid line{stroke:#dfe7f0;stroke-width:1;stroke-dasharray:3 4}.qd-line-grid text{fill:var(--muted);font-size:10px}
+.qd-line-path{fill:none;stroke:#2d70d6;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 3px 5px rgba(45,112,214,.14))}
+.qd-line-point circle{fill:#fff;stroke:#2d70d6;stroke-width:3}.qd-line-value{fill:var(--ink);font-size:10px;font-weight:800}.qd-line-label{fill:var(--muted);font-size:9px}
+#qualityWorkspace.q-dashboard-page .qd-task-chart{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:minmax(72px,1fr)!important;align-items:end!important;justify-items:stretch!important;overflow-x:auto!important;overflow-y:hidden!important;padding:14px 4px 6px!important;border-top:1px solid var(--line)!important;column-gap:14px!important;row-gap:0!important}
+@media(max-width:680px){.qd-line-chart{min-width:560px}.qd-line-chart-wrap{overflow-x:auto}}
+@media(min-width:1281px){#qualityTimeWorkspace .qt-inline-form{grid-template-columns:minmax(120px,.8fr) minmax(120px,.8fr) minmax(230px,1.55fr) minmax(128px,.82fr) minmax(128px,.82fr) minmax(125px,.82fr) minmax(170px,1.05fr) 104px}}
+
+
+/* v219 — use the full dashboard graph space with the original stacked bar style. */
+@media (min-width:981px){
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{gap:10px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{height:100%!important;min-height:0!important;padding:16px 18px 18px!important;display:grid!important;grid-template-rows:auto auto minmax(0,1fr)!important;overflow:hidden!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics .panel-head{margin-bottom:6px!important}
+  #qualityWorkspace.q-dashboard-page .qd-chart-summary{margin:6px 0 8px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{height:100%!important;min-height:0!important;max-height:none!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{height:100%!important;min-height:0!important;grid-template-rows:minmax(0,1fr) auto auto!important;gap:7px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{height:100%!important;min-height:0!important;max-height:none!important;width:min(46px,82%)!important;border-radius:12px 12px 4px 4px!important;box-shadow:inset 0 0 0 1px rgba(24,47,87,.05)!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col>b{font-size:10px!important;line-height:1.1!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col>span{font-size:9px!important;line-height:1.1!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar i{min-height:2px!important}
+}
+@media (min-width:981px) and (min-height:700px){
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{padding-top:18px!important;column-gap:16px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{min-height:280px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{min-height:220px!important}
+}
+@media (min-width:981px) and (min-height:820px){
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{min-height:320px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{min-height:255px!important}
+}
+
+/* v220 — dashboard analytics card and bars consume all remaining desktop height. */
+@media (min-width:981px){
+  #qualityWorkspace.q-dashboard-page #qRecordArea,
+  #qualityWorkspace.q-dashboard-page #qFormHost,
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{
+    height:100%!important;
+    min-height:0!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-dashboard{
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:stretch!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:stretch!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    align-self:stretch!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+}

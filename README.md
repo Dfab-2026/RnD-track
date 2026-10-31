@@ -155,3 +155,20 @@ R&D remains on its dedicated workflow. Quality remains on its dedicated workflow
 - KPI/Time/Analytics leader pages suppress the R&D left sidebar/reopen control.
 - On the last day of each month, leaders receive a red backup/cleanup reminder. Month deletion is still available only after a confirmed downloaded backup and the existing double confirmation.
 - See `PRODUCTION-READINESS-v199.txt` before deployment. The packaged `firebase-config.js` still contains placeholders and must be replaced with the real project config.
+
+## v203 — R&D Datas + Production Time Sheet cleanup
+- Removed the `Open existing Production project Time Sheet` action from the Production Quality-style Time Sheet. The current Production Time Sheet remains unchanged.
+- Added an R&D `Datas` page in the existing R&D navigation.
+- Added R&D Dashboard `Hours Spent` card linked to Datas.
+- Dashboard Hours Spent and Datas use the same R&D Time Sheet summary calculation.
+- Datas shows Today / This Week / This Month hours and task-wise working hours for the current month.
+- R&D Time Sheet remains the entry/history page; its v202 summary block was moved to Datas to avoid duplicate reporting UI.
+- Current compact Firebase R&D time records and preserved legacy project-time records are both included in the summary.
+
+## v205 reconstruction (31 Oct 2026)
+- Rebuilt from the stable v203 feature set after the v204 department initialization regression.
+- Time Sheet dropdowns now use the exact supplied task lists for R&D, Outsourcing, Quality, Purchase, HR & Admin, Accounts, Finance, Maintenance, Digital Marketing, RFQ/Sales, and Welding Qualification, with `Others` preserved.
+- NPD and Stores retain their existing task dropdowns because no replacement list was supplied.
+- The user-facing Production department is renamed to Welding Qualification while the internal `production` Firebase/storage key remains unchanged for backward compatibility.
+- Existing saved Time Sheet records and legacy Quality task IDs remain readable.
+- All v203 Admin/leader, member management, KPI mirror, backup, R&D Datas/Hours, Quality, Weekly, Kaizen, and Firebase flows are preserved.

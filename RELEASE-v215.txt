@@ -1,0 +1,29 @@
+DFAB KPI/R&D Tracker v215
+
+Requested changes only:
+1. Dashboard analytics card height increased exactly 15px for Quality and all shared department dashboards:
+   - normal desktop minimum 360px -> 375px
+   - tall desktop minimum 430px -> 445px
+   Existing no-scroll dashboard behavior is preserved.
+
+2. KPI Control / Time Control / Analytics cards:
+   - now visible on the department-card screen for normal users
+   - normal users see an Admin-only locked state and cannot click them
+   - Kabil / Suresh Kumar / Pramod Kumar Admin session unlocks the same cards and their existing flows
+
+3. Chrome background push scaffolding:
+   - Firebase Messaging compat SDK added
+   - notification service worker handles background FCM messages
+   - Enable Chrome Notifications registers an FCM token when messaging config + VAPID key are present
+   - token is server-confirmed in Firestore app_meta as kind=push_subscription
+   - Settings reports whether background push is registered
+   - service worker/push config files are deployed no-cache
+
+Configuration required for background push:
+- firebase-config.js: Firebase Web config values
+- firebase-config.js: RND_FIREBASE_PUSH_CONFIG.vapidKey = Firebase Web Push public VAPID key
+- deploy on HTTPS
+- click Enable Chrome Notifications once on each browser/device
+- use Firebase Console Messaging or a trusted Firebase Admin/Cloud Function sender for notifications while the site is closed
+
+Security: Never place Firebase service-account/private server credentials in this frontend.

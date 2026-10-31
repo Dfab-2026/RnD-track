@@ -1,0 +1,11 @@
+v210 — Scroll containment / layout-only update
+
+Changed only desktop scroll behavior where content can safely fit:
+- R&D Dashboard remains viewport-contained; R&D Ideas page now stays in viewport and its table scrolls internally.
+- Quality Dashboard now uses viewport-contained layout consistently.
+- Quality Kaizen page stays in viewport; its records table scrolls internally.
+- Shared department Dashboards now receive the existing dashboard containment state correctly.
+- Shared department Kaizen pages stay in viewport; records table scrolls internally.
+- Tablet/mobile keeps natural page scrolling to avoid clipped forms/tables.
+
+No business logic, Firebase schema, navigation, permissions, KPI, Time Sheet, backup, notification, or member changes.

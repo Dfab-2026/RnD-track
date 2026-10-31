@@ -1,0 +1,21 @@
+DFAB KPI Tracker v209
+
+Changes only:
+1. RFQ department display renamed to Sales. Internal rfq Firebase key remains for backward compatibility.
+2. NPD Time Sheet dropdown updated from the supplied handwritten task list. Others remains available.
+3. R&D Datas Time Sheet Summary now uses the same card pattern as other departments and includes assigned projects, every R&D master task, zero-hour cards, status counts, and Others.
+4. Month-end lead-only backup reminder repeats once per hour on the last calendar day until that department/month has a confirmed backup history entry.
+5. Monthly backups download as detailed PDF files for R&D, Quality, and all shared departments.
+6. R&D Settings now includes the same monthly backup/cleanup workflow for the R&D Lead.
+7. R&D backup/delete includes current compact Time Sheet records plus legacy project Time Sheet entries and prevents deleted local month data from reappearing.
+
+Preserved:
+- Admin/leader tools and access rules
+- Left sidebars for normal departments; no sidebar on the 3 Admin control pages
+- PO Number Time Sheet linkage
+- KPI mirrors, Quality special KPI logic, Weekly Report, Kaizen, notifications
+- Department Lead-only backup visibility; Admin backup UI remains hidden
+- Existing Firebase internal keys and historical records
+
+Deployment requirement:
+Replace placeholder Firebase web config values in firebase-config.js with the live project values before production deployment, unless your hosting pipeline injects them.

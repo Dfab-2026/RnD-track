@@ -1,0 +1,8 @@
+# v221 Release Notes
+
+- Stability-only update based on v220.
+- Hardened R&D, Quality, and shared-department Time Sheet clock input bindings.
+- Time field itself and clock icon now both open the approved animated picker.
+- Clock selection emits input + change events before save validation.
+- Added clear fallback status if the shared picker is not ready.
+- Preserved v220 full-height Dashboard visuals and every unrelated flow.

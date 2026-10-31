@@ -1,0 +1,7 @@
+v214 — PO fallback + animated manual clock picker
+
+Changes only:
+- PO Number inputs explicitly accept normal PO values or NA / N/A / NO PO / NO when no PO applies.
+- R&D, Quality, and all shared department Time Sheets now use the existing animated clock dial for From/To.
+- Clock supports manual hour selection, minute selection, and AM/PM switching; underlying stored value remains HH:MM for compatibility.
+- Existing duration, overlap validation, Firebase storage, filters, summaries, backups, dashboard, KPI, Weekly, Admin, and sidebar flows are unchanged.

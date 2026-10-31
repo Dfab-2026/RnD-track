@@ -181,7 +181,7 @@
   #qualityWorkspace.q-dashboard-page .qd-task-analytics{
     min-height:0;
     height:100%;
-    padding:14px 16px;
+    padding:16px 18px 18px;
     display:grid;
     grid-template-rows:auto auto minmax(0,1fr);
   }
@@ -201,16 +201,16 @@
   #qualityWorkspace.q-dashboard-page .qd-task-chart{
     min-height:0;
     height:100%;
-    padding:8px 4px 0;
+    padding:12px 6px 4px;
   }
   #qualityWorkspace.q-dashboard-page .qd-task-chart-col{
     height:100%;
     min-height:150px;
-    max-height:220px;
+    max-height:none;
   }
   #qualityWorkspace.q-dashboard-page .qd-task-chart-bar{
     height:calc(100% - 42px);
     min-height:100px;
-    max-height:165px;
+    max-height:none;
   }
 }

@@ -11,13 +11,13 @@
   <link rel="icon" type="image/png" href="assets/dfab-logo.png?v=129.0.0">
   <link rel="apple-touch-icon" href="assets/dfab-logo.png?v=129.0.0">
   <link rel="stylesheet" href="branding.css?v=129.0.0">
-  <link rel="stylesheet" href="styles.css?v=129.0.0" />
+  <link rel="stylesheet" href="styles.css?v=216.0.0" />
   <link rel="stylesheet" href="responsive.css?v=129.0.0">
   <link rel="stylesheet" href="production.css?v=129.0.0">
-<link rel="stylesheet" href="quality.css?v=138.0.0">
-<link rel="stylesheet" href="department-workspace.css?v=182.0.0">
-<link rel="stylesheet" href="leader-center.css?v=199.0.0">
-<link rel="stylesheet" href="quality-daily.css?v=135.0.0">
+<link rel="stylesheet" href="quality.css?v=217.0.0">
+<link rel="stylesheet" href="department-workspace.css?v=217.0.0">
+<link rel="stylesheet" href="leader-center.css?v=216.0.0">
+<link rel="stylesheet" href="quality-daily.css?v=212.0.0">
 <link rel="stylesheet" href="quality-review.css?v=141.0.0">
 <link rel="stylesheet" href="quality-polish.css?v=137.0.0">
 </head>
@@ -58,6 +58,7 @@
         <button class="nav-btn" data-page="weekly"><span>03</span> Weekly Tasks</button>
         <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
         <button class="nav-btn" data-page="timeconsume"><span>◷</span> Time Sheet</button>
+        <button class="nav-btn" data-page="datas"><span>05</span> Datas</button>
         <button class="nav-btn" data-page="chat"><span>06</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
         <button class="nav-btn" data-page="kpi"><span>07</span> KPI Report</button>
         <button class="nav-btn" data-page="settings"><span>08</span> Settings</button>
@@ -140,6 +141,8 @@
 
       <section class="page" id="timeconsumePage"><div id="timeConsumeRoot"></div></section>
 
+      <section class="page" id="datasPage"><div id="rndDataRoot"></div></section>
+
       <section class="page" id="chatPage">
         <section class="team-chat-page-shell" aria-label="R&D team chat">
           <div id="teamChatMessages" class="team-chat-messages team-chat-page-messages" role="log" aria-live="polite" aria-relevant="additions"><div class="team-chat-empty">No messages yet. Start the team discussion.</div></div>
@@ -184,24 +187,27 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
-  <script defer src="firebase-config.js?v=129.0.0"></script>
-  <script defer src="firebase-cloud.js?v=199.0.0"></script>
-<script defer src="backup-tools.js?v=190.0.0"></script>
+  <script defer src="firebase-config.js?v=215.0.0"></script>
+  <script defer src="firebase-cloud.js?v=209.0.0"></script>
+  <script defer src="push-notifications.js?v=215.0.0"></script>
+<script defer src="backup-tools.js?v=212.0.0"></script>
 <script defer src="quality-login.js?v=199.0.0"></script>
-<script defer src="quality-time.js?v=139.0.0"></script>
+<script defer src="quality-time.js?v=214.0.0"></script>
 <script defer src="quality-ideas.js?v=137.0.0"></script>
-<script defer src="quality-daily.js?v=137.0.0"></script>
+<script defer src="quality-daily.js?v=217.0.0"></script>
 <script defer src="quality-review.js?v=141.0.0"></script>
-<script defer src="quality.js?v=199.0.0"></script>
-  <script defer src="production.js?v=129.0.0"></script>
-  <script defer src="department-workspace.js?v=199.0.0"></script>
-  <script defer src="leader-center.js?v=199.0.0"></script>
-  <script defer src="app.js?v=199.0.0"></script>
+<script defer src="quality.js?v=209.0.0"></script>
+  <script defer src="production.js?v=205.0.0"></script>
+  <script defer src="department-workspace.js?v=217.0.0"></script>
+  <script defer src="leader-center.js?v=215.0.0"></script>
+  <script defer src="app.js?v=215.0.0"></script>
   <script defer src="kpi-chat.js?v=129.0.0"></script>
   <script defer src="kpi-pdf.js?v=129.0.0"></script>
   <script defer src="responsive.js?v=129.0.0"></script>
-<script defer src="time-consume.js?v=129.0.0"></script>
-<link rel="stylesheet" href="time-consume.css?v=129.0.0">
+<script defer src="time-consume.js?v=217.0.0"></script>
+<link rel="stylesheet" href="time-consume.css?v=217.0.0">
+  <script src="layout-fit.js?v=216.0.0"></script>
 </body>
 </html>

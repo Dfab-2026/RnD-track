@@ -1,0 +1,11 @@
+v218 – Dashboard graph revert + 4-card department grid
+
+Changes only:
+- Restored the pre-v217 stacked bar/column dashboard analytics renderer for Quality and all shared departments.
+- Desktop department/admin card screen is exactly 4 cards per row.
+- Compacted desktop card padding, gaps, and typography so all 16 cards fit within one viewport without page scrolling while retaining card details.
+
+Preserved:
+- v217 clock modal fit improvements.
+- R&D Datas weekly Time Sheet/KPI summary additions.
+- Firebase, backups, notifications, member management, PO flow, task lists, roles, sidebars, and all other application logic.

@@ -1,0 +1,6 @@
+# v212
+- Dashboard analytics graph uses available desktop viewport height with padding and no page scroll.
+- Month-end backup reminder opens/focuses the department backup section.
+- Backup flow completes only after PDF download and confirmed Firebase month deletion.
+- Hourly month-end reminder continues until Firebase cleanup is marked complete.
+- All unrelated flows preserved from v211.
