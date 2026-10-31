@@ -1,0 +1,9 @@
+v224 — Admin allowlist update only
+
+Changed:
+- Added Jithendra Babu to the existing company Admin / All-Department Leader exact-name allowlist.
+
+Preserved:
+- Existing admins: Kabil, Suresh Kumar, Pramod Kumar
+- R&D Lead ownership remains Kabil
+- Department member logins, Firebase flows, notifications, backups, dashboards, KPI, Weekly Reports, Time Sheets, Datas and all UI remain unchanged.

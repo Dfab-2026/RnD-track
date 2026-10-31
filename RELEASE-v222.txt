@@ -1,0 +1,5 @@
+V222
+- Monthly backup PDF now covers every calendar date from day 1 through the selected month's last day, including explicit no-record days.
+- Chrome notification controls removed from Settings; approved member login triggers the browser permission flow instead.
+- R&D Datas weekly Time Sheet Summary and Weekly KPI Status are both fully expanded using the same weekly report panel/card UI.
+- No other application flow intentionally changed.

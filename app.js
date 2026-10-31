@@ -143,7 +143,29 @@ function initThemeColor(){
 function notificationsEnabled(){return ('Notification' in window)&&Notification.permission==='granted'}
 async function registerNotificationWorker(){if(!('serviceWorker' in navigator))return false;try{await navigator.serviceWorker.register('./notification-sw.js',{scope:'./'});return true}catch(e){console.warn('Notification worker',e);return false}}
 async function enableNotifications(){if(!('Notification' in window))return false;if(Notification.permission==='denied')return false;const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();if(permission!=='granted')return false;try{await registerNotificationWorker();if(window.rndPush?.enable)await window.rndPush.enable()}catch(e){console.warn('Background push setup',e)}return true}
-function requestNotificationsFromGesture(){if(!('Notification' in window)||Notification.permission!=='default')return;enableNotifications().then(ok=>{if(ok){notifyUser('R&D Track notifications','Chrome notifications are enabled for this tracker.');maybeDailyReminder()}}).catch(()=>{})}
+async function requestNotificationsFromGesture(){
+  if(!('Notification' in window))return false;
+  if(!window.isSecureContext){console.warn('Chrome notifications require HTTPS or localhost.');return false}
+  if(Notification.permission==='denied'){console.warn('Chrome notifications are blocked for this site. Enable them from the browser site permissions.');return false}
+  try{
+    const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+    if(permission!=='granted')return false;
+    try{await registerNotificationWorker();if(window.rndPush?.enable)await window.rndPush.enable()}catch(e){console.warn('Background push setup',e)}
+    notifyUser('R&D Track notifications','Chrome notifications are enabled for this tracker.');
+    maybeDailyReminder();
+    return true;
+  }catch(e){console.warn('Notification permission request failed',e);return false}
+}
+function armNotificationPermissionPrompt(){
+  if(!('Notification' in window)||Notification.permission!=='default'||!window.isSecureContext)return;
+  if(document.documentElement.dataset.notificationPromptArmed==='1')return;
+  document.documentElement.dataset.notificationPromptArmed='1';
+  const ask=()=>{document.documentElement.dataset.notificationPromptArmed='0';requestNotificationsFromGesture()};
+  document.addEventListener('pointerdown',ask,{once:true,capture:true});
+}
+window.requestNotificationsFromGesture=requestNotificationsFromGesture;
+window.armNotificationPermissionPrompt=armNotificationPermissionPrompt;
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',armNotificationPermissionPrompt,{once:true});else armNotificationPermissionPrompt();
 async function notifyUser(title,body){if(!notificationsEnabled())return;const options={body,icon:'assets/dfab-logo.png',badge:'assets/dfab-logo.png',tag:'rnd-track-'+title.replace(/\s+/g,'-').toLowerCase(),data:{url:'./'}};try{const reg=await navigator.serviceWorker?.ready;if(reg){await reg.showNotification(title,options);return}}catch{}try{new Notification(title,options)}catch{}}
 function maybeDailyReminder(){const m=currentMember();if(!m||m.role==='visitor'||!notificationsEnabled())return;const key=`rnd_reminder_${m.id}_${today()}`;if(localStorage.getItem(key))return;const submitted=state.ideas.some(i=>Number(i.submitted_by)===Number(m.id)&&i.submission_date===today());if(!submitted){notifyUser('R&D Track · Daily Idea','Your daily idea is still pending for today.');localStorage.setItem(key,'1')}}
 function localIsoDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
@@ -580,7 +602,7 @@ function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.
 function activeDepartments(){return state.departments.filter(d=>Number(d.active)!==0).sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||Number(a.id)-Number(b.id))}
 function isRndDepartment(department){return ['rd','rnd','r and d','research and development'].includes(normalizeName(department?.name))}
 
-const DEPARTMENT_ADMIN_NAMES=['Kabil','Suresh Kumar','Pramod Kumar'];
+const DEPARTMENT_ADMIN_NAMES=['Kabil','Suresh Kumar','Pramod Kumar','Jithendra Babu'];
 const DEPARTMENT_ADMIN_KEY='dfabDepartmentAdminSession';
 function departmentAdminName(){try{const name=JSON.parse(localStorage.getItem(DEPARTMENT_ADMIN_KEY)||'null')?.name||'';return DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name))||''}catch{return ''}}
 function departmentAdminActive(){return Boolean(departmentAdminName())}
@@ -686,7 +708,7 @@ function updateCompactProfile(){
   if(role)role.textContent=adminName?'ALL DEPARTMENTS LEADER':memberRoleLabel(member);
   const settingsName=$('#settingsSignedInName');if(settingsName)settingsName.textContent=member.name;
 }
-function showApp(){const member=currentMember();if(!member){showLogin();return}document.body.classList.remove('leader-center-active');$('#departmentGate').classList.add('hidden');$('#loginGate').classList.add('hidden');$('#appShell').classList.remove('app-locked','sidebar-collapsed');localStorage.setItem(SIDEBAR_CLOSED_KEY,'0');document.getElementById('sidebar')?.classList.remove('open');document.getElementById('sidebarReopenBtn')?.classList.remove('show');updateCompactProfile();try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);maybeShowPendingTaskPopup();updateTeamChatIdentity();setTimeout(startTeamChat,120)}
+function showApp(){const member=currentMember();if(!member){showLogin();return}armNotificationPermissionPrompt();document.body.classList.remove('leader-center-active');$('#departmentGate').classList.add('hidden');$('#loginGate').classList.add('hidden');$('#appShell').classList.remove('app-locked','sidebar-collapsed');localStorage.setItem(SIDEBAR_CLOSED_KEY,'0');document.getElementById('sidebar')?.classList.remove('open');document.getElementById('sidebarReopenBtn')?.classList.remove('show');updateCompactProfile();try{renderAll()}catch(e){console.error('Initial app render failed',e);try{renderPage(state.page||'dashboard')}catch(inner){console.error('Page render failed',inner)}}setTimeout(maybeDailyReminder,500);maybeShowPendingTaskPopup();updateTeamChatIdentity();setTimeout(startTeamChat,120)}
 let cloudRuntimeStatus='connecting', cloudRuntimeMessage='';
 let cloudRetryTimer=null,cloudRetryAttempt=0,cloudBootInFlight=false;
 function scheduleCloudReconnect(immediate=false){
