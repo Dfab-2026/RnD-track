@@ -41,7 +41,7 @@
       <p>Enter the same name saved in the R&D members list. You will stay signed in on this device until you log out from Settings.</p>
       <form id="loginForm">
         <label>Your name<input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="loginName" autocomplete="username" placeholder="Enter your saved name" maxlength="80" required autocorrect="off" autocapitalize="off"></label>
-        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" minlength="4" maxlength="64" required></label>
+        <label>Password<input id="loginPassword" type="text" class="secure-password-entry" data-secure-entry="password" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" data-lpignore="true" data-1p-ignore="true" placeholder="Enter your password" minlength="4" maxlength="64" required></label>
         <button class="primary-btn login-submit" type="submit">CONTINUE →</button>
       </form>
       <div id="loginMessage" class="login-message" aria-live="polite"></div>
