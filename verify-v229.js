@@ -1,0 +1,15 @@
+const fs=require('fs'),path=require('path');
+const read=f=>fs.readFileSync(path.join(__dirname,f),'utf8');
+const assert=(ok,msg)=>{if(!ok)throw new Error(msg)};
+const assigned=read('assigned-tasks.js'),leader=read('leader-center.js'),dept=read('department-workspace.js'),quality=read('quality.js'),app=read('app.js'),html=read('index.html');
+assert(assigned.includes('managerAccess')&&assigned.includes('managerCatalog'),'Lead manager access/scope missing');
+assert(assigned.includes("tasks.filter(t=>t.department_key===access?.departmentKey)"),'Department-lead task scoping missing');
+assert(assigned.includes("assigned_by:access.person"),'Lead assignment actor missing');
+assert(assigned.includes('canManage:()=>Boolean(managerAccess())'),'Assign Task permission export missing');
+assert(leader.includes("card.kind==='assign'&&Boolean(window.assignedTasks?.canManage?.())"),'Assign card is not enabled for department leads');
+assert(leader.includes("card.kind==='assign'?'Admin / Department Lead only'"),'Assign card locked copy missing');
+assert(dept.includes('departmentAssignedTaskLeadAccess')&&dept.includes('dfabDepartmentLeadSession'),'Generic department lead session missing');
+assert(quality.includes('qualityAssignedTaskLeadAccess'),'Quality lead access missing');
+assert(app.includes('rndAssignedTaskLeadAccess'),'R&D lead access missing');
+for(const file of ['quality.js','department-workspace.js','assigned-tasks.js','leader-center.js','app.js'])assert(html.includes(file+'?v=229.0.0'),file+' cache version not bumped');
+console.log('PASS: v229 Assign Task card enabled for all department leads with own-department scope; all other admin cards remain admin-only.');

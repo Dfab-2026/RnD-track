@@ -1,0 +1,21 @@
+DFAB KPI TRACK v226
+
+ONLY REQUESTED CHANGES
+1. Added a new Production department card without changing the existing Welding Qualification department.
+   - Production uses the same shared department workspace flow: Dashboard, Kaizen Ideas, Weekly Report, KPI Report, Time Sheet, Settings.
+   - Production has its own isolated Firebase department key: productiondept.
+   - Production Time Sheet has no predefined task list yet; only Others is available until the task list is provided.
+
+2. Added Admin Assign Task card.
+   - Admin selects Department -> Person -> task text -> Send task.
+   - Tasks are stored as compact Firebase app_meta assigned_task records.
+   - Admin view shows live Pending / Completed state.
+
+3. Added employee Assigned Task icon beside Notifications.
+   - Shows numeric pending badge (1, 2, ...).
+   - Opens tasks assigned to the current logged-in person only.
+   - Employee can mark a task Completed.
+   - Completion updates the same Firebase record and is reflected live in Admin Assign Task.
+
+LOCKED / UNCHANGED
+All existing R&D, Quality, Welding Qualification, NPD, Sales, Outsourcing, Purchase, Stores, HR & Admin, Accounts, Finance, Maintenance, Digital Marketing flows remain unchanged. Existing Dashboard, Datas, KPI, Weekly Report, Time Sheet, backup, notification, Admin, Firebase and login behavior are preserved.

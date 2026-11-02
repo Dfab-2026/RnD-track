@@ -1,0 +1,20 @@
+PRODUCTION TIME SHEET — v128
+
+Keep your existing firebase-config.js and publish the included firestore.rules.
+Open Production, enter your name, then use Assign project to add the project name
+and assigned person's name. Assignments are stored in production_projects.
+Each person sees their assigned projects after entering the matching name.
+Time Sheet entries save to production_entries and stream live from Firebase.
+The form retains its values if a save fails and reports the error.
+The clock picker and hourly reminder match the R&D Time Sheet workflow.
+
+Production records are separate from R&D collections. Existing R&D records are
+not migrated or deleted. Name entry follows the site's existing name-based
+access model; it is not a verified identity or department security boundary.
+
+Browser history now has distinct department and workspace entries. Back returns
+to departments, Forward returns to the workspace, and refresh retains selection.
+Opening a remembered workspace in a fresh tab creates a department Back entry.
+
+No live database configuration was supplied, so validation used local automated
+checks. Deploying the included Firestore rules is required for Production saves.

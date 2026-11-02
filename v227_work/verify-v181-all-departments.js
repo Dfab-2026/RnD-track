@@ -1,0 +1,18 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('app.js','utf8'),dept=fs.readFileSync('department-workspace.js','utf8'),cloud=fs.readFileSync('firebase-cloud.js','utf8'),html=fs.readFileSync('index.html','utf8');
+const names=['Production','NPD','R&D','Outsourcing','Quality','Purchase','Stores','HR & Admin','Accounts','Finance','Maintenance','Digital Marketing','RFQ'];
+names.forEach(n=>assert(app.includes(`'${n}'`),`missing department ${n}`));
+const generic=['production','npd','rfq','outsourcing','purchase','stores','hradmin','accounts','finance','maintenance','digitalmarketing'];generic.forEach(k=>assert(new RegExp(`\\b${k}:\\{`).test(dept),`missing generic config ${k}`));
+const kpis=['Production Plan vs Actual','NPD Projects Completed','Revenue Target','Vendor Addition','On-time Placement','GRN On Time','Position Fulfillment on Time','Record / Book Keeping','Cash Flow Statement','No. of Machines Available','Digital Media Engagement'];kpis.forEach(k=>assert(dept.includes(k),`missing KPI ${k}`));
+['Dashboard','Kaizen Ideas','Weekly Report','KPI Report','Time Sheet','Settings'].forEach(p=>assert(dept.includes(p),`missing page ${p}`));
+assert(dept.includes('Download PDF'),'department KPI PDF action missing');
+assert(dept.includes("option value=\"weekly\">Weekly")&&dept.includes("option value=\"monthly\">Monthly"),'weekly/monthly KPI filter missing');
+assert(dept.includes('__other__'),'Time Sheet Others option missing');
+assert(dept.includes('48h'),'weekly hours target missing');
+assert(dept.includes('window.openProduction?.()'),'legacy Production Time Sheet preservation missing');
+['saveDepartmentRecord','watchDepartmentRecords','deleteDepartmentRecord'].forEach(f=>assert(cloud.includes(`function ${f}`),`Firebase helper ${f} missing`));
+assert(cloud.includes("store.collection('app_meta')"),'department records must use shared app_meta Firebase database');
+assert(cloud.includes("get({source:'server'})"),'server read-back verification missing');
+assert(app.includes('window.departmentWorkspace?.has?.(department.name)'),'department gate generic routing missing');
+assert(html.includes('department-workspace.js')&&html.includes('department-workspace.css'),'department workspace assets not loaded');
+console.log('PASS v181: all department KPI workspaces, source KPI cards, weekly/monthly reports, Time Sheet, PDF, shared Firebase isolation and Production legacy flow.');

@@ -1,0 +1,7 @@
+DFAB R&D KPI Tracker v233
+
+Requested change only:
+- Manage Members Excel action now opens a preview first.
+- Preview reads the latest Firebase member data and shows S.No, Department, Name, Role and secured Password Status.
+- Download Excel is available from inside the preview only.
+- Existing Excel workbook generation and all unrelated flows remain unchanged.

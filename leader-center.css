@@ -112,3 +112,29 @@ body.leader-center-active #departmentWorkspace .q-reopen{display:none!important;
 .assigned-task-employee-rating{margin-top:9px;padding:8px 10px;border:1px solid #e3e9f0;border-radius:10px;background:#f8fbff;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .assigned-task-employee-rating>span{font-size:7px!important;color:#6e8299!important;letter-spacing:.1em!important}
 .assigned-task-rating-stars{display:flex;gap:1px;line-height:1}.assigned-task-rating-stars i{font-style:normal;font-size:15px;color:#d2d9e2}.assigned-task-rating-stars i.active{color:#e8a724}.assigned-task-employee-rating>small{font-size:8px!important;color:#6f8296!important}
+
+/* v231 — password-protected member management + full Assigned Tasks pages. */
+.member-admin-add.member-admin-add-password{grid-template-columns:minmax(210px,1fr) minmax(190px,.9fr) 160px auto minmax(160px,auto)}
+.member-admin-row{grid-template-columns:minmax(210px,1fr) minmax(190px,.9fr) 160px auto 42px}
+.assigned-task-page-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.assigned-task-page-summary article{padding:15px 16px;border:1px solid #dbe5ef;border-radius:14px;background:linear-gradient(145deg,#fff,#f6f9fd);box-shadow:0 7px 20px rgba(22,65,108,.06);display:grid;gap:5px}
+.assigned-task-page-summary span{font-size:8px;font-weight:900;letter-spacing:.09em;color:#6d839c}.assigned-task-page-summary strong{font-size:25px;line-height:1;color:#163f68}.assigned-task-page-summary small{font-size:9px;color:#8293a7}
+.assigned-task-page-panel{min-height:280px}.assigned-task-page-list{max-height:none;overflow:visible;padding:0;gap:10px}.assigned-task-page-list .assigned-task-item{box-shadow:0 4px 14px rgba(19,61,103,.04)}
+@media(max-width:980px){.member-admin-add.member-admin-add-password,.member-admin-row{grid-template-columns:1fr 1fr}.member-admin-add.member-admin-add-password [role=status]{grid-column:1/-1}.assigned-task-page-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.member-admin-add.member-admin-add-password,.member-admin-row,.assigned-task-page-summary{grid-template-columns:1fr}}
+
+/* v233: Manage Members Excel preview only */
+.member-excel-preview-dialog{width:min(980px,calc(100vw - 28px));max-height:88vh;padding:0;border:0;border-radius:18px;overflow:hidden;box-shadow:0 30px 90px rgba(10,37,70,.28)}
+.member-excel-preview-dialog::backdrop{background:rgba(7,24,45,.5);backdrop-filter:blur(4px)}
+.member-excel-preview-panel{display:flex;flex-direction:column;max-height:88vh;background:#fff}
+.member-excel-preview-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px;border-bottom:1px solid #dfe8f2;background:#f6faff}
+.member-excel-preview-head h2{margin:4px 0 5px;color:#183f6b;font-size:24px}
+.member-excel-preview-head p{margin:0;color:#6e839b;font-size:11px;line-height:1.5}
+.member-excel-preview-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 20px;border-bottom:1px solid #e4ebf3;background:#fff}
+.member-excel-preview-summary span{display:flex;align-items:baseline;gap:6px;padding:10px 12px;border:1px solid #dbe6f1;border-radius:11px;background:#fbfdff;color:#6f8197;font-size:10px;font-weight:800}
+.member-excel-preview-summary b{font-size:18px;color:#1e5fa8}
+.member-excel-preview-table-wrap{flex:1 1 auto;min-height:0;overflow:auto;padding:0 20px 16px}
+.member-excel-preview-table{min-width:720px;margin:0}
+.member-excel-preview-table thead th{position:sticky;top:0;z-index:1;background:#edf5ff}
+.member-excel-preview-actions{display:flex;justify-content:flex-end;gap:9px;padding:13px 20px;border-top:1px solid #dfe8f2;background:#f8fbff}
+@media(max-width:700px){.member-excel-preview-summary{grid-template-columns:1fr}.member-excel-preview-head{padding:16px}.member-excel-preview-table-wrap{padding:0 12px 12px}.member-excel-preview-actions{padding:12px;flex-wrap:wrap}.member-excel-preview-actions button{flex:1;min-width:140px}}

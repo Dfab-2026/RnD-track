@@ -1,0 +1,25 @@
+DFAB Tracker - Background Chrome Push Setup (v215)
+
+1. Firebase Console -> Project settings -> Your apps -> Web app
+   Fill firebase-config.js with apiKey, authDomain, projectId, storageBucket,
+   messagingSenderId and appId.
+
+2. Firebase Console -> Project settings -> Cloud Messaging -> Web Push certificates
+   Create/use a Web Push key pair and put the PUBLIC VAPID key in:
+   RND_FIREBASE_PUSH_CONFIG.vapidKey in firebase-config.js.
+
+3. Deploy the site over HTTPS (Vercel is fine). Service workers / push require HTTPS
+   except localhost.
+
+4. In the tracker, click Enable Chrome Notifications once in Settings.
+   The app requests permission, registers notification-sw.js, gets an FCM token and
+   stores the token in Firestore app_meta as kind=push_subscription.
+
+5. To send notifications while the website/tab is closed, a remote sender is required.
+   Options:
+   - Firebase Console -> Messaging/Notifications for manual broadcasts, or
+   - Firebase Cloud Function / trusted server using Firebase Admin SDK for automatic
+     hourly/due-date reminders.
+
+IMPORTANT: Browser JavaScript cannot safely contain a Firebase Admin/server key.
+Do not put any service-account private key or FCM server credential in this frontend.

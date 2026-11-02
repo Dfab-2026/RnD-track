@@ -1,0 +1,16 @@
+DFAB KPI / Work Tracker — v227
+Base: v226 Production + Assign Task
+
+ONLY CHANGED:
+1. Assign Task Admin dashboard UI/alignment improved.
+2. Completed assigned tasks can be rated 1–5 stars by Admin; rating is stored on the same Firebase assigned_task record with server read-back verification.
+3. Assigned tasks can be deleted from Admin Assign Task; deletion is verified from Firebase.
+4. Monthly backup PDF now includes a monthly overview, per-individual Time Sheet actual hours/count/status totals, counts for Ideas/Kaizen, KPI report data and assigned tasks, followed by the complete day-by-day record detail from day 1 through month end.
+5. Assigned tasks for the selected department/month are included in the same monthly backup and month cleanup.
+6. Existing Production department remains a separate productiondept Firebase namespace; its Time Sheet predefined list remains empty/Other-only until supplied by the user.
+
+UNCHANGED:
+All unrelated UI, R&D/Quality/shared department flows, KPI logic, Time Sheet entry logic, notifications, dashboard visuals, backup workflow/confirmations, roles and access are unchanged.
+
+IMPORTANT CONFIGURATION:
+firebase-config.js in the distributable still contains placeholder Firebase Web config and VAPID values. Insert the deployed project's real Firebase Web config/VAPID values (or inject them during deployment). Do not place Firebase Admin/service-account private keys in frontend files.

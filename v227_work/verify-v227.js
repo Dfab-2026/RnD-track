@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const a=fs.readFileSync(__dirname+'/assigned-tasks.js','utf8'),f=fs.readFileSync(__dirname+'/firebase-cloud.js','utf8'),b=fs.readFileSync(__dirname+'/backup-tools.js','utf8'),css=fs.readFileSync(__dirname+'/leader-center.css','utf8'),idx=fs.readFileSync(__dirname+'/index.html','utf8'),dept=fs.readFileSync(__dirname+'/department-workspace.js','utf8');
+assert(a.includes('assigned-task-admin-stats')&&a.includes('data-rate=')&&a.includes('data-delete-task='),'Assign Task admin UI/rating/delete missing');
+assert(f.includes('async function rateAssignedTask')&&f.includes('async function deleteAssignedTask'),'Firebase rating/delete API missing');
+assert(f.includes("source:'assigned_tasks'")&&f.includes('assignedTasksForBackup'),'Assigned tasks not included in backup');
+assert(b.includes('INDIVIDUAL TIME SHEET ACTUALS')&&b.includes('Ideas / Kaizen')&&b.includes('KPI report data'),'Expanded monthly backup overview missing');
+assert(dept.includes("productiondept:{name:'Production'")&&dept.includes('productiondept:[]'),'Production separate full-flow config changed');
+assert(css.includes('v227 — Assign Task admin dashboard polish'),'Assign Task UI polish CSS missing');
+for(const file of ['leader-center.css','firebase-cloud.js','backup-tools.js','assigned-tasks.js'])assert(idx.includes(file+'?v=227.0.0'),file+' cache version not bumped');
+console.log('PASS: v227 Assign Task UI/rating/delete + full monthly backup + Production Firebase compatibility');

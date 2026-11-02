@@ -1,0 +1,20 @@
+const fs=require('fs');
+const t=fs.readFileSync('time-consume.js','utf8');
+const c=fs.readFileSync('firebase-cloud.js','utf8');
+const css=fs.readFileSync('time-consume.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+function ok(v,m){if(!v)throw new Error(m)}
+ok(t.includes('rtc-inline-form')&&t.includes('rtcTask')&&t.includes('rtcEntryStatus'),'R&D single-row Time Sheet fields missing');
+ok(t.includes("<option value=\"other\">Others</option>"),'R&D Others task missing');
+ok(t.includes("Idea Generation")&&t.includes("Assembly and Verification")&&t.includes("R&D Task List"),'R&D Task-List-Master options missing');
+ok(t.includes('Time Summary')&&t.includes('This Week')&&t.includes('This Month'),'R&D day/week/month summary missing');
+ok(t.includes('Task Working Hours · This Month')&&t.includes('rtcTaskSummary'),'R&D task hours summary missing');
+ok(t.includes('legacyEntries()')&&t.includes('Legacy project Time Sheet'),'legacy R&D time entries not preserved');
+ok(t.includes('This time period overlaps a saved entry'),'overlap validation missing');
+ok(t.includes('watchRndTime')&&t.includes('saveRndTime'),'R&D Firebase Time Sheet API not used');
+ok(c.includes("const rndTimeKind='rnd_time_entry'")&&c.includes("kind:rndTimeKind"),'compact R&D Firebase Time Sheet schema missing');
+ok(c.includes("get({source:'server'})")&&c.includes('R&D Time Sheet verify'),'R&D Time Sheet server read-back missing');
+ok(c.includes('watchRndTime,saveRndTime'),'R&D Time Sheet Firebase methods not exported');
+ok(css.includes('.rtc-summary-cards')&&css.includes('.rtc-task-summary'),'R&D summary responsive CSS missing');
+ok(html.includes('time-consume.js?v=202.0.0')&&html.includes('time-consume.css?v=202.0.0'),'R&D Time Sheet cache bust missing');
+console.log('PASS v202: R&D Quality-style Time Sheet, live Firebase, legacy history, day/week/month and task-hour summaries.');

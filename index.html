@@ -11,12 +11,12 @@
   <link rel="icon" type="image/png" href="assets/dfab-logo.png?v=129.0.0">
   <link rel="apple-touch-icon" href="assets/dfab-logo.png?v=129.0.0">
   <link rel="stylesheet" href="branding.css?v=129.0.0">
-  <link rel="stylesheet" href="styles.css?v=228.0.0" />
-  <link rel="stylesheet" href="responsive.css?v=129.0.0">
+  <link rel="stylesheet" href="styles.css?v=231.0.0" />
+  <link rel="stylesheet" href="responsive.css?v=230.0.0">
   <link rel="stylesheet" href="production.css?v=129.0.0">
 <link rel="stylesheet" href="quality.css?v=217.0.0">
 <link rel="stylesheet" href="department-workspace.css?v=217.0.0">
-<link rel="stylesheet" href="leader-center.css?v=228.0.0">
+<link rel="stylesheet" href="leader-center.css?v=231.0.0">
 <link rel="stylesheet" href="quality-daily.css?v=212.0.0">
 <link rel="stylesheet" href="quality-review.css?v=141.0.0">
 <link rel="stylesheet" href="quality-polish.css?v=137.0.0">
@@ -40,7 +40,8 @@
       <h1>What is your name?</h1>
       <p>Enter the same name saved in the R&D members list. You will stay signed in on this device until you log out from Settings.</p>
       <form id="loginForm">
-        <label>Your name<input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="loginName" autocomplete="name" placeholder="Enter your saved name" maxlength="80" required autocorrect="off" autocapitalize="off"></label>
+        <label>Your name<input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="loginName" autocomplete="username" placeholder="Enter your saved name" maxlength="80" required autocorrect="off" autocapitalize="off"></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter your password" minlength="4" maxlength="64" required></label>
         <button class="primary-btn login-submit" type="submit">CONTINUE →</button>
       </form>
       <div id="loginMessage" class="login-message" aria-live="polite"></div>
@@ -61,7 +62,8 @@
         <button class="nav-btn" data-page="datas"><span>05</span> Datas</button>
         <button class="nav-btn" data-page="chat"><span>06</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
         <button class="nav-btn" data-page="kpi"><span>07</span> KPI Report</button>
-        <button class="nav-btn" data-page="settings"><span>08</span> Settings</button>
+        <button class="nav-btn" data-page="assigned"><span>08</span> Assigned Tasks</button>
+        <button class="nav-btn" data-page="settings"><span>09</span> Settings</button>
       </nav>
       <div class="side-note"><b>TEAM MODE</b><p>R&D idea and execution tracker with member and visitor access.</p></div>
     </aside>
@@ -159,6 +161,11 @@
         <div id="kpiReportContent"></div>
       </section>
 
+      <section class="page" id="assignedPage">
+        <div class="section-toolbar"><div><span class="kicker">WORK ASSIGNMENTS</span><h2>Assigned Tasks</h2><p>View your assigned work, completion status and Lead rating in one place.</p></div></div>
+        <div id="rndAssignedTasksPage"></div>
+      </section>
+
       <section class="page" id="settingsPage">
         <div class="section-toolbar"><div><span class="kicker">MASTER DATA</span><h2>Settings</h2><p>Manage departments, active member/visitor logins, database backup and your current session.</p></div></div>
         <div class="settings-master-row">
@@ -190,20 +197,20 @@
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
   <script defer src="firebase-config.js?v=215.0.0"></script>
-  <script defer src="firebase-cloud.js?v=227.0.0"></script>
+  <script defer src="firebase-cloud.js?v=231.0.0"></script>
   <script defer src="push-notifications.js?v=215.0.0"></script>
 <script defer src="backup-tools.js?v=227.0.0"></script>
-<script defer src="quality-login.js?v=199.0.0"></script>
+<script defer src="quality-login.js?v=231.0.0"></script>
 <script defer src="quality-time.js?v=214.0.0"></script>
 <script defer src="quality-ideas.js?v=137.0.0"></script>
 <script defer src="quality-daily.js?v=217.0.0"></script>
 <script defer src="quality-review.js?v=141.0.0"></script>
-<script defer src="quality.js?v=226.0.0"></script>
+<script defer src="quality.js?v=231.0.0"></script>
   <script defer src="production.js?v=205.0.0"></script>
-  <script defer src="department-workspace.js?v=226.0.0"></script>
-  <script defer src="assigned-tasks.js?v=228.0.0"></script>
-  <script defer src="leader-center.js?v=226.0.0"></script>
-  <script defer src="app.js?v=226.0.0"></script>
+  <script defer src="department-workspace.js?v=231.0.0"></script>
+  <script defer src="assigned-tasks.js?v=231.0.0"></script>
+  <script defer src="leader-center.js?v=232.0.0"></script>
+  <script defer src="app.js?v=231.0.0"></script>
   <script defer src="kpi-chat.js?v=129.0.0"></script>
   <script defer src="kpi-pdf.js?v=129.0.0"></script>
   <script defer src="responsive.js?v=129.0.0"></script>

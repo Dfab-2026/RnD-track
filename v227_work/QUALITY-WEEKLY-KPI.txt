@@ -1,0 +1,29 @@
+QUALITY WEEKLY REPORT & KPI — v136
+
+Quality sidebar: Dashboard, Daily Ideas, Daily Task, Weekly Report, KPI Report,
+Time Sheet, Settings. Removed standalone links do not delete saved history.
+
+Weekly Report contains:
+1. Internal Audit: all active departments, Completed/Not completed, remarks.
+2. Department-wise Quality KPI: all departments and completion status.
+3. Training: candidate, department, role, from/to dates and outcomes.
+Week selection uses the same month weeks as R&D: 1–7, 8–14, 15–21, 22–month end.
+
+KPI Report uses the existing R&D card styles, All/Navarasu/Mohan filter,
+Weekly/Monthly, month and week filters with from/to dates.
+- Daily Ideas: 6/week or monthly working days (Sundays excluded).
+- Daily Task: 18/week or 3 per working day monthly.
+- Weekly Audit and Department KPI: all departments each week.
+- Quality cost reduction: manual monthly percentage, minimum 10%.
+- Attrition: manual yearly percentage, target exactly 0%. Unentered is not passed.
+- ISO: calendar-quarter/3-month target, completion across all active departments.
+- Training count is shown as activity, with no invented numeric training target.
+
+Individual due-date remarks belong to that member. Shared KPIs can be updated
+by either Quality member. Due-date remarks are required for shortfalls; completed
+KPIs need no remarks. ISO department implementation accepts pending-work details.
+
+Keep the real firebase-config.js and publish included firestore.rules for the
+added percentage/review records and training/week fields. No database reset.
+The site retains the existing name-based access model. Live database tests need
+the real deployment configuration. Other departments are unchanged.

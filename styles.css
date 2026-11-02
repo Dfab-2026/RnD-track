@@ -2298,3 +2298,9 @@ body.dashboard-team-celebrating .topbar:after{content:"GOOD WORK ✦";position:a
 
 /* v228 — department and admin cards use five cards per desktop row. */
 @media (min-width:981px){.department-gate-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}}
+
+/* v231 — password fields in R&D Access Master. */
+.member-add-form.member-add-password-form{grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) 170px auto}
+.roster-slot.roster-slot-password{grid-template-columns:42px minmax(180px,1fr) minmax(180px,1fr) 170px auto}
+@media(max-width:900px){.member-add-form.member-add-password-form,.roster-slot.roster-slot-password{grid-template-columns:1fr 1fr}.roster-slot.roster-slot-password .roster-index{grid-row:1/-1}.roster-slot.roster-slot-password .member-row-actions{grid-column:2}}
+@media(max-width:700px){.member-add-form.member-add-password-form,.roster-slot.roster-slot-password{grid-template-columns:1fr}.roster-slot.roster-slot-password .roster-index{grid-row:auto}.roster-slot.roster-slot-password .member-row-actions{grid-column:auto}}

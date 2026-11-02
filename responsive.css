@@ -111,3 +111,6 @@ html{scroll-padding-top:calc(var(--app-header-height) + 12px);-webkit-text-size-
   #ideasPage .table-wrap{flex:1 1 auto;min-height:0!important;max-height:none!important;height:auto!important;overflow:auto!important}
   #ideasPage .table-wrap thead th{position:sticky;top:0;z-index:2;background:var(--paper)}
 }
+
+/* v230 — R&D desktop left sidebar stays fixed in the viewport and does not scroll internally. */
+@media(min-width:981px){#appShell #sidebar{position:sticky!important;top:0!important;height:100vh!important;overflow:hidden!important;overscroll-behavior:none!important}}

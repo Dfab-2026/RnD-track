@@ -1,0 +1,13 @@
+const fs=require('fs');
+const need=(f,s)=>{const t=fs.readFileSync(f,'utf8'); if(!t.includes(s)) throw new Error(`${f}: missing ${s}`)};
+need('index.html','styles.css?v=216.0.0');
+need('index.html','layout-fit.js?v=216.0.0');
+need('layout-fit.js',"document.getElementById('qualityWorkspace')");
+need('layout-fit.js',"document.getElementById('departmentWorkspace')");
+need('layout-fit.js',"scrollRect.bottom-cardRect.top-bottomPad");
+need('styles.css','grid-template-columns:repeat(6,minmax(0,1fr))!important');
+need('styles.css','width:min(1440px,calc(100vw - 36px))!important');
+need('styles.css','height:100dvh!important');
+need('quality.css','v216 — use the real remaining desktop viewport');
+need('department-workspace.css','v216 — use the real remaining desktop viewport');
+console.log('v216 layout checks passed');

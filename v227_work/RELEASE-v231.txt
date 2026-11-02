@@ -1,0 +1,17 @@
+DFAB R&D KPI Tracker — v231
+
+Requested changes only:
+1. Manage Department Members now supports setting/changing a password for each member login.
+2. R&D, Quality and shared-department member login screens require name + password.
+3. Passwords are stored as salted SHA-256 hashes; plain entered passwords are not saved.
+4. Existing members with no password must have one set from Manage Members before their next login.
+5. The Assigned Task icon beside the notification bell was removed.
+6. Assigned Tasks is now a full sidebar page in R&D, Quality and shared department workspaces.
+7. Assigned Tasks page shows task details, pending/completed state, completion action and Lead rating.
+8. Admin Assign Task card, department Lead scope, Firebase task records, rating flow and all unrelated existing flows remain unchanged.
+9. R&D fixed non-scrolling left sidebar from v230 remains unchanged.
+
+Verification:
+- node verify-v231.js: PASS
+- node verify.js: PASS
+- node --check all JavaScript files: PASS

@@ -1,0 +1,15 @@
+DFAB KPI Tracker v208
+
+Changes only:
+1. Dashboard weekly metric label changed from WEEKLY REPORT to WEEK in Quality/shared department dashboards and R&D Datas summary.
+2. Time Sheet visible Month field replaced by required PO Number in R&D, Quality, and all shared departments.
+3. Saved Time Sheet filters use PO Number instead of Month.
+4. PO Number is saved in compact Firebase records and read back for Quality, R&D, and shared departments.
+5. Saved Time Sheet history shows PO Number.
+6. Admin Time Control shows and exports PO Number.
+7. Existing date-based daily/week/month calculations, KPI, weekly reports, backups, navigation, roles, and other flows remain unchanged.
+
+Compatibility:
+- Existing historical records without PO Number remain readable and show PO —.
+- Month/week reporting still derives from Date internally.
+- Existing Firebase document namespaces remain unchanged.

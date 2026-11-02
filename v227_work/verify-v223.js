@@ -1,0 +1,11 @@
+const fs=require('fs');
+const read=f=>fs.readFileSync(f,'utf8');
+const ok=(v,m)=>{if(!v)throw Error(m);console.log('PASS:',m)};
+const t=read('time-consume.js'), css=read('time-consume.css'), app=read('app.js');
+ok(t.includes('TIME SHEET SOURCE')&&t.includes('Weekly Task Summary'),'R&D Datas uses Quality weekly summary heading');
+ok(t.includes('h logged'),'R&D Datas shows logged-hours badge');
+ok(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'),'R&D Datas weekly cards use two-column layout');
+ok(t.includes("t.group==='R&D Task List'?'TASK LIST':t.group"),'R&D task cards use Task List label');
+ok(app.includes('armNotificationPermissionPrompt'),'Notification permission prompt is armed for persistent sessions');
+ok(app.includes("document.addEventListener('pointerdown',ask,{once:true,capture:true})"),'Notification request is tied to a user gesture');
+ok(app.includes("Notification.permission==='denied'"),'Blocked notification state is handled without breaking the app');

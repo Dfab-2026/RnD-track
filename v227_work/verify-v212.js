@@ -1,0 +1,12 @@
+const fs=require('fs');
+const read=f=>fs.readFileSync(f,'utf8');
+const q=read('quality-daily.css'), d=read('department-workspace.css'), b=read('backup-tools.js'), i=read('index.html');
+const ok=(c,m)=>{if(!c)throw new Error(m)};
+ok(q.includes('max-height:none') && q.includes('padding:16px 18px 18px'),'Quality dashboard chart height not expanded');
+ok(d.includes('max-height:none') && d.includes('padding:16px 18px 18px'),'Department dashboard chart height not expanded');
+ok(b.includes("x=>x.month===month&&x.deleted_at"),'Backup completion must require Firebase deletion');
+ok(b.includes('Delete the month from Firebase to complete cleanup'),'Post-download cleanup prompt missing');
+ok(b.includes('Awaiting Firebase cleanup'),'Pending cleanup state missing');
+ok(b.includes("scrollIntoView({behavior:'smooth',block:'start'})"),'Backup reminder does not navigate/focus backup section');
+ok(i.includes('department-workspace.css?v=212.0.0')&&i.includes('quality-daily.css?v=212.0.0')&&i.includes('backup-tools.js?v=212.0.0'),'Cache versions not bumped');
+console.log('v212 verification passed');
