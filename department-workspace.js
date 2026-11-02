@@ -1,5 +1,6 @@
 (function(){
   const CONFIG={
+    productiondept:{name:'Production',kpis:[]},
     production:{name:'Welding Qualification',legacyProduction:true,kpis:[
       ['Production Plan vs Actual','100%','Weekly / Monthly'],['In-process Rework','< 2%','Weekly / Monthly'],['In-process Rejection','0%','Weekly / Monthly'],['OTD','100%','Weekly / Monthly'],['Kaizen Improvement','5 Kaizen / week','Weekly / Monthly'],['Quotation Accuracy','100%','Weekly / Monthly'],['Project Documentation Coordination','Coordinate / maintain','Weekly / Monthly'],['Attrition Rate','< 2%','Weekly / Monthly'],['Customer Complaint','0','Weekly / Monthly'],['Team Attendance Discipline','100%','Weekly / Monthly'],['Safety Incident','0','Weekly / Monthly'],['Cost Reduction in Operations','10%','Weekly / Monthly'],['Monthly-19 Invoice','Avg invoice value ₹1 Lakh','Weekly / Monthly'],['Report Submission','Weekly and monthly management review','Weekly / Monthly']
     ]},
@@ -36,6 +37,7 @@
   };
   const PAGES={dashboard:'Dashboard',kaizen:'Kaizen Ideas',weekly:'Weekly Report',kpi:'KPI Report',settings:'Settings'};
   const MASTER_TIME_TASKS={
+    productiondept:[],
     npd:[
       'Drawing Review for Production','Purchase Indent Creation','Fabrication Drawing Creation','Manufacturing Process Planning','Fabrication Fitup','Fabrication Welding','Inprocess Inspection','Final Inspection','Report / Quality / Project Report Preparation','Project Documentation','Internal Communication / Followup','External Communication / Followup','Training','Customer Visit','Leave'
     ],
@@ -70,11 +72,11 @@
       'Market Research','Instagram Post','Linked-in Post','Youtube Upload','Website Update','Lead Generation','Reports','Documentation','Training','Meeting','5S','Kaizen','Leave','No Work'
     ]
   };
-  const MEMBER_ACCESS={production:[],npd:[],rfq:[],outsourcing:['Sai','Sakthi','Venkatachala','Mithilesh'],purchase:[],stores:[],hradmin:[],accounts:[],finance:[],maintenance:[],digitalmarketing:[]};
+  const MEMBER_ACCESS={productiondept:[],production:[],npd:[],rfq:[],outsourcing:['Sai','Sakthi','Venkatachala','Mithilesh'],purchase:[],stores:[],hradmin:[],accounts:[],finance:[],maintenance:[],digitalmarketing:[]};
   const MEMBER_ROLES={outsourcing:{sai:'lead',sakthi:'member',venkatachala:'member',mithilesh:'member'}};
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const norm=s=>String(s||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');
-  const keyForName=name=>{const n=norm(name);if(n==='hrandadmin'||n==='hradmin')return'hradmin';if(n==='digitalmarketing'||n==='marketing')return'digitalmarketing';if(n==='weldingqualification'||n==='production')return'production';if(n==='sales'||n==='rfq')return'rfq';return n};
+  const keyForName=name=>{const n=norm(name);if(n==='hrandadmin'||n==='hradmin')return'hradmin';if(n==='digitalmarketing'||n==='marketing')return'digitalmarketing';if(n==='weldingqualification')return'production';if(n==='production')return'productiondept';if(n==='sales'||n==='rfq')return'rfq';return n};
   const isoToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
   const fmt=s=>s?new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
   const mins=t=>{const [h,m]=String(t||'').split(':').map(Number);return h*60+m};
@@ -194,6 +196,6 @@
   async function open(department){close();deptKey=keyForName(department.name);cfg=CONFIG[deptKey];if(!cfg)return false;memberDirectory=[];memberDirectoryLoaded=false;try{memberDirectory=await window.rndCloud.loadDepartmentMembers(deptKey);memberDirectoryLoaded=true}catch(error){console.warn('Department member registry unavailable, using packaged fallback',deptKey,error)}root=document.getElementById('departmentWorkspace');if(!root){root=document.createElement('main');root.id='departmentWorkspace';root.className='quality-workspace department-quality-clone';document.body.append(root)}root.hidden=false;document.body.classList.remove('leader-center-active');root.classList.remove('q-collapsed');document.getElementById('appShell')?.classList.add('app-locked');document.getElementById('loginGate')?.classList.add('hidden');const saved=localStorage.getItem(personKey())||'';member=adminView()?window.adminSession.name():resolveMember(saved);if(!adminView()&&!member&&saved)localStorage.removeItem(personKey());page='dashboard';reportMonth=currentMonth();reportWeek=Math.min(4,Math.max(1,Math.ceil(Number(isoToday().slice(-2))/7)));weeklyDate=isoToday();if(member){shell();connect()}paint();return true}
   function close(){stop?.();stop=null;records=[];memberDirectory=[];memberDirectoryLoaded=false;server=false;if(root){root.hidden=true;root.innerHTML=''}}
   async function openSettings(department){const ok=await open(department);if(!ok)return false;page='settings';paint();return true}
-  window.departmentWorkspace={open,openSettings,close,has:name=>Boolean(CONFIG[keyForName(name)]),configs:CONFIG,keyForName};
+  window.departmentWorkspace={open,openSettings,close,has:name=>Boolean(CONFIG[keyForName(name)]),configs:CONFIG,keyForName,currentIdentity:()=>root&&!root.hidden&&memberName()&&!adminView()?{departmentKey:deptKey,department:cfg?.name||deptKey,person:memberName()}:null};
   window.setInterval?.(hourlyReminder,30000);window.addEventListener?.('focus',hourlyReminder);document.addEventListener?.('visibilitychange',hourlyReminder);
 })();

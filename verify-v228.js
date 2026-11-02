@@ -1,0 +1,11 @@
+const fs=require('fs'),assert=require('assert');
+const assigned=fs.readFileSync(__dirname+'/assigned-tasks.js','utf8');
+const css=fs.readFileSync(__dirname+'/leader-center.css','utf8');
+const styles=fs.readFileSync(__dirname+'/styles.css','utf8');
+const html=fs.readFileSync(__dirname+'/index.html','utf8');
+assert(assigned.includes('assigned-task-employee-rating')&&assigned.includes('assigned-task-rating-stars'),'Employee assigned-task rating UI missing');
+assert(assigned.includes('Number(t.rating)>0'),'Rating visibility guard missing');
+assert(css.includes('.assigned-task-employee-rating')&&css.includes('.assigned-task-rating-stars i.active'),'Employee rating styles missing');
+assert(styles.includes('grid-template-columns:repeat(5,minmax(0,1fr))!important'),'Five-card desktop grid missing');
+for(const file of ['styles.css','leader-center.css','assigned-tasks.js'])assert(html.includes(file+'?v=228.0.0'),file+' cache version not updated');
+console.log('PASS v228: employee rating display + five-card desktop grid.');

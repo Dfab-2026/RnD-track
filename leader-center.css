@@ -75,3 +75,40 @@ body.leader-center-active #departmentWorkspace .q-reopen{display:none!important;
 .department-gate-grid .leader-tool-card.leader-tool-locked::after{content:'LOCKED';width:auto;padding:0 8px;font-size:7px;letter-spacing:.08em}
 .department-gate-grid .leader-tool-card.leader-tool-locked:hover{transform:none!important;box-shadow:0 8px 20px rgba(20,54,91,.08);filter:saturate(.35) brightness(.98)}
 .department-gate-grid .leader-tool-lock{position:absolute;right:14px;bottom:12px;font-style:normal;font-size:13px;opacity:.85}
+/* v226 — Admin Assign Task card + employee assigned-task UI. */
+.department-gate-grid .leader-tool-assign{background:linear-gradient(145deg,#a52858,#df4f7f)!important}
+.assigned-task-header-btn{position:relative;font-weight:900;font-size:18px;color:#164c8d}
+.assigned-task-badge{position:absolute;right:-5px;top:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e3344f;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900;box-shadow:0 2px 7px rgba(120,20,40,.25)}
+.assigned-task-badge.hidden{display:none!important}
+.assigned-task-dialog{width:min(760px,94vw);max-height:84vh;padding:0;border:0;border-radius:18px;overflow:hidden}
+.assigned-task-panel{background:#f7faff;max-height:84vh;display:flex;flex-direction:column}.assigned-task-panel .modal-head{padding:20px 22px;background:#fff;border-bottom:1px solid #dbe5f0}.assigned-task-list{padding:16px;display:grid;gap:10px;overflow:auto}
+.assigned-task-item{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:15px 16px;border:1px solid #dce6f0;border-radius:13px;background:#fff}.assigned-task-item.done{background:#f4fbf7}.assigned-task-item span{font-size:8px;font-weight:900;letter-spacing:.08em;color:#64809f;text-transform:uppercase}.assigned-task-item h3{margin:5px 0 6px;font-size:14px}.assigned-task-item small{font-size:9px;color:#7890aa}.assigned-task-state{text-align:right;display:grid;justify-items:end;gap:6px}.assigned-task-state>b{font-size:9px;color:#ba3142}.assigned-task-item.done .assigned-task-state>b{color:#198154}.assigned-task-state .primary-btn{min-height:32px;padding:7px 10px;font-size:9px}
+.assigned-task-admin-form form{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(180px,.8fr) minmax(280px,1.5fr) auto;gap:12px;align-items:end}.assigned-task-admin-form label{display:grid;gap:6px;font-size:9px;font-weight:800;letter-spacing:.07em;color:#69809a}.assigned-task-admin-form textarea{min-height:72px;resize:vertical}.assigned-task-admin-form [role=status]{grid-column:1/-1;font-size:10px;color:#426383}.assigned-task-admin-list{display:grid;gap:9px}.assigned-task-admin-row{display:flex;justify-content:space-between;gap:18px;padding:13px 14px;border:1px solid #dce5ef;border-radius:12px;background:#fff}.assigned-task-admin-row>div{display:grid;gap:4px}.assigned-task-admin-row span{font-size:8px;font-weight:900;color:#66809c;letter-spacing:.06em}.assigned-task-admin-row strong{font-size:12px}.assigned-task-admin-row small{font-size:9px;color:#8294a8}.assigned-task-admin-row>b{align-self:center;font-size:9px;color:#ba3142;background:#fff0f2;padding:6px 8px;border-radius:8px}.assigned-task-admin-row>b.done{color:#177d50;background:#eaf8f0}
+@media(max-width:800px){.assigned-task-admin-form form{grid-template-columns:1fr}.assigned-task-text{grid-column:1}.assigned-task-item{align-items:flex-start;flex-direction:column}.assigned-task-state{width:100%;justify-items:start}.assigned-task-admin-row{flex-direction:column}.assigned-task-admin-row>b{align-self:flex-start}}
+
+/* v227 — Assign Task admin dashboard polish, ratings and record actions. */
+.assigned-task-admin-shell{max-width:1480px;margin:0 auto}
+.assigned-task-admin-body{display:grid;gap:14px;padding-bottom:24px}
+.assigned-task-admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.assigned-task-admin-stats article{min-width:0;padding:15px 16px;border:1px solid #dbe5ef;border-radius:14px;background:linear-gradient(145deg,#fff,#f6f9fd);box-shadow:0 7px 20px rgba(22,65,108,.06);display:grid;gap:5px}
+.assigned-task-admin-stats span{font-size:8px;font-weight:900;letter-spacing:.09em;color:#6d839c}
+.assigned-task-admin-stats strong{font-size:25px;line-height:1;color:#163f68}
+.assigned-task-admin-stats small{font-size:9px;color:#8293a7}
+.assigned-task-form-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e2e9f1}
+.assigned-task-form-head h3{margin:4px 0 0;font-size:18px}.assigned-task-form-head>span{font-size:9px;color:#758ba1;font-weight:700}
+.assigned-task-admin-form form{grid-template-columns:minmax(190px,.9fr) minmax(190px,.9fr) minmax(360px,1.7fr) 120px;gap:12px 14px;align-items:end}
+.assigned-task-admin-form select,.assigned-task-admin-form textarea{width:100%}.assigned-task-admin-form textarea{height:78px;min-height:78px}
+.assigned-task-send{height:42px;align-self:end}.assigned-task-status-panel{min-height:260px}
+.assigned-task-list-filter label{display:grid;gap:5px;font-size:8px;font-weight:900;letter-spacing:.08em;color:#72869d}.assigned-task-list-filter select{min-width:140px;height:36px}
+.assigned-task-admin-list{gap:10px}.assigned-task-admin-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:15px 16px;border-radius:14px;box-shadow:0 4px 14px rgba(19,61,103,.04)}
+.assigned-task-admin-row.is-complete{border-color:#cfe8da;background:#fbfefc}.assigned-task-admin-main{min-width:0;display:grid;gap:5px}.assigned-task-row-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.assigned-task-row-meta span{padding:3px 7px;border-radius:999px;background:#edf4fb;color:#56718e;font-size:8px!important}
+.assigned-task-admin-main>strong{font-size:13px;line-height:1.45;color:#183c60}.assigned-task-admin-actions{min-width:185px;display:grid;justify-items:end;gap:6px}.assigned-task-status{font-size:8px;color:#b52d43;background:#fff0f2;padding:6px 8px;border-radius:8px}.assigned-task-status.done{color:#18784d;background:#e8f7ef}
+.assigned-task-stars{display:flex;gap:2px}.assigned-star{border:0;background:transparent;color:#cfd7e2;font-size:20px;line-height:1;padding:1px 2px;cursor:pointer;transition:transform .14s ease,color .14s ease}.assigned-star:hover:not(:disabled){transform:translateY(-1px) scale(1.08);color:#e8a724}.assigned-star.active{color:#e8a724}.assigned-star:disabled{cursor:not-allowed;opacity:.55}
+.assigned-rating-wait,.assigned-rated-by{font-size:8px;color:#8395a8}.assigned-task-delete{border:1px solid #efc9ce;background:#fff7f8;color:#b83346;border-radius:8px;padding:5px 9px;font-size:8px;font-weight:800;cursor:pointer}.assigned-task-delete:hover{background:#ffedef}
+@media(max-width:980px){.assigned-task-admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.assigned-task-admin-form form{grid-template-columns:1fr 1fr}.assigned-task-text{grid-column:1/-1}.assigned-task-send{grid-column:1/-1;width:100%}}
+@media(max-width:650px){.assigned-task-admin-stats{grid-template-columns:1fr 1fr}.assigned-task-admin-row{grid-template-columns:1fr}.assigned-task-admin-actions{justify-items:start;min-width:0}.assigned-task-form-head{align-items:flex-start;flex-direction:column}.assigned-task-admin-form form{grid-template-columns:1fr}.assigned-task-text,.assigned-task-send{grid-column:1}.assigned-task-list-filter select{min-width:110px}}
+
+/* v228 — show saved admin rating inside the employee assigned-task card. */
+.assigned-task-employee-rating{margin-top:9px;padding:8px 10px;border:1px solid #e3e9f0;border-radius:10px;background:#f8fbff;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.assigned-task-employee-rating>span{font-size:7px!important;color:#6e8299!important;letter-spacing:.1em!important}
+.assigned-task-rating-stars{display:flex;gap:1px;line-height:1}.assigned-task-rating-stars i{font-style:normal;font-size:15px;color:#d2d9e2}.assigned-task-rating-stars i.active{color:#e8a724}.assigned-task-employee-rating>small{font-size:8px!important;color:#6f8296!important}

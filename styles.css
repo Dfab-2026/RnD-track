@@ -2295,3 +2295,6 @@ body.dashboard-team-celebrating .topbar:after{content:"GOOD WORK ✦";position:a
   .department-gate-message{min-height:12px!important;margin-top:5px!important;font-size:9px!important}
   .department-back-btn{margin-top:4px!important;padding:4px 0!important}
 }
+
+/* v228 — department and admin cards use five cards per desktop row. */
+@media (min-width:981px){.department-gate-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}}

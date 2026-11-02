@@ -14,3 +14,4 @@ globalThis.RND_FIREBASE_CONFIG = {
 globalThis.RND_FIREBASE_PUSH_CONFIG = {
   vapidKey: "BOanTTfxo_JrCI6xT9PkLJHqR1Q8Zj2mokYozpNgWqNhXkRN5FRakAOVyn6_S1HiDpnWWL9n1FKXMRURXdb2P7k"
 };
+

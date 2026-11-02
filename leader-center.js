@@ -113,7 +113,8 @@
     const cards=[
       {kind:'kpi',eyebrow:'KPI CONTROL',title:'All Department KPI Reports',copy:'Exact department KPI pages · live Firebase mirror',open:openKpi},
       {kind:'time',eyebrow:'TIME CONTROL',title:'Person-wise Time Sheet',copy:'Department → person → exact individual timing',open:openTime},
-      {kind:'analytics',eyebrow:'ANALYTICS',title:'Company Analytics',copy:'KPI, hours, Kaizen and activity visual analysis',open:openAnalytics}
+      {kind:'analytics',eyebrow:'ANALYTICS',title:'Company Analytics',copy:'KPI, hours, Kaizen and activity visual analysis',open:openAnalytics},
+      {kind:'assign',eyebrow:'ASSIGN TASK',title:'Assign Task',copy:'Department → person → task · live completion status',open:()=>window.assignedTasks?.openAdmin?.()}
     ];
     cards.forEach(card=>{const button=document.createElement('button');button.type='button';button.className=`department-choice available leader-tool-card leader-tool-${card.kind}${allowed?'':' leader-tool-locked'}`;button.setAttribute('aria-disabled',allowed?'false':'true');button.tabIndex=allowed?0:-1;button.innerHTML=`<b>${esc(card.eyebrow)}</b><strong>${esc(card.title)}</strong><span>${esc(allowed?card.copy:'Admin only · sign in as an All Departments Leader')}</span>${allowed?'':'<i class=\"leader-tool-lock\" aria-hidden=\"true\">🔒</i>'}`;if(allowed)button.addEventListener('click',card.open);grid.append(button)});
   }

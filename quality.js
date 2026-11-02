@@ -195,4 +195,6 @@
   }
   window.openQuality=open;window.closeQuality=close;window.openQualitySettings=()=>{page='settings';open()};window.qualityValidation={validate,weekRange,overviewRows,pages,qualityRole,qualityRoleLabel};window.qualityHourlyTimesheetReminder=qualityHourlyTimesheetReminder;
   window.setInterval?.(qualityHourlyTimesheetReminder,30000);window.addEventListener?.('focus',qualityHourlyTimesheetReminder);document.addEventListener?.('visibilitychange',qualityHourlyTimesheetReminder);
+
+  window.qualityAssignedTaskIdentity=()=>root&&!root.hidden&&!adminView()&&person()?{departmentKey:'quality',department:'Quality',person:person()}:null;
 })();
