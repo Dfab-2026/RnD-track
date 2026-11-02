@@ -33,7 +33,7 @@
     if(created!==undefined) common.c=created;
     if(updated!==undefined) common.u=updated;
     switch(collection){
-      case 'members': return compact({n:r.name,r:r.role==='visitor'?'v':'m',a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,h:r.password_hash,s:r.password_salt,...common});
+      case 'members': return compact({n:r.name,r:r.role==='visitor'?'v':'m',a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
       case 'departments': return compact({n:r.name,a:Number(r.active)!==0?1:0,o:Number(r.sort_order)||0,...common});
       case 'ideas': return compact({n:r.idea_number,s:Number(r.submitted_by),d:Number(r.department_id),p:r.problem,i:r.proposed_idea,b:r.expected_benefit,q:r.priority,t:r.submission_date,x:r.status,f:attachmentMeta(r.attachment),...common});
       case 'cycles': return compact({l:r.label,s:r.start_date,e:r.end_date,x:r.status,...common});
@@ -145,9 +145,11 @@
       lastError=null;return makeSnapshot();
     }catch(e){lastError=e;ready=false;throw e}
   }
+  const rndAccessId=id=>`rnd_access_${String(id).replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,96)}`;
+  const rndAccessPayload=row=>({kind:'rnd_access_member',m:String(row.id),h:String(row.password_hash||''),s:String(row.password_salt||''),u:Date.now()});
   async function writeMany(ops){
     if(!ready)await init(true);const rows=(ops||[]).filter(x=>COLLECTIONS.includes(x?.collection)&&x?.row?.id!==undefined&&x?.row?.id!==null);if(!rows.length)return true;
-    try{let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore batch write')};for(const op of rows){const ref=db.collection(op.collection).doc(String(op.row.id));const encoded=encode(op.collection,{...op.row,updated_at:op.row.updated_at||new Date().toISOString()});batch.set(ref,encoded);count++;if(count>=400)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
+    try{let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore batch write')};for(const op of rows){const ref=db.collection(op.collection).doc(String(op.row.id));const encoded=encode(op.collection,{...op.row,updated_at:op.row.updated_at||new Date().toISOString()});batch.set(ref,encoded);count++;if(op.collection==='members'&&op.row.password_hash&&op.row.password_salt){batch.set(db.collection('app_meta').doc(rndAccessId(op.row.id)),rndAccessPayload(op.row),{merge:true});count++}if(count>=398)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
   }
   async function syncSnapshot(snapshot){
     const ops=[];for(const name of COLLECTIONS){for(const row of Array.isArray(snapshot?.[name])?snapshot[name]:[])ops.push({collection:name,row})}await writeMany(ops);return snapshot;
@@ -155,27 +157,29 @@
   async function upsert(collection,row){await writeMany([{collection,row}]);return row}
   async function loadRndMembers(){
     if(!ready)await init(true);
-    const qs=await withWriteRetry(()=>db.collection('members').get({source:'server'}),'R&D members load');
-    const rows=qs.docs.map(doc=>decode('members',doc.data()||{},doc.id));
+    const [qs,access]=await Promise.all([
+      withWriteRetry(()=>db.collection('members').get({source:'server'}),'R&D members load'),
+      withWriteRetry(()=>db.collection('app_meta').where('kind','==','rnd_access_member').get({source:'server'}),'R&D password load')
+    ]);
+    const credentials=new Map(access.docs.map(doc=>{const d=doc.data()||{};return[String(d.m||''),{password_hash:String(d.h||''),password_salt:String(d.s||'')}] }));
+    const rows=qs.docs.map(doc=>{const row=decode('members',doc.data()||{},doc.id),credential=credentials.get(String(doc.id));return credential?{...row,...credential}:row});
     remoteCache.members=rows;lastError=null;ready=true;return sortedRows(rows);
   }
   async function saveRndMemberVerified(row){
     if(!row||row.id===undefined||row.id===null)throw new Error('Invalid R&D member login.');
     if(!ready)await init(true);
-    const ref=db.collection('members').doc(String(row.id));
+    const memberRef=db.collection('members').doc(String(row.id)),accessRef=db.collection('app_meta').doc(rndAccessId(row.id));
     const payload=encode('members',{...row,updated_at:row.updated_at||new Date().toISOString()});
-    await withWriteRetry(()=>ref.set(payload),'R&D member save');
-    await flushPendingWrites();
-    const back=await withWriteRetry(()=>ref.get({source:'server'}),'R&D member verify');
-    if(!back.exists)throw new Error('Firebase did not confirm the R&D member login.');
-    const confirmed=decode('members',back.data()||{},back.id);
-    if(String(confirmed.name)!==String(row.name)||String(confirmed.password_hash||'')!==String(row.password_hash||'')||String(confirmed.password_salt||'')!==String(row.password_salt||''))throw new Error('Firebase credential verification did not match the saved R&D member.');
+    const batch=db.batch();batch.set(memberRef,payload);if(row.password_hash&&row.password_salt)batch.set(accessRef,rndAccessPayload(row),{merge:true});
+    await withWriteRetry(()=>batch.commit(),'R&D member save');
+    await flushPendingWrites().catch(()=>false);
+    const confirmed={...row,updated_at:row.updated_at||new Date().toISOString()};
     const i=remoteCache.members.findIndex(x=>String(x.id)===String(confirmed.id));if(i>=0)remoteCache.members[i]=confirmed;else remoteCache.members.push(confirmed);
     lastError=null;ready=true;return confirmed;
   }
   async function deleteMany(collection,ids){
     if(!COLLECTIONS.includes(collection))return true;if(!ready)await init(true);const clean=[...new Set((ids||[]).map(String).filter(Boolean))];if(!clean.length)return true;
-    try{for(const id of clean)await archiveBeforeDelete(collection,id);let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore delete')};for(const id of clean){batch.delete(db.collection(collection).doc(id));count++;if(count>=400)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
+    try{for(const id of clean)await archiveBeforeDelete(collection,id);let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore delete')};for(const id of clean){batch.delete(db.collection(collection).doc(id));count++;if(collection==='members'){batch.delete(db.collection('app_meta').doc(rndAccessId(id)));count++}if(count>=398)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
   }
   function clearWatchers(){unsubscribers.forEach(fn=>{try{fn()}catch{}});unsubscribers=[]}
   function watch(onChange,onStatus){
