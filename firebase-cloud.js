@@ -153,6 +153,26 @@
     const ops=[];for(const name of COLLECTIONS){for(const row of Array.isArray(snapshot?.[name])?snapshot[name]:[])ops.push({collection:name,row})}await writeMany(ops);return snapshot;
   }
   async function upsert(collection,row){await writeMany([{collection,row}]);return row}
+  async function loadRndMembers(){
+    if(!ready)await init(true);
+    const qs=await withWriteRetry(()=>db.collection('members').get({source:'server'}),'R&D members load');
+    const rows=qs.docs.map(doc=>decode('members',doc.data()||{},doc.id));
+    remoteCache.members=rows;lastError=null;ready=true;return sortedRows(rows);
+  }
+  async function saveRndMemberVerified(row){
+    if(!row||row.id===undefined||row.id===null)throw new Error('Invalid R&D member login.');
+    if(!ready)await init(true);
+    const ref=db.collection('members').doc(String(row.id));
+    const payload=encode('members',{...row,updated_at:row.updated_at||new Date().toISOString()});
+    await withWriteRetry(()=>ref.set(payload),'R&D member save');
+    await flushPendingWrites();
+    const back=await withWriteRetry(()=>ref.get({source:'server'}),'R&D member verify');
+    if(!back.exists)throw new Error('Firebase did not confirm the R&D member login.');
+    const confirmed=decode('members',back.data()||{},back.id);
+    if(String(confirmed.name)!==String(row.name)||String(confirmed.password_hash||'')!==String(row.password_hash||'')||String(confirmed.password_salt||'')!==String(row.password_salt||''))throw new Error('Firebase credential verification did not match the saved R&D member.');
+    const i=remoteCache.members.findIndex(x=>String(x.id)===String(confirmed.id));if(i>=0)remoteCache.members[i]=confirmed;else remoteCache.members.push(confirmed);
+    lastError=null;ready=true;return confirmed;
+  }
   async function deleteMany(collection,ids){
     if(!COLLECTIONS.includes(collection))return true;if(!ready)await init(true);const clean=[...new Set((ids||[]).map(String).filter(Boolean))];if(!clean.length)return true;
     try{for(const id of clean)await archiveBeforeDelete(collection,id);let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore delete')};for(const id of clean){batch.delete(db.collection(collection).doc(id));count++;if(count>=400)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
@@ -479,5 +499,5 @@
     return q.onSnapshot({includeMetadataChanges:true},snap=>{const connected=!snap.metadata?.fromCache;if(connected){lastError=null;ready=true}onRows(snap.docs.map(decodeRndTime).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.from).localeCompare(String(b.from))),{connected,fromCache:!connected,hasPendingWrites:Boolean(snap.metadata?.hasPendingWrites)})},err=>{lastError=err;onError?.(err)});
   }
 
-  window.rndCloud={watchAssignedTasks,loadAssignedTasks,deleteAssignedTask,rateAssignedTask,updateAssignedTaskStatus,saveAssignedTask,watchRndTime,saveRndTime,watchDepartmentMembers,deleteDepartmentMember,saveDepartmentMember,loadDepartmentMembers,loadReportDataOnce,deleteMonthData,markBackupDeleted,loadBackupHistory,saveBackupHistory,loadMonthBackup,loadQualityRecordsOnce,loadDepartmentRecordsOnce,deleteDepartmentRecord,watchDepartmentRecords,saveDepartmentRecord,deleteQualityRecord,saveQualityTime,watchQualityTime,saveProduction,watchProduction,watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+  window.rndCloud={watchAssignedTasks,loadAssignedTasks,deleteAssignedTask,rateAssignedTask,updateAssignedTaskStatus,saveAssignedTask,watchRndTime,saveRndTime,watchDepartmentMembers,deleteDepartmentMember,saveDepartmentMember,loadDepartmentMembers,loadRndMembers,saveRndMemberVerified,loadReportDataOnce,deleteMonthData,markBackupDeleted,loadBackupHistory,saveBackupHistory,loadMonthBackup,loadQualityRecordsOnce,loadDepartmentRecordsOnce,deleteDepartmentRecord,watchDepartmentRecords,saveDepartmentRecord,deleteQualityRecord,saveQualityTime,watchQualityTime,saveProduction,watchProduction,watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
 })();
