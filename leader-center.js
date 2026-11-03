@@ -104,12 +104,12 @@
   const memberDeptCatalog=()=>[{key:'rnd',name:'R&D'},{key:'quality',name:'Quality'},...genericCatalog()];
   const xmlEsc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
   const excelCell=(value,style='')=>`<Cell${style?` ss:StyleID="${style}"`:''}><Data ss:Type="String">${xmlEsc(value)}</Data></Cell>`;
-  const excelSheet=(name,rows)=>`<Worksheet ss:Name="${xmlEsc(String(name).slice(0,31))}"><Table><Column ss:Width="45"/><Column ss:Width="120"/><Column ss:Width="170"/><Column ss:Width="95"/><Column ss:Width="125"/><Row>${['S.No','Department','Name','Role','Password'].map(x=>excelCell(x,'Header')).join('')}</Row>${rows.map((r,i)=>`<Row>${excelCell(i+1)}${excelCell(r.department)}${excelCell(r.name)}${excelCell(r.role)}${excelCell(r.password)}</Row>`).join('')}</Table></Worksheet>`;
+  const excelSheet=(name,rows)=>`<Worksheet ss:Name="${xmlEsc(String(name).slice(0,31))}"><Table><Column ss:Width="45"/><Column ss:Width="120"/><Column ss:Width="170"/><Column ss:Width="95"/><Column ss:Width="180"/><Row>${['S.No','Department','Name','Role','Saved Password'].map(x=>excelCell(x,'Header')).join('')}</Row>${rows.map((r,i)=>`<Row>${excelCell(i+1)}${excelCell(r.department)}${excelCell(r.name)}${excelCell(r.role)}${excelCell(r.password)}</Row>`).join('')}</Table></Worksheet>`;
   async function loadMemberExcelRows(){
     const catalog=memberDeptCatalog(),all=[];
     for(const dept of catalog){
-      const rows=dept.key==='rnd'?(window.rndMemberAdmin?.list?.()||[]):await window.rndCloud.loadDepartmentMembers(dept.key);
-      rows.forEach(r=>all.push({department:dept.name,name:r.name||'',role:r.role==='lead'?'Lead':r.role==='visitor'?'Visitor':'Member',password:r.has_password?'Set (secured)':'Not set'}));
+      const rows=dept.key==='rnd'?(await window.rndCloud.loadRndMembers()).filter(r=>Number(r.active)!==0):await window.rndCloud.loadDepartmentMembers(dept.key);
+      rows.forEach(r=>all.push({department:dept.name,name:r.name||'',role:r.role==='lead'?'Lead':r.role==='visitor'?'Visitor':'Member',password:window.memberPasswordSession?.get(dept.key,r.id)||''}));
     }
     return {catalog,all};
   }
@@ -118,19 +118,95 @@
     const workbook=`<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Bottom"/><Borders/><Font/><Interior/><NumberFormat/><Protection/></Style><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#D9EAF7" ss:Pattern="Solid"/></Style></Styles>${excelSheet('All Members',all)}${groups.map(g=>excelSheet(g.name,g.rows)).join('')}</Workbook>`;
     const blob=new Blob(['\ufeff',workbook],{type:'application/vnd.ms-excel;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a'),stamp=new Date().toISOString().slice(0,10);a.href=url;a.download=`DFAB-Member-Logins-${stamp}.xls`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
   }
+  const normalizeMemberName=value=>String(value||'').normalize('NFKC').trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
+  const normalizeDepartment=value=>String(value||'').normalize('NFKC').replace(/[^a-z0-9]+/gi,'').toLowerCase();
+  async function loadPasswordImportAccounts(catalog){
+    const accounts=[];
+    for(const dept of catalog){
+      const rows=dept.key==='rnd'?(await window.rndCloud.loadRndMembers()).filter(row=>Number(row.active)!==0):await window.rndCloud.loadDepartmentMembers(dept.key);
+      rows.forEach(member=>accounts.push({department:dept,member}));
+    }
+    return accounts;
+  }
+  async function applyPasswordWorkbook(file,catalog,status){
+    if(!window.memberPasswordImport?.parse)throw new Error('Password workbook import is unavailable. Refresh the page and try again.');
+    const records=await window.memberPasswordImport.parse(file),accounts=await loadPasswordImportAccounts(catalog),byName=new Map(),departmentByName=new Map(catalog.map(dept=>[normalizeDepartment(dept.name),dept]));
+    accounts.forEach(account=>{
+      const key=normalizeMemberName(account.member.name),matches=byName.get(key)||[];
+      matches.push(account);byName.set(key,matches);
+    });
+    const candidates=new Map(),conflicts=new Set(),invalid=[];
+    for(const record of records){
+      const password=String(record.password||'').trim();
+      if(password.length<window.rndPassword.min||password.length>window.rndPassword.max){invalid.push(`${record.name}: password must be ${window.rndPassword.min}–${window.rndPassword.max} characters.`);continue}
+      let matches=byName.get(normalizeMemberName(record.name))||[];
+      if(record.department){
+        const department=departmentByName.get(normalizeDepartment(record.department));
+        if(!department){invalid.push(`${record.name}: department does not match an app department.`);continue}
+        matches=matches.filter(account=>account.department.key===department.key);
+      }
+      if(!matches.length){invalid.push(`${record.name}: no matching account${record.department?' in '+record.department:''}.`);continue}
+      if(matches.length>1){invalid.push(`${record.name}: multiple accounts match; include a Department column.`);continue}
+      const account=matches[0],key=`${account.department.key}:${account.member.id}`,existing=candidates.get(key);
+      if(conflicts.has(key))continue;
+      if(existing&&existing.password!==password){candidates.delete(key);conflicts.add(key);invalid.push(`${record.name}: conflicting passwords appear more than once.`);continue}
+      candidates.set(key,{...account,password});
+    }
+    if(!candidates.size)throw new Error(`No passwords are ready to import. ${invalid.slice(0,5).join(' ')}`);
+    const selected=[...candidates.values()];
+    const summary=`Import ${selected.length} password${selected.length===1?'':'s'} into matching member logins? This replaces their current login passwords.${invalid.length?` ${invalid.length} row(s) will be skipped.`:''}`;
+    if(!window.confirm(summary))return{cancelled:true};
+    let saved=0;const failures=[];
+    for(let i=0;i<selected.length;i++){
+      const {department,member,password}=selected[i];
+      status.textContent=`Saving password ${i+1} of ${selected.length}…`;
+      try{
+        if(department.key==='rnd'){
+          const credential=await window.rndPassword.create(password);
+          await window.rndCloud.saveRndMemberVerified({...member,...credential,updated_at:new Date().toISOString()});
+          window.memberPasswordSession?.remember('rnd',member.id,password);
+        }else await window.rndCloud.saveDepartmentMember(department.key,{id:member.id,name:member.name,role:member.role,password});
+        saved++;
+      }catch(error){
+        try{
+          const latest=department.key==='rnd'?(await window.rndCloud.loadRndMembers()).find(row=>String(row.id)===String(member.id)):(await window.rndCloud.loadDepartmentMembers(department.key)).find(row=>String(row.id)===String(member.id));
+          if(!latest||!await window.rndPassword.verify(password,latest))throw error;
+          window.memberPasswordSession?.remember(department.key,member.id,password);
+          saved++;
+        }catch(verifyError){failures.push(`${department.name} · ${member.name}: ${verifyError.message||'save was not confirmed.'}`)}
+      }
+      selected[i].password='';
+    }
+    reset();
+    return{cancelled:false,saved,total:selected.length,skipped:invalid,failures};
+  }
   async function previewMembersExcel(button){
     const original=button?.textContent||'Preview Excel';if(button){button.disabled=true;button.textContent='Loading preview…'}
     try{
       const {catalog,all}=await loadMemberExcelRows(),existing=document.getElementById('memberExcelPreviewDialog');existing?.remove();
       const dialog=document.createElement('dialog');dialog.id='memberExcelPreviewDialog';dialog.className='member-excel-preview-dialog';
-      dialog.innerHTML=`<div class="member-excel-preview-panel"><div class="member-excel-preview-head"><div><span class="kicker">EXCEL PREVIEW</span><h2>Department Member Logins</h2><p>Latest saved Firebase member list. Passwords remain protected and are shown only as status.</p></div><button class="icon-btn" type="button" data-close aria-label="Close preview">×</button></div><div class="member-excel-preview-summary"><span><b>${all.length}</b> total members</span><span><b>${catalog.length}</b> departments</span><span><b>${all.filter(r=>r.password==='Set (secured)').length}</b> passwords set</span></div><div class="member-excel-preview-table-wrap"><table class="leader-table member-excel-preview-table"><thead><tr><th>S.No</th><th>Department</th><th>Name</th><th>Role</th><th>Password</th></tr></thead><tbody>${all.length?all.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.department)}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.role)}</td><td><span class="q-status ${r.password==='Set (secured)'?'done':'open'}">${esc(r.password)}</span></td></tr>`).join(''):'<tr><td colspan="5">No member logins available.</td></tr>'}</tbody></table></div><div class="member-excel-preview-actions"><button class="ghost-btn" type="button" data-close>Close</button><button class="secondary-btn" type="button" data-download ${all.length?'':'disabled'}>Download Excel</button></div></div>`;
-      document.body.append(dialog);dialog.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>dialog.close());dialog.querySelector('[data-download]').onclick=()=>saveMembersExcel(catalog,all);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+      dialog.innerHTML=`<div class="member-excel-preview-panel"><div class="member-excel-preview-head"><div><span class="kicker">EXCEL PREVIEW</span><h2>Department Member Logins</h2><p>Passwords successfully saved during this browser session appear here. Existing passwords saved earlier are not recoverable. Plain-text passwords are kept only in memory until this tab closes.</p></div><button class="icon-btn" type="button" data-close aria-label="Close preview">×</button></div><div class="member-excel-preview-summary"><span><b>${all.length}</b> total members</span><span><b>${catalog.length}</b> departments</span></div><div class="member-excel-preview-table-wrap"><table class="leader-table member-excel-preview-table"><thead><tr><th>S.No</th><th>Department</th><th>Name</th><th>Role</th><th>Saved Password</th></tr></thead><tbody>${all.length?all.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.department)}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.role)}</td><td>${esc(r.password)}</td></tr>`).join(''):'<tr><td colspan="5">No member logins available.</td></tr>'}</tbody></table></div><p class="member-password-import-status" data-import-status role="status" aria-live="polite"></p><input data-password-import-file type="file" accept=".xlsx,.xls,.xml" hidden><div class="member-excel-preview-actions"><button class="ghost-btn" type="button" data-close>Close</button><button class="secondary-btn" type="button" data-download ${all.length?'':'disabled'}>Download Excel</button><button class="secondary-btn" type="button" data-import-passwords>Import filled Excel</button></div></div>`;
+      document.body.append(dialog);
+      dialog.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>dialog.close());
+      dialog.querySelector('[data-download]').onclick=()=>saveMembersExcel(catalog,all);
+      const importButton=dialog.querySelector('[data-import-passwords]'),fileInput=dialog.querySelector('[data-password-import-file]'),status=dialog.querySelector('[data-import-status]');
+      importButton.onclick=()=>fileInput.click();
+      fileInput.onchange=async()=>{
+        const file=fileInput.files?.[0];if(!file)return;
+        importButton.disabled=true;status.textContent='Reading password cells locally…';
+        try{
+          const result=await applyPasswordWorkbook(file,catalog,status);
+          if(result.cancelled)status.textContent='Import cancelled; no member passwords were changed.';
+          else status.textContent=`Saved ${result.saved} of ${result.total} password${result.total===1?'':'s'}.${result.skipped.length?` Skipped ${result.skipped.length} unmatched, ambiguous, duplicate, or invalid row(s).`:''}${result.failures.length?` Failed saves: ${result.failures.join(' | ')}`:''}`;
+        }catch(error){status.textContent=error.message||'Unable to import member passwords.'}
+        finally{fileInput.value='';importButton.disabled=false}
+      };
+      dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
     }catch(err){alert(err.message||'Unable to preview member Excel.')}finally{if(button){button.disabled=false;button.textContent=original}}
   }
   async function openMembers(){view='members';const body=shell('Manage Department Members','Add or remove approved logins, set passwords and assign Lead / Member roles. Credentials are stored in Firebase.');try{await renderMembers(body,'quality')}catch(e){body.innerHTML=`<div class="leader-empty">${esc(e.message||'Unable to load member access.')}</div>`}}
-  function bindPasswordVisibility(root){root.querySelectorAll('[data-password-toggle]').forEach(button=>{const input=button.parentElement?.querySelector('input');if(!input)return;button.onclick=()=>{const visible=input.classList.toggle('password-visible');button.setAttribute('aria-label',visible?'Hide password':'Show password');button.setAttribute('aria-pressed',String(visible))}})}
   async function renderMembers(body,key){const catalog=memberDeptCatalog(),dept=catalog.find(x=>x.key===key)||catalog[0],isRnd=dept.key==='rnd',rows=isRnd?(window.rndMemberAdmin?.list?.()||[]):await window.rndCloud.loadDepartmentMembers(dept.key);body.innerHTML=`<section class="panel leader-filter member-admin-filter"><label>DEPARTMENT<select id="lmDept">${catalog.map(d=>`<option value="${d.key}" ${d.key===dept.key?'selected':''}>${esc(d.name)}</option>`).join('')}</select></label><button class="ghost-btn" id="lmRefresh">Refresh Firebase</button><button class="secondary-btn" id="lmDownloadExcel" type="button">Preview Excel</button></section><section class="panel member-admin-panel"><div class="panel-head"><div><span class="kicker">LOGIN CREDENTIALS</span><h3>${esc(dept.name)} Members</h3><span>${isRnd?'Existing R&D Access Master · password protected':'Password protected · role-controlled · Firebase-backed'}</span></div></div><form id="lmAdd" class="member-admin-add member-admin-add-password"><label>NAME<input name="name" maxlength="80" autocomplete="off" required placeholder="Enter member name"></label><label>PASSWORD<span class="password-entry-wrap"><input name="password" type="text" class="secure-password-entry" data-secure-entry="password" minlength="4" maxlength="64" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" data-lpignore="true" data-1p-ignore="true" required placeholder="Set password"><button class="password-visibility-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.3-7 9.5-7 9.5 7 9.5 7-3.3 7-9.5 7-9.5-7-9.5-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span></label><label>ROLE<select name="role">${isRnd?'<option value="member">Member</option><option value="visitor">Visitor</option>':'<option value="member">Member</option><option value="lead">Lead</option>'}</select></label><button class="primary-btn">Add member</button><span role="status"></span></form><div class="member-admin-list">${rows.length?rows.map(r=>`<div class="member-admin-row" data-member-id="${esc(r.id)}"><input data-name value="${esc(r.name)}" maxlength="80" aria-label="Member name" ${isRnd&&r.role==='lead'?'readonly':''}><span class="password-entry-wrap"><input data-password type="text" class="secure-password-entry" data-secure-entry="password" minlength="4" maxlength="64" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" data-lpignore="true" data-1p-ignore="true" aria-label="Member password" placeholder="${r.has_password?'Change password':'Password required'}"><button class="password-visibility-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.3-7 9.5-7 9.5 7 9.5 7-3.3 7-9.5 7-9.5-7-9.5-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span><select data-role aria-label="Member role" ${isRnd&&r.role==='lead'?'disabled':''}>${isRnd?`<option value="member" ${r.role==='member'?'selected':''}>Member</option><option value="visitor" ${r.role==='visitor'?'selected':''}>Visitor</option>${r.role==='lead'?'<option value="lead" selected>Lead</option>':''}`:`<option value="member" ${r.role==='member'?'selected':''}>Member</option><option value="lead" ${r.role==='lead'?'selected':''}>Lead</option>`}</select><button class="secondary-btn" data-save>Save</button><button class="icon-btn danger-member" data-delete aria-label="Delete ${esc(r.name)}" ${isRnd&&r.role==='lead'?'disabled':''}>×</button></div>`).join(''):'<div class="leader-empty">No member logins yet. Add the first member for this department.</div>'}</div></section>${isRnd?'<section class="panel rnd-member-note"><span class="kicker">R&D RULE</span><h3>Kabil remains R&D Lead</h3><p>The existing R&D lead/task ownership model is preserved. Admin can add R&D Members or Visitors here without changing that rule.</p></section>':''}`;
-    bindPasswordVisibility(body);body.querySelector('#lmDept').onchange=e=>renderMembers(body,e.target.value);body.querySelector('#lmRefresh').onclick=()=>renderMembers(body,dept.key);body.querySelector('#lmDownloadExcel').onclick=e=>previewMembersExcel(e.currentTarget);const add=body.querySelector('#lmAdd');add.onsubmit=async e=>{e.preventDefault();const fd=new FormData(add),btn=add.querySelector('button[type="submit"]'),st=add.querySelector('[role=status]');btn.disabled=true;try{st.textContent='Saving to Firebase…';if(isRnd)await window.rndMemberAdmin.save({name:String(fd.get('name')||'').trim(),password:String(fd.get('password')||''),role:String(fd.get('role')||'member')});else await window.rndCloud.saveDepartmentMember(dept.key,{name:String(fd.get('name')||'').trim(),password:String(fd.get('password')||''),role:String(fd.get('role')||'member')});cache=null;st.textContent='Member login saved.';await renderMembers(body,dept.key)}catch(err){st.textContent=err.message||'Unable to save member.';btn.disabled=false}};body.querySelectorAll('[data-member-id]').forEach(row=>{const saveBtn=row.querySelector('[data-save]'),deleteBtn=row.querySelector('[data-delete]');saveBtn.onclick=async()=>{saveBtn.disabled=true;try{if(isRnd)await window.rndMemberAdmin.save({id:row.dataset.memberId,name:row.querySelector('[data-name]').value,password:row.querySelector('[data-password]').value,role:row.querySelector('[data-role]').value});else await window.rndCloud.saveDepartmentMember(dept.key,{id:row.dataset.memberId,name:row.querySelector('[data-name]').value,password:row.querySelector('[data-password]').value,role:row.querySelector('[data-role]').value});cache=null;await renderMembers(body,dept.key)}catch(err){alert(err.message);saveBtn.disabled=false}};deleteBtn.onclick=async()=>{const name=row.querySelector('[data-name]').value;if(!confirm(`Delete ${name} login from ${dept.name}?`))return;if(isRnd)await window.rndMemberAdmin.delete(row.dataset.memberId);else await window.rndCloud.deleteDepartmentMember(row.dataset.memberId);cache=null;await renderMembers(body,dept.key)}})
+    body.querySelector('#lmDept').onchange=e=>renderMembers(body,e.target.value);body.querySelector('#lmRefresh').onclick=()=>renderMembers(body,dept.key);body.querySelector('#lmDownloadExcel').onclick=e=>previewMembersExcel(e.currentTarget);const add=body.querySelector('#lmAdd');add.onsubmit=async e=>{e.preventDefault();const fd=new FormData(add),btn=add.querySelector('button[type="submit"]'),st=add.querySelector('[role=status]');btn.disabled=true;try{st.textContent='Saving to Firebase…';if(isRnd)await window.rndMemberAdmin.save({name:String(fd.get('name')||'').trim(),password:String(fd.get('password')||''),role:String(fd.get('role')||'member')});else await window.rndCloud.saveDepartmentMember(dept.key,{name:String(fd.get('name')||'').trim(),password:String(fd.get('password')||''),role:String(fd.get('role')||'member')});cache=null;st.textContent='Member login saved.';await renderMembers(body,dept.key)}catch(err){st.textContent=err.message||'Unable to save member.';btn.disabled=false}};body.querySelectorAll('[data-member-id]').forEach(row=>{const saveBtn=row.querySelector('[data-save]'),deleteBtn=row.querySelector('[data-delete]');saveBtn.onclick=async()=>{saveBtn.disabled=true;try{if(isRnd)await window.rndMemberAdmin.save({id:row.dataset.memberId,name:row.querySelector('[data-name]').value,password:row.querySelector('[data-password]').value,role:row.querySelector('[data-role]').value});else await window.rndCloud.saveDepartmentMember(dept.key,{id:row.dataset.memberId,name:row.querySelector('[data-name]').value,password:row.querySelector('[data-password]').value,role:row.querySelector('[data-role]').value});cache=null;await renderMembers(body,dept.key)}catch(err){alert(err.message);saveBtn.disabled=false}};deleteBtn.onclick=async()=>{const name=row.querySelector('[data-name]').value;if(!confirm(`Delete ${name} login from ${dept.name}?`))return;if(isRnd)await window.rndMemberAdmin.delete(row.dataset.memberId);else await window.rndCloud.deleteDepartmentMember(row.dataset.memberId);cache=null;await renderMembers(body,dept.key)}})
   }
   function renderCards(){
     const grid=document.getElementById('departmentGateGrid');if(!grid)return;

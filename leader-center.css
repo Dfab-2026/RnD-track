@@ -138,3 +138,5 @@ body.leader-center-active #departmentWorkspace .q-reopen{display:none!important;
 .member-excel-preview-table thead th{position:sticky;top:0;z-index:1;background:#edf5ff}
 .member-excel-preview-actions{display:flex;justify-content:flex-end;gap:9px;padding:13px 20px;border-top:1px solid #dfe8f2;background:#f8fbff}
 @media(max-width:700px){.member-excel-preview-summary{grid-template-columns:1fr}.member-excel-preview-head{padding:16px}.member-excel-preview-table-wrap{padding:0 12px 12px}.member-excel-preview-actions{padding:12px;flex-wrap:wrap}.member-excel-preview-actions button{flex:1;min-width:140px}}
+.member-password-import-status{min-height:0;margin:0;padding:0 20px;color:#365674;font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:700px){.member-password-import-status{padding:0 12px}}

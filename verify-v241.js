@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const leader=fs.readFileSync('leader-center.js','utf8');
+assert(leader.includes("['S.No','Department','Name','Role','Saved Password']"),'member export must include the editable saved-password column');
+assert(leader.includes('${excelCell(r.password)}'),'member export must include entered session passwords');
+assert(!leader.includes('password_status'),'member Excel export must not include password status');
+assert(!leader.includes('resetMemberPasswords'),'bulk password reset must be removed');
+assert(!leader.includes('data-reset-passwords'),'Excel preview must not offer password reset');
+assert(!leader.includes("window.prompt('Type RESET"),'reset confirmation prompt must be removed');
+assert(!leader.includes('Temporary Password'),'member export must not contain generated temporary credentials');
+console.log('PASS v241: member Excel exports session-saved passwords and has no bulk reset flow.');

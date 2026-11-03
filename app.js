@@ -351,15 +351,18 @@ async function persistThenSync(writes=[],deletes=[]){
 }
 async function refreshFromStorage(){let snap=await readSnapshot();if(!snap)snap=seedSnapshot();snap=migrateSnapshot(snap);await writeSnapshot(snap);const ui={page:state.page,selectedProject:state.selectedProject,reportType:state.reportType};Object.assign(state,enrich(snap),ui)}
 async function updateMemberLocal(id,{name,role,password=''}){if(isLead(state.members.find(m=>Number(m.id)===Number(id)))&&!isLead())throw new Error('Only Kabil can change the R&D Lead profile.');
-  const m=state.members.find(x=>Number(x.id)===Number(id));if(!m||Number(m.active)===0)throw new Error('Login not found.');
+  const current=state.members.find(x=>Number(x.id)===Number(id));if(!current||Number(current.active)===0)throw new Error('Login not found.');
+  const m={...current};
   name=String(name||'').trim().replace(/\s+/g,' ');role=role==='visitor'?'visitor':'member';password=String(password||'');
   if(name.length<2||name.length>80)throw new Error('Enter a valid name between 2 and 80 characters.');
   const normalized=normalizeName(name);
   if(state.members.some(x=>Number(x.id)!==Number(m.id)&&normalizeName(x.name)===normalized))throw new Error('That name already belongs to another saved login.');
   if(password){const credential=await window.rndPassword.create(password);m.password_hash=credential.password_hash;m.password_salt=credential.password_salt}
   m.name=name;m.role=role;m.updated_at=new Date().toISOString();
-  const saved=storedLogin();if(saved&&Number(saved.id)===Number(m.id))persistLogin(m);
-  await persistThenSync([{collection:'members',row:m}]);return m;
+  const confirmed=await window.rndCloud.saveRndMemberVerified(m),index=state.members.findIndex(x=>Number(x.id)===Number(confirmed.id));
+  if(index>=0)state.members[index]={...state.members[index],...confirmed};else state.members.push(confirmed);
+  const saved=storedLogin();if(saved&&Number(saved.id)===Number(confirmed.id))persistLogin(confirmed);
+  await persistState();if(password)window.memberPasswordSession?.remember('rnd',confirmed.id,password);scheduleRender();return confirmed;
 }
 async function addMemberLocal({name,role,password}){
   name=String(name||'').trim().replace(/\s+/g,' ');role=role==='visitor'?'visitor':'member';password=String(password||'');
@@ -368,10 +371,11 @@ async function addMemberLocal({name,role,password}){
   const credential=await window.rndPassword.create(password),normalized=normalizeName(name);const existing=state.members.find(x=>normalizeName(x.name)===normalized);
   if(existing&&Number(existing.active)!==0)throw new Error('That login already exists. Edit the existing row instead.');
   const now=new Date().toISOString();let row;
-  if(existing){existing.active=1;existing.role=role;existing.password_hash=credential.password_hash;existing.password_salt=credential.password_salt;existing.updated_at=now;existing.sort_order=Math.max(0,...state.members.map(x=>Number(x.sort_order)||0))+1;row=existing}
+  if(existing)row={...existing,active:1,role,password_hash:credential.password_hash,password_salt:credential.password_salt,updated_at:now,sort_order:Math.max(0,...state.members.map(x=>Number(x.sort_order)||0))+1};
   else row={id:nextId(),name,role,password_hash:credential.password_hash,password_salt:credential.password_salt,active:1,sort_order:Math.max(0,...state.members.map(x=>Number(x.sort_order)||0))+1,created_at:now,updated_at:now};
-  if(!existing)state.members.push(row);
-  await persistThenSync([{collection:'members',row}]);return row;
+  const confirmed=await window.rndCloud.saveRndMemberVerified(row),index=state.members.findIndex(x=>Number(x.id)===Number(confirmed.id));
+  if(index>=0)state.members[index]={...state.members[index],...confirmed};else state.members.push(confirmed);
+  await persistState();window.memberPasswordSession?.remember('rnd',confirmed.id,password);scheduleRender();return confirmed;
 }
 async function deleteMemberLocal(id){if(isLead(state.members.find(m=>Number(m.id)===Number(id)))&&!isLead())throw new Error('Only Kabil can manage the R&D Lead profile.');
   const m=state.members.find(x=>Number(x.id)===Number(id));if(!m||Number(m.active)===0)throw new Error('Login not found.');
@@ -618,20 +622,17 @@ window.rndAssignedTaskMembers=()=>workingMembers().filter(m=>m.role!=='visitor')
 
 window.rndMemberAdmin={
   list:()=>state.members.filter(m=>Number(m.active)!==0).map(m=>({id:m.id,name:m.name,role:isLead(m)?'lead':m.role==='visitor'?'visitor':'member',has_password:Boolean(m.password_hash&&m.password_salt)})).sort((a,b)=>String(a.name).localeCompare(String(b.name))),
-  save:async data=>{if(!departmentAdminActive())throw new Error('Admin login required.');let name=String(data?.name||'').trim().replace(/\s+/g,' '),role=String(data?.role||'member'),password=String(data?.password||'');if(name.length<2||name.length>80)throw new Error('Enter a valid R&D member name.');const normalized=normalizeName(name),id=Number(data?.id)||0,current=id?state.members.find(m=>Number(m.id)===id):null;if(role==='lead'&&normalized!=='kabil')throw new Error('Kabil remains the fixed R&D Lead. Add other R&D users as Member or Visitor.');if(current&&isLead(current)&&normalized!=='kabil')throw new Error('The R&D Lead profile cannot be renamed here.');if(state.members.some(m=>Number(m.active)!==0&&Number(m.id)!==id&&normalizeName(m.name)===normalized))throw new Error('That R&D login already exists.');if(!current&&!password)throw new Error('Enter a password for this R&D login.');const now=new Date().toISOString();let row=current?{...current}:null;if(row){if(password){const credential=await window.rndPassword.create(password);row.password_hash=credential.password_hash;row.password_salt=credential.password_salt}row.name=name;row.role=normalized==='kabil'?'member':role==='visitor'?'visitor':'member';row.updated_at=now}else{const credential=await window.rndPassword.create(password);row={id:nextId(state.members),name,role:normalized==='kabil'?'member':role==='visitor'?'visitor':'member',password_hash:credential.password_hash,password_salt:credential.password_salt,active:1,sort_order:Math.max(0,...state.members.map(x=>Number(x.sort_order)||0))+1,created_at:now,updated_at:now}}const confirmed=await window.rndCloud.saveRndMemberVerified(row);const idx=state.members.findIndex(m=>Number(m.id)===Number(confirmed.id));if(idx>=0)state.members[idx]={...state.members[idx],...confirmed};else state.members.push(confirmed);await persistState();scheduleRender();return confirmed},
+  save:async data=>{if(!departmentAdminActive())throw new Error('Admin login required.');let name=String(data?.name||'').trim().replace(/\s+/g,' '),role=String(data?.role||'member'),password=String(data?.password||'');if(name.length<2||name.length>80)throw new Error('Enter a valid R&D member name.');const normalized=normalizeName(name),id=Number(data?.id)||0,current=id?state.members.find(m=>Number(m.id)===id):null;if(role==='lead'&&normalized!=='kabil')throw new Error('Kabil remains the fixed R&D Lead. Add other R&D users as Member or Visitor.');if(current&&isLead(current)&&normalized!=='kabil')throw new Error('The R&D Lead profile cannot be renamed here.');if(state.members.some(m=>Number(m.active)!==0&&Number(m.id)!==id&&normalizeName(m.name)===normalized))throw new Error('That R&D login already exists.');if(!current&&!password)throw new Error('Enter a password for this R&D login.');const now=new Date().toISOString();let row=current?{...current}:null;if(row){if(password){const credential=await window.rndPassword.create(password);row.password_hash=credential.password_hash;row.password_salt=credential.password_salt}row.name=name;row.role=normalized==='kabil'?'member':role==='visitor'?'visitor':'member';row.updated_at=now}else{const credential=await window.rndPassword.create(password);row={id:nextId(state.members),name,role:normalized==='kabil'?'member':role==='visitor'?'visitor':'member',password_hash:credential.password_hash,password_salt:credential.password_salt,active:1,sort_order:Math.max(0,...state.members.map(x=>Number(x.sort_order)||0))+1,created_at:now,updated_at:now}}const confirmed=await window.rndCloud.saveRndMemberVerified(row);const idx=state.members.findIndex(m=>Number(m.id)===Number(confirmed.id));if(idx>=0)state.members[idx]={...state.members[idx],...confirmed};else state.members.push(confirmed);await persistState();if(password)window.memberPasswordSession?.remember('rnd',confirmed.id,password);scheduleRender();return confirmed},
   delete:async id=>{if(!departmentAdminActive())throw new Error('Admin login required.');const row=state.members.find(m=>Number(m.id)===Number(id));if(!row||Number(row.active)===0)throw new Error('R&D login not found.');if(isLead(row))throw new Error('Kabil · R&D Lead cannot be deleted.');row.active=0;row.updated_at=new Date().toISOString();await persistThenSync([{collection:'members',row}]);return true}
 };
 
-function bindPasswordVisibility(root){
-  root.querySelectorAll('[data-password-toggle]').forEach(button=>{
-    const input=button.parentElement?.querySelector('input');if(!input)return;
-    button.onclick=()=>{
-      const visible=input.classList.toggle('password-visible');
-      button.setAttribute('aria-label',visible?'Hide password':'Show password');
-      button.setAttribute('aria-pressed',String(visible));
-    };
-  });
-}
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('[data-password-toggle]');if(!button)return;
+  const input=button.parentElement?.querySelector('input');if(!input)return;
+  const visible=input.classList.toggle('password-visible');
+  button.setAttribute('aria-label',visible?'Hide password':'Show password');
+  button.setAttribute('aria-pressed',String(visible));
+});
 
 function renderDepartmentAdminControl(){
   const card=document.querySelector('#departmentGate .department-gate-card');if(!card)return;
@@ -886,7 +887,6 @@ function renderSettings(){
     const rows=state.members.filter(m=>Number(m.active)!==0).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
     const members=rows.filter(m=>m.role!=='visitor').length,admins=rows.filter(m=>m.role==='visitor').length;
     memberHost.innerHTML=`<div class="roster-summary"><div><strong>${members}</strong><span>R&D Members</span></div><div><strong>${admins}</strong><span>Admins / Visitors</span></div></div><form class="member-add-form member-add-password-form" id="memberAddForm"><label><span>Name</span><input id="newMemberName" maxlength="80" placeholder="Member name" ${visitor?'disabled':''}></label><label><span>Password</span><span class="password-entry-wrap"><input id="newMemberPassword" type="text" class="secure-password-entry" data-secure-entry="password" minlength="4" maxlength="64" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" data-lpignore="true" data-1p-ignore="true" placeholder="Set password" ${visitor?'disabled':''}><button class="password-visibility-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.3-7 9.5-7 9.5 7 9.5 7-3.3 7-9.5 7-9.5-7-9.5-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span></label><label><span>Access</span><select id="newMemberRole" ${visitor?'disabled':''}><option value="member">R&D Member</option><option value="visitor">Admin / Visitor</option></select></label><button class="secondary-btn" type="submit" ${visitor?'disabled':''}>Add Login</button></form><div class="roster-list">${rows.map((m,i)=>`<div class="roster-slot roster-slot-password ${m.role==='visitor'?'visitor-slot':''}"><span class="roster-index">${String(i+1).padStart(2,'0')}</span><div class="roster-edit"><label>NAME</label><input data-member-name="${m.id}" value="${esc(m.name)}" maxlength="80" ${visitor?'disabled':''}></div><div class="roster-edit"><label>PASSWORD</label><span class="password-entry-wrap"><input data-member-password="${m.id}" type="text" class="secure-password-entry" data-secure-entry="password" minlength="4" maxlength="64" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" data-lpignore="true" data-1p-ignore="true" placeholder="${m.password_hash?'Change password':'Password required'}" ${visitor?'disabled':''}><button class="password-visibility-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false" ${visitor?'disabled':''}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.3-7 9.5-7 9.5 7 9.5 7-3.3 7-9.5 7-9.5-7-9.5-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span></div><select class="role-select" data-member-role="${m.id}" ${visitor?'disabled':''}><option value="member" ${m.role!=='visitor'?'selected':''}>${isLead(m)?'R&D Lead':'R&D Member'}</option><option value="visitor" ${m.role==='visitor'?'selected':''}>Admin / Visitor</option></select><div class="member-row-actions"><button class="ghost-btn" type="button" data-save-member="${m.id}" ${visitor?'disabled':''}>Save</button><button class="danger-outline-btn" type="button" data-delete-member="${m.id}" ${visitor?'disabled':''}>×</button></div></div>`).join('')}</div>`;
-    bindPasswordVisibility(memberHost);
   }
   const dbStats=$('#databaseStats');if(dbStats)dbStats.innerHTML=`<div><span>Members</span><strong>${state.members.filter(m=>Number(m.active)!==0).length}</strong></div><div><span>Departments</span><strong>${state.departments.filter(d=>Number(d.active)!==0).length}</strong></div><div><span>Ideas</span><strong>${state.ideas.length}</strong></div><div><span>Projects</span><strong>${state.projects.length}</strong></div>`;
   const ss=$('#storageStatus');if(ss)ss.textContent=storageStatus();
