@@ -2308,3 +2308,11 @@ body.dashboard-team-celebrating .topbar:after{content:"GOOD WORK ✦";position:a
 
 /* v238 — internal secure-entry fields stay masked without invoking browser password-manager breach prompts. */
 .secure-password-entry{-webkit-text-security:disc}
+.secure-password-entry.password-visible{-webkit-text-security:none!important}
+.password-entry-wrap{position:relative;display:flex;align-items:center;width:100%;min-width:0}
+.password-entry-wrap>input{width:100%;min-width:0;padding-right:44px!important}
+.password-visibility-toggle{position:absolute;right:4px;top:50%;display:grid;place-items:center;width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border:0;border-radius:8px;background:transparent;color:#536b85;font-size:17px;line-height:1;cursor:pointer;transform:translateY(-50%)}
+.password-visibility-toggle:hover{background:#edf4fb;color:#175da5}
+.password-visibility-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.password-visibility-toggle:focus-visible{outline:2px solid #2563eb;outline-offset:1px}
+.password-visibility-toggle:disabled{opacity:.5;cursor:not-allowed}
