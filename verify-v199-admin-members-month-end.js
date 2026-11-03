@@ -17,6 +17,8 @@ assert(dept.includes('dynamic?.role'));
 assert(qualityLogin.includes("loadDepartmentMembers('quality')"));
 assert(qualityLogin.includes('roleFor'));
 assert(leader.includes("shell('Manage Department Members'"));
+assert(leader.includes('<button type="submit" class="primary-btn">Add member</button>'));
+assert(leader.includes("add.querySelector('button[type=\"submit\"]')"));
 assert(leader.includes('maybeMonthEndReminder'));
 assert(leader.includes('MONTH END · FIREBASE CLEANUP'));
 assert(css.includes('body.leader-center-active #sidebarReopenBtn'));
