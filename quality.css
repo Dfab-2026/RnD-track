@@ -148,6 +148,11 @@
 #qualityWorkspace .q-weekly-other-list span{padding:5px 8px;border-radius:999px;background:#eef4fb;color:var(--ink);font-size:10px;text-transform:none;letter-spacing:0}
 #qualityWorkspace .q-weekly-other-list.empty{font-size:11px;color:var(--muted)}
 @media(max-width:1050px){#qualityWorkspace .q-weekly-timesheet-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+#qualityTimeWorkspace .qt-entry-row header{grid-template-columns:minmax(0,1fr) minmax(0,auto)}
+#qualityTimeWorkspace .qt-entry-row header .tc-entry-details{display:flex;min-width:0;max-width:100%;justify-content:flex-end;flex-wrap:wrap;gap:4px 10px;white-space:normal}
+#qualityTimeWorkspace .qt-entry-row header .tc-entry-details>span{text-align:left;white-space:normal}
+@media(max-width:760px){#qualityTimeWorkspace .qt-entry-row header .tc-entry-details{justify-content:flex-start}}
 @media(max-width:620px){#qualityWorkspace .q-weekly-timesheet-summary{grid-template-columns:1fr}}
 
 /* v210 — desktop viewport containment only. Keep long data accessible inside its own table. */
@@ -334,4 +339,32 @@
     min-height:0!important;
     max-height:none!important;
   }
+}
+
+/* Keep the time-sheet fields inside the panel and give both clock pickers room. */
+#qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(12,minmax(0,1fr))}
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(1),
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(2),
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(4),
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(5){grid-column:span 2}
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(3){grid-column:span 4}
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(6){grid-column:span 3}
+#qualityTimeWorkspace .qt-inline-form>label:nth-child(7){grid-column:span 7}
+#qualityTimeWorkspace .qt-inline-form>#qtSave{grid-column:span 2;width:100%;max-width:none;min-width:0;justify-self:stretch;overflow:visible}
+#qualityTimeWorkspace .qt-inline-form>.qt-inline-status{grid-column:1/-1}
+@media(max-width:900px){
+  #qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(6,minmax(0,1fr))}
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(1),
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(2),
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(4),
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(5),
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(6),
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(7){grid-column:span 3}
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(3),
+  #qualityTimeWorkspace .qt-inline-form>#qtSave{grid-column:1/-1}
+}
+@media(max-width:560px){
+  #qualityTimeWorkspace .qt-inline-form{grid-template-columns:minmax(0,1fr)}
+  #qualityTimeWorkspace .qt-inline-form>label:nth-child(n),
+  #qualityTimeWorkspace .qt-inline-form>#qtSave{grid-column:1}
 }

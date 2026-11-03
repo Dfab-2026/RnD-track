@@ -9,6 +9,12 @@
 /* v203 R&D Datas summary page */
 .rnd-data-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px}.rnd-data-hero>div{display:grid;gap:5px}.rnd-data-hero strong{font-size:34px;line-height:1;letter-spacing:-.04em}.rnd-data-hero p{margin:0;color:var(--muted);font-size:12px}.rnd-hours-metric strong{font-variant-numeric:tabular-nums}@media(max-width:700px){.rnd-data-hero{align-items:flex-start;flex-direction:column}.rnd-data-hero .secondary-btn{width:100%}}
 
+.tc-entry .tc-entry-details{display:flex;flex:1 1 65%;min-width:0;max-width:100%;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:4px 10px;white-space:normal}
+.tc-entry .tc-entry-details>span{white-space:normal}
+.tc-entry .tc-entry-time-range{display:inline-flex;align-items:center;flex-wrap:wrap;gap:2px;font-variant-numeric:tabular-nums}
+.tc-entry .tc-entry-time-range b{margin-left:0}
+@media(max-width:600px){.tc-entry .tc-entry-details{justify-content:flex-start}}
+
 /* v203 R&D Datas summary page */
 .rnd-data-hero{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px}.rnd-data-hero>div{display:grid;gap:5px}.rnd-data-hero strong{font-size:34px;line-height:1;letter-spacing:-.04em}.rnd-data-hero p{margin:0;color:var(--muted);font-size:12px}.rnd-hours-metric strong{font-variant-numeric:tabular-nums}@media(max-width:700px){.rnd-data-hero{align-items:flex-start;flex-direction:column}.rnd-data-hero .secondary-btn{width:100%}}
 
@@ -50,3 +56,31 @@
 #rndDataRoot .rnd-data-quality-weekly .q-weekly-task-summary>b{font-size:20px;line-height:1.1;white-space:nowrap;color:var(--ink)}
 #rndDataRoot .rnd-data-quality-weekly .q-weekly-task-summary>small{grid-column:1/-1;color:var(--muted);line-height:1.45}
 @media(max-width:760px){#rndDataRoot .rnd-data-quality-weekly .q-weekly-panel-head{align-items:flex-start;flex-direction:column}#rndDataRoot .rnd-data-quality-weekly .q-weekly-timesheet-summary{grid-template-columns:1fr!important;padding:14px!important}}
+
+/* Keep the time-sheet fields inside the panel and give both clock pickers room. */
+#timeConsumeRoot .rtc-inline-form{grid-template-columns:repeat(12,minmax(0,1fr))}
+#timeConsumeRoot .rtc-inline-form>label:nth-child(1),
+#timeConsumeRoot .rtc-inline-form>label:nth-child(2),
+#timeConsumeRoot .rtc-inline-form>label:nth-child(4),
+#timeConsumeRoot .rtc-inline-form>label:nth-child(5){grid-column:span 2}
+#timeConsumeRoot .rtc-inline-form>label:nth-child(3){grid-column:span 4}
+#timeConsumeRoot .rtc-inline-form>label:nth-child(6){grid-column:span 3}
+#timeConsumeRoot .rtc-inline-form>label:nth-child(7){grid-column:span 7}
+#timeConsumeRoot .rtc-inline-form>#rtcSave{grid-column:span 2;width:100%;max-width:none;min-width:0;justify-self:stretch}
+#timeConsumeRoot .rtc-inline-form>.rtc-inline-status{grid-column:1/-1}
+@media(max-width:900px){
+  #timeConsumeRoot .rtc-inline-form{grid-template-columns:repeat(6,minmax(0,1fr))}
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(1),
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(2),
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(4),
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(5),
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(6),
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(7){grid-column:span 3}
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(3),
+  #timeConsumeRoot .rtc-inline-form>#rtcSave{grid-column:1/-1}
+}
+@media(max-width:560px){
+  #timeConsumeRoot .rtc-inline-form{grid-template-columns:minmax(0,1fr)}
+  #timeConsumeRoot .rtc-inline-form>label:nth-child(n),
+  #timeConsumeRoot .rtc-inline-form>#rtcSave{grid-column:1}
+}

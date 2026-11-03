@@ -7,6 +7,11 @@
 #departmentWorkspace .dw-login-card{width:min(430px,100%);background:#fff;border:1px solid #d8e3ef;border-radius:22px;padding:28px;display:grid;gap:14px;box-shadow:0 18px 60px rgba(15,41,70,.12)}
 #departmentWorkspace .dw-login-card img{width:82px}#departmentWorkspace .dw-login-card label,#departmentWorkspace .dw-login-card form{display:grid;gap:8px}
 #departmentWorkspace .dw-record-list{display:grid;gap:10px}#departmentWorkspace .dw-record-list article{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--paper)}#departmentWorkspace .dw-record-list article>div:first-child{display:grid;gap:3px;min-width:0}#departmentWorkspace .dw-record-list strong{font-size:13px;overflow-wrap:anywhere}#departmentWorkspace .dw-record-list small{color:var(--muted);overflow-wrap:anywhere}#departmentWorkspace .dw-record-list .panel-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+
+#departmentWorkspace .qt-entry-row header{grid-template-columns:minmax(0,1fr) minmax(0,auto)}
+#departmentWorkspace .qt-entry-row header .tc-entry-details{display:flex;min-width:0;max-width:100%;justify-content:flex-end;flex-wrap:wrap;gap:4px 10px;white-space:normal}
+#departmentWorkspace .qt-entry-row header .tc-entry-details>span{text-align:left;white-space:normal}
+@media(max-width:760px){#departmentWorkspace .qt-entry-row header .tc-entry-details{justify-content:flex-start}}#departmentWorkspace .dw-record-list .panel-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
 #departmentWorkspace .dw-weekly-kpis{display:grid;gap:8px}#departmentWorkspace .dw-weekly-kpis>div{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,.7fr) 70px;gap:12px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}#departmentWorkspace .dw-weekly-kpis small{color:var(--muted)}#departmentWorkspace .dw-weekly-kpis b{text-align:right}
 #departmentWorkspace .dw-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
 #departmentWorkspace .q-week-selector{display:grid;gap:5px;font-size:10px;font-weight:750;color:var(--muted)}
@@ -765,4 +770,32 @@
     min-height:0!important;
     max-height:none!important;
   }
+}
+
+/* Keep every department's time-sheet form inside its panel. */
+#departmentWorkspace .qt-inline-form{grid-template-columns:repeat(12,minmax(0,1fr))}
+#departmentWorkspace .qt-inline-form>label:nth-child(1),
+#departmentWorkspace .qt-inline-form>label:nth-child(2),
+#departmentWorkspace .qt-inline-form>label:nth-child(4),
+#departmentWorkspace .qt-inline-form>label:nth-child(5){grid-column:span 2}
+#departmentWorkspace .qt-inline-form>label:nth-child(3){grid-column:span 4}
+#departmentWorkspace .qt-inline-form>label:nth-child(6){grid-column:span 3}
+#departmentWorkspace .qt-inline-form>label:nth-child(7){grid-column:span 7}
+#departmentWorkspace .qt-inline-form>button:nth-child(8){grid-column:span 2;width:100%;min-width:0;justify-self:stretch}
+#departmentWorkspace .qt-inline-form>.qt-inline-status{grid-column:1/-1}
+@media(max-width:900px){
+  #departmentWorkspace .qt-inline-form{grid-template-columns:repeat(6,minmax(0,1fr))}
+  #departmentWorkspace .qt-inline-form>label:nth-child(1),
+  #departmentWorkspace .qt-inline-form>label:nth-child(2),
+  #departmentWorkspace .qt-inline-form>label:nth-child(4),
+  #departmentWorkspace .qt-inline-form>label:nth-child(5),
+  #departmentWorkspace .qt-inline-form>label:nth-child(6),
+  #departmentWorkspace .qt-inline-form>label:nth-child(7){grid-column:span 3}
+  #departmentWorkspace .qt-inline-form>label:nth-child(3),
+  #departmentWorkspace .qt-inline-form>button:nth-child(8){grid-column:1/-1}
+}
+@media(max-width:560px){
+  #departmentWorkspace .qt-inline-form{grid-template-columns:minmax(0,1fr)}
+  #departmentWorkspace .qt-inline-form>label:nth-child(n),
+  #departmentWorkspace .qt-inline-form>button:nth-child(8){grid-column:1}
 }
