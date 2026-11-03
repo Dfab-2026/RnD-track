@@ -2316,3 +2316,22 @@ body.dashboard-team-celebrating .topbar:after{content:"GOOD WORK ✦";position:a
 .password-visibility-toggle svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .password-visibility-toggle:focus-visible{outline:2px solid #2563eb;outline-offset:1px}
 .password-visibility-toggle:disabled{opacity:.5;cursor:not-allowed}
+#loginGate.login-gate{background:#eef4fb}
+#loginGate.login-gate:before{display:none}
+#loginGate .login-card{width:min(430px,100%);background:#fff;border:1px solid #d8e3ef;border-radius:22px;padding:28px;display:grid;gap:14px;box-shadow:0 18px 60px rgba(15,41,70,.12)}
+#loginGate .login-brand{margin-bottom:0}
+#loginGate .login-card h1,#loginGate .login-card>p,#loginGate .login-card .login-message{margin-top:0}
+#loginGate .login-card h1{margin-bottom:0}
+#loginGate .login-card>p{margin-bottom:0}
+#loginGate .login-card form{display:grid;gap:12px}
+#loginGate .login-card .login-submit{margin-top:0}
+.kpi-auto-evidence{display:grid;gap:14px;margin:16px 0;padding:16px}
+.kpi-auto-evidence>div:first-child{display:grid;gap:5px}
+.kpi-auto-evidence h3,.kpi-auto-evidence h4,.kpi-auto-evidence p{margin:0}
+.kpi-auto-evidence p,.kpi-auto-evidence-grid small{color:var(--muted);font-size:12px;line-height:1.5}
+.kpi-auto-evidence-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kpi-auto-evidence-grid article{min-width:0;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--paper);display:grid;gap:5px}
+.kpi-auto-evidence-grid span{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--muted)}
+.kpi-auto-evidence-grid strong{font-size:18px;overflow-wrap:anywhere}
+.kpi-auto-evidence-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:700px){.kpi-auto-evidence-grid{grid-template-columns:1fr}}

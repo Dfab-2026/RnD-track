@@ -6,7 +6,7 @@
   const qualityRole=()=>window.qualitySession?.role?.(person())==='lead'?'Quality Lead':'Member';
   const qualityRoleLabel=()=>window.qualitySession?.role?.(person())==='lead'?'QUALITY LEAD':'MEMBER';
   const options=()=>activeDepartments().map(d=>`<option value="${Number(d.id)}">${esc(d.name)}</option>`).join('');
-  let pendingPopupShownThisOpen=false,lastNotificationSignature='';
+  let pendingPopupScheduledKey='',lastNotificationSignature='';
   function qualityExpectedDailyPending(){
     const date=today(),taskOwner='Navarasu';
     const found=records.find(r=>r.kind==='daily_idea'&&r.date===date&&clean(r.person)===clean(taskOwner));
@@ -47,15 +47,22 @@
     updateQualityNotificationBadge();
   }
   function qualityOwnPendingItems(){const data=qualityPendingSummary();return [...data.reviews,...data.mine]}
-  function showQualityPendingPopup(){
-    const items=qualityOwnPendingItems();if(!items.length||document.getElementById('qPendingDialog')?.open)return;
+  function showQualityPendingPopup(hourKey){
+    if(localStorage.getItem(hourKey))return false;
+    const items=qualityOwnPendingItems(),existing=document.getElementById('qPendingDialog');if(!items.length||existing?.open||document.querySelector('dialog[open]'))return false;
     let dialog=document.getElementById('qPendingDialog');if(!dialog){dialog=document.createElement('dialog');dialog.id='qPendingDialog';dialog.className='modal pending-task-dialog';document.body.append(dialog)}
     dialog.innerHTML=`<div class="pending-task-panel"><div class="modal-head"><div><span class="kicker">DAILY ATTENTION</span><h2>Pending Tasks</h2><p>Your pending Quality work. Select an item to open it.</p></div><div class="pending-total"><span>PENDING</span><strong>${items.length}</strong></div></div><div class="pending-task-content"><section class="pending-day single"><div class="pending-day-head"><div><span>MY PENDING WORK</span><strong>${esc(person())}</strong></div><b>${items.length}</b></div>${items.map(r=>`<button type="button" class="pending-task-item pending-popup-link" data-q-popup="${esc(r.kind||'report')}"><div><strong>${esc(qualityNoticeLabel(r))}</strong><h4>${esc(qualityNoticeTitle(r))}</h4><p>${esc(r.kind==='report'?'KPI remarks/review is due today.':r.status==='in_progress'?'Work is still in progress.':'Pending item needs attention.')}</p></div><span class="pending-status">${r.kind==='report'?'REVIEW':String(r.status||'pending').replace('_',' ').toUpperCase()}</span></button>`).join('')}</section></div><div class="modal-actions pending-actions"><button class="secondary-btn" id="qPendingNotify" type="button">Enable Chrome Notifications</button><button class="primary-btn" id="qPendingClose" type="button">Got it</button></div></div>`;
     const notifyBtn=dialog.querySelector('#qPendingNotify');if(notifyBtn)notifyBtn.classList.toggle('hidden',!('Notification' in window)||Notification.permission==='granted');
     notifyBtn?.addEventListener('click',()=>requestNotificationsFromGesture?.());dialog.querySelector('#qPendingClose').onclick=()=>dialog.close();
-    dialog.querySelectorAll('[data-q-popup]').forEach(b=>b.onclick=()=>{dialog.close();dailyContext().navigate(b.dataset.qPopup)});dialog.showModal();
+    dialog.querySelectorAll('[data-q-popup]').forEach(b=>b.onclick=()=>{dialog.close();dailyContext().navigate(b.dataset.qPopup)});dialog.showModal();localStorage.setItem(hourKey,'1');return true;
   }
-  function maybeShowQualityPendingPopup(){if(pendingPopupShownThisOpen||!ready)return;const items=qualityOwnPendingItems();if(!items.length)return;pendingPopupShownThisOpen=true;setTimeout(showQualityPendingPopup,450)}
+  function maybeShowQualityPendingPopup(){
+    const member=person();if(!ready||adminView()||!member)return;
+    const hourKey=`pending-popup:quality:${clean(member)}:${today()}:${new Date().getHours()}`;
+    if(localStorage.getItem(hourKey)||pendingPopupScheduledKey===hourKey||!qualityOwnPendingItems().length)return;
+    pendingPopupScheduledKey=hourKey;
+    setTimeout(()=>{if(person()===member&&ready)showQualityPendingPopup(hourKey);pendingPopupScheduledKey=''},450);
+  }
   function maybeTriggerQualityNotification(){
     if(!serverConnected||!notificationsEnabled?.())return;const items=qualityOwnPendingItems();if(!items.length)return;const signature=items.map(x=>`${x.kind}:${x.id||x.title||''}:${x.status||''}`).sort().join('|');if(signature===lastNotificationSignature)return;lastNotificationSignature=signature;const key=`quality_pending_notice_${clean(person())}_${today()}_${btoa(unescape(encodeURIComponent(signature))).slice(0,24)}`;if(localStorage.getItem(key))return;notifyUser('Quality Track · My Pending',`${items.length} pending item${items.length===1?'':'s'} need your attention.`);localStorage.setItem(key,'1');
   }
@@ -148,7 +155,7 @@
     if(page==='training'||page==='kaizen')row.status='completed';if(page==='audit'&&row.status==='completed')row.remarks='';
     try{validate(row);if(!editId&&page==='kaizen'&&records.some(r=>r.kind==='kaizen'&&r.date===today()&&clean(r.person)===clean(row.person)))throw Error('One idea per day is already saved. Use Edit to update it.');busy=true;paint();$('FormStatus').textContent='Saving to Firebase…';const id=editId||(page==='kaizen'?`kaizen_${today()}_${encodeURIComponent(clean(row.person))}`:crypto.randomUUID());const confirmed=await window.rndCloud.saveQualityTime('records',id,row);records=[...records.filter(r=>r.id!==id),{...row,...confirmed,id:confirmed?.id||id}];ready=true;serverConnected=true;cloudMessage='Firebase connected · live data';localStorage.setItem('qualityMemberName',row.person);renderForm();$('FormStatus').textContent='Saved and verified in Firebase.'}catch(error){$('FormStatus').textContent=error.message||'Unable to save.'}finally{busy=false;paint()}
   }
-  function close(){generation++;stops.forEach(stop=>stop?.());stops=[];ready=false;serverConnected=false;timeEntries=[];pendingPopupShownThisOpen=false;lastNotificationSignature='';cloudMessage='Connecting…';root?._qualityResize?.();if(root)root.hidden=true;window.closeQualityTime?.();window.qualitySession.hide()}
+  function close(){generation++;stops.forEach(stop=>stop?.());stops=[];ready=false;serverConnected=false;timeEntries=[];pendingPopupScheduledKey='';lastNotificationSignature='';cloudMessage='Connecting…';root?._qualityResize?.();if(root)root.hidden=true;window.closeQualityTime?.();window.qualitySession.hide()}
   function dailyContext(){return{records,timeEntries,ready,person,upsert:row=>{records=[...records.filter(r=>r.id!==row.id),row];paint()},remove:id=>{records=records.filter(r=>r.id!==id);paint()},navigate:id=>{const target=['audit','kpi','training'].includes(id)?'weekly':pages[id]?id:'report';root.querySelector('[data-q-page="'+target+'"]')?.click()}}}
   async function open(){
     if(!adminView()&&!window.qualitySession.current()){close();window.qualitySession.show(open);return}window.qualitySession.hide();if(!adminView()){const n=window.qualitySession.current(),key='dfabDepartmentLeadSession';if(n&&window.qualitySession?.role?.(n)==='lead')localStorage.setItem(key,JSON.stringify({departmentKey:'quality',department:'Quality',person:n}));else localStorage.removeItem(key)}

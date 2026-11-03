@@ -224,25 +224,29 @@ function renderNotificationCenter(){
   $('#notificationChatLink')?.addEventListener('click',()=>{showPage('chat');$('#notificationPanel')?.classList.add('hidden');$('#notificationBellBtn')?.setAttribute('aria-expanded','false')});
   updateUnifiedNotificationBadge();
 }
-let pendingPopupShownThisOpen=false;
-function renderPendingTaskPopup(){
+let pendingPopupScheduledKey='';
+function renderPendingTaskPopup(hourKey){
+  if(localStorage.getItem(hourKey))return false;
   const dialog=$('#pendingTaskDialog'),host=$('#pendingTaskContent'),m=currentMember();
-  if(!dialog||!host||!m)return;
+  if(!dialog||!host||!m||dialog.open||document.querySelector('dialog[open]'))return false;
   const items=dashboardPendingItems();
-  if(!items.length)return;
+  if(!items.length)return false;
   host.innerHTML=`<section class="pending-day single"><div class="pending-day-head"><div><span>MY PENDING WORK</span><strong>${esc(m.name)}</strong></div><b>${items.length}</b></div>${items.map(x=>`<button type="button" class="pending-task-item pending-popup-link" data-pending-go="${esc(x.page)}" data-pending-project="${Number(x.projectId)||0}"><div><strong>${esc(x.page==='ideas'?'DAILY IDEA':'WORK TRACKING')}</strong><h4>${esc(x.label)}</h4><p>${esc(x.detail||'Pending item')}</p></div><span class="pending-status">PENDING</span></button>`).join('')}</section>`;
   $('#pendingTaskTotal').textContent=String(items.length);
   $('#pendingNotificationBtn').classList.toggle('hidden',!('Notification' in window)||Notification.permission==='granted');
   host.querySelectorAll('[data-pending-go]').forEach(el=>el.onclick=()=>{dialog.close();goToPendingItem(el.dataset.pendingGo,Number(el.dataset.pendingProject)||0)});
-  if(!dialog.open)dialog.showModal();
+  dialog.showModal();
+  localStorage.setItem(hourKey,'1');
   if(notificationsEnabled())notifyUser('R&D Track · My Pending',`${items.length} pending item${items.length===1?'':'s'} need your attention.`);
+  return true;
 }
 function maybeShowPendingTaskPopup(){
-  if(pendingPopupShownThisOpen)return;
-  if(!currentMember())return;
+  const member=currentMember();if(!member)return;
+  const hourKey=`pending-popup:rnd:${member.id}:${today()}:${new Date().getHours()}`;
+  if(localStorage.getItem(hourKey)||pendingPopupScheduledKey===hourKey)return;
   if(!dashboardPendingItems().length)return;
-  pendingPopupShownThisOpen=true;
-  setTimeout(()=>renderPendingTaskPopup(),450);
+  pendingPopupScheduledKey=hourKey;
+  setTimeout(()=>{if(String(currentMember()?.id||'')===String(member.id))renderPendingTaskPopup(hourKey);pendingPopupScheduledKey=''},450);
 }
 function rawSnapshot(){return {schema_version:22,exported_at:new Date().toISOString(),members:state.members.map(({id,name,role='member',active=1,sort_order=0,created_at,updated_at})=>({id,name,role,active,sort_order,created_at,updated_at})),departments:state.departments.map(({id,name,active=1,sort_order=0})=>({id,name,active,sort_order})),ideas:state.ideas.map(({submitted_by_name,department_name,attachment_path,...i})=>i),cycles:state.cycles,projects:state.projects.map(({owner_name,cycle_label,department_name,...p})=>p),progress:state.progress.map(({user_name,attachment_path,...u})=>u)} }
 function exportDatabase(){const payload=JSON.stringify(rawSnapshot(),null,2);const blob=new Blob([payload],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`RND-TRACK-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
@@ -842,11 +846,14 @@ function renderKpiReport(){
   const member=members.find(m=>Number(m.id)===Number(memberSel.value))||members[0];if(!member){host.innerHTML='<div class="empty-state">No R&D members available.</div>';return}
   const monthKey=String(today()).slice(0,7),week=Number(weekSel.value)||1,monthly=periodSel.value==='monthly';
   const cycles=state.cycles.filter(c=>monthKeyFromDate(c.start_date)===monthKey&&(monthly||workCycleWeek(c)===week)),cycleIds=new Set(cycles.map(c=>Number(c.id)));
+  const monthEnd=new Date(Number(monthKey.slice(0,4)),Number(monthKey.slice(5,7)),0).getDate(),fallbackStart=`${monthKey}-${String((week-1)*7+1).padStart(2,'0')}`,fallbackEnd=`${monthKey}-${String(Math.min(week*7,monthEnd)).padStart(2,'0')}`,cycleStarts=cycles.map(c=>String(c.start_date||'')).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)).sort(),cycleEnds=cycles.map(c=>String(c.end_date||'')).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)).sort(),timeStart=monthly?`${monthKey}-01`:cycleStarts[0]||fallbackStart,timeEnd=monthly?`${monthKey}-${String(monthEnd).padStart(2,'0')}`:cycleEnds[cycleEnds.length-1]||fallbackEnd,timeData=window.rndTimeConsume?.reportData?.(timeStart,timeEnd,member.id)||{entries:0,hours:0,completed:0,inProgress:0,pending:0};
   const projects=state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))&&Number(p.owner_id)===Number(member.id)),completed=projects.filter(p=>p.status==='completed'||Number(p.progress||0)>=100).length;
   const ideas=state.ideas.filter(i=>Number(i.submitted_by)===Number(member.id)&&String(i.submission_date||'').slice(0,7)===monthKey&&(monthly||inferredWeekForDay(Number(String(i.submission_date).slice(8,10)))===week));
   const teamProjects=state.projects.filter(p=>cycleIds.has(Number(p.cycle_id))),teamCompleted=teamProjects.filter(p=>p.status==='completed'||Number(p.progress||0)>=100).length;
-  host.innerHTML=`<section class="panel kpi-report-card"><div class="kpi-report-head"><div class="kpi-report-avatar">${esc(member.name.charAt(0).toUpperCase())}</div><div><span class="kicker">${monthly?'MONTHLY':`WEEK ${week}`} KPI REPORT</span><h3>${esc(member.name)}</h3><p>R&D performance snapshot · ${esc(monthKey)}</p></div></div><div class="kpi-report-grid"><article><span>NEW PRODUCT IDEAS</span><strong>${ideas.length}${monthly?'':' / 7'}</strong><small>${monthly?'Ideas submitted this month':'Individual KPI · 1 idea/day'}</small></article><article><span>MY WEEKLY ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed</small></article><article><span>AUTOMATION OF MANUAL PROCESS</span><strong>${teamCompleted}${monthly?'':' / 16'}</strong><small>Team KPI · 2/week × 8 departments</small></article><article><span>DEVELOPMENT OF NEW PRODUCT</span><strong>${monthly?`${Math.min(teamCompleted,2)} / 2`:teamCompleted}</strong><small>Team KPI · monthly target 2 products</small></article></div><div class="kpi-note"><b>TEAM KPI</b><p>Automation and New Product Development are shared team targets. Daily Ideas and weekly assignments use the selected member's data.</p></div></section>`;
+  host.innerHTML=`<section class="panel kpi-report-card"><div class="kpi-report-head"><div class="kpi-report-avatar">${esc(member.name.charAt(0).toUpperCase())}</div><div><span class="kicker">${monthly?'MONTHLY':`WEEK ${week}`} KPI REPORT</span><h3>${esc(member.name)}</h3><p>R&D performance snapshot · ${esc(monthKey)}</p></div></div><div class="kpi-report-grid"><article><span>NEW PRODUCT IDEAS</span><strong>${ideas.length}${monthly?'':' / 7'}</strong><small>${monthly?'Ideas submitted this month':'Individual KPI · 1 idea/day'}</small></article><article><span>MY WEEKLY ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed</small></article><article><span>AUTOMATION OF MANUAL PROCESS</span><strong>${teamCompleted}${monthly?'':' / 16'}</strong><small>Team KPI · 2/week × 8 departments</small></article><article><span>DEVELOPMENT OF NEW PRODUCT</span><strong>${monthly?`${Math.min(teamCompleted,2)} / 2`:teamCompleted}</strong><small>Team KPI · monthly target 2 products</small></article></div><section class="kpi-auto-evidence"><div><span class="kicker">AUTO-COLLECTED SOURCE DATA</span><h4>Time Sheet · ${esc(timeStart)} → ${esc(timeEnd)}</h4><p>Figures come from saved records and refresh when Firebase updates. Correct an incorrect total in its source record.</p></div><div class="kpi-auto-evidence-grid"><article><span>TIME SHEET</span><strong>${timeData.entries} entries · ${timeData.hours}h</strong><small>${timeData.completed} completed · ${timeData.inProgress} in progress · ${timeData.pending} pending</small></article><article><span>KAIZEN / IDEAS</span><strong>${ideas.length}</strong><small>Saved ideas for ${esc(monthly?'this month':`week ${week}`)}</small></article><article><span>ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed · ${Math.max(0,projects.length-completed)} remaining</small></article></div><div class="kpi-auto-evidence-actions"><button type="button" class="ghost-btn" data-kpi-source="timeconsume">Review Time Sheet</button><button type="button" class="ghost-btn" data-kpi-source="ideas">Review Ideas</button><button type="button" class="ghost-btn" data-kpi-source="projects">Review Assignments</button></div></section><div class="kpi-note"><b>TEAM KPI</b><p>Automation and New Product Development are shared team targets. Daily Ideas and weekly assignments use the selected member's data.</p></div></section>`;
+  host.querySelectorAll('[data-kpi-source]').forEach(button=>button.onclick=()=>showPage(button.dataset.kpiSource));
 }
+window.refreshRndKpiReport=()=>{if(state.page==='kpi')renderKpiReport()};
 
 const WORK_DATA_START='2026-10-26';
 function startTodayCleanupPlan(snapshot){

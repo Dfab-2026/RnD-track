@@ -799,3 +799,5 @@
   #departmentWorkspace .qt-inline-form>label:nth-child(n),
   #departmentWorkspace .qt-inline-form>button:nth-child(8){grid-column:1}
 }
+#departmentWorkspace .qt-task-controls:has(input[name="other"]:not([hidden])){grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
+@media(max-width:760px){#departmentWorkspace .qt-task-controls:has(input[name="other"]:not([hidden])){grid-template-columns:1fr;height:auto}}
