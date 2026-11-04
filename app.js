@@ -615,9 +615,23 @@ function isRndDepartment(department){return ['rd','rnd','r and d','research and 
 
 const DEPARTMENT_ADMIN_NAMES=['Kabil','Suresh Kumar','Pramod Kumar','Jithendra Babu'];
 const DEPARTMENT_ADMIN_KEY='dfabDepartmentAdminSession';
-function departmentAdminName(){try{const name=JSON.parse(localStorage.getItem(DEPARTMENT_ADMIN_KEY)||'null')?.name||'';return DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name))||''}catch{return ''}}
+// Admin gate: the configured common secret is checked before an Admin session is issued.
+// Real production authorization must also be enforced by Firebase Auth / security rules.
+const DEPARTMENT_ADMIN_PASSWORD_SHA256='056a445fb7a2e197fbf3a2811002f9df68606bd5caf35e6d693ba62db62cca7e';
+async function departmentAdminPasswordValid(password){
+  const raw=new TextEncoder().encode(String(password||''));
+  const digest=await crypto.subtle.digest('SHA-256',raw);
+  const candidate=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+  return candidate===DEPARTMENT_ADMIN_PASSWORD_SHA256;
+}
+function departmentAdminName(){try{const session=JSON.parse(localStorage.getItem(DEPARTMENT_ADMIN_KEY)||'null');if(session?.verified!==true)return '';const name=session.name||'';return DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name))||''}catch{return ''}}
 function departmentAdminActive(){return Boolean(departmentAdminName())}
-function departmentAdminLogin(name){const found=DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name));if(!found)throw new Error('Wrong / Not authorized');localStorage.setItem(DEPARTMENT_ADMIN_KEY,JSON.stringify({name:found}));renderDepartmentGate();return found}
+async function departmentAdminLogin(name,password){
+  const found=DEPARTMENT_ADMIN_NAMES.find(x=>normalizeName(x)===normalizeName(name));
+  if(!found||!await departmentAdminPasswordValid(password))throw new Error('Incorrect name or password.');
+  localStorage.setItem(DEPARTMENT_ADMIN_KEY,JSON.stringify({name:found,verified:true}));
+  renderDepartmentGate();return found;
+}
 function departmentAdminLogout(){const current=currentMember();localStorage.removeItem(DEPARTMENT_ADMIN_KEY);if(current?.role==='visitor')clearLogin();document.getElementById('departmentAdminLoginGate')?.remove();renderDepartmentGate()}
 window.adminSession={active:departmentAdminActive,name:departmentAdminName,login:departmentAdminLogin,logout:departmentAdminLogout,names:[...DEPARTMENT_ADMIN_NAMES]};
 window.rndAssignedTaskIdentity=()=>{const m=currentMember();return m&&m.role!=='visitor'?{departmentKey:'rnd',department:'R&D',person:m.name}:null};
@@ -643,21 +657,23 @@ function renderDepartmentAdminControl(){
   let host=card.querySelector('.department-admin-control');if(!host){host=document.createElement('div');host.className='department-admin-control';card.prepend(host)}
   const name=departmentAdminName();
   host.innerHTML=name?`<div class="department-admin-profile"><button type="button" class="department-admin-profile-btn" aria-expanded="false"><span>${esc(name.charAt(0))}</span><div><strong>${esc(name)}</strong><small>ALL DEPARTMENTS LEADER</small></div></button><div class="department-admin-menu hidden"><b>${esc(name)}</b><span>Leader access across all departments</span><button type="button" class="secondary-btn" data-manage-members>Manage members</button><button type="button" class="danger-btn" data-admin-logout>Admin logout</button></div></div>`:`<button type="button" class="secondary-btn department-admin-login-btn">Admin</button>`;
-  if(name){const btn=host.querySelector('.department-admin-profile-btn'),menu=host.querySelector('.department-admin-menu');btn.onclick=()=>{const show=menu.classList.contains('hidden');menu.classList.toggle('hidden',!show);btn.setAttribute('aria-expanded',String(show))};menu.querySelector('[data-manage-members]').onclick=()=>{menu.classList.add('hidden');window.leaderCenter?.openMembers?.()};menu.querySelector('[data-admin-logout]').onclick=departmentAdminLogout}
+  if(host._adminOutside){document.removeEventListener('pointerdown',host._adminOutside);delete host._adminOutside}
+  if(name){const btn=host.querySelector('.department-admin-profile-btn'),menu=host.querySelector('.department-admin-menu'),close=()=>{menu.classList.add('hidden');btn.setAttribute('aria-expanded','false')};btn.onclick=()=>{const show=menu.classList.contains('hidden');close();if(show){menu.classList.remove('hidden');btn.setAttribute('aria-expanded','true')}};menu.querySelector('[data-manage-members]').onclick=()=>{close();window.leaderCenter?.openMembers?.()};menu.querySelector('[data-admin-logout]').onclick=departmentAdminLogout;host._adminOutside=event=>{if(!event.target.closest?.('.department-admin-profile'))close()};document.addEventListener('pointerdown',host._adminOutside)}
   else host.querySelector('.department-admin-login-btn').onclick=openDepartmentAdminLogin;
 }
 function openDepartmentAdminLogin(){
   let gate=document.getElementById('departmentAdminLoginGate');
-  if(!gate){gate=document.createElement('section');gate.id='departmentAdminLoginGate';gate.className='login-gate';gate.setAttribute('aria-label','Admin name login');document.body.append(gate)}
+  if(!gate){gate=document.createElement('section');gate.id='departmentAdminLoginGate';gate.className='login-gate';gate.setAttribute('aria-label','Admin name and password login');document.body.append(gate)}
   document.getElementById('appShell').classList.add('app-locked');
   document.getElementById('loginGate').classList.add('hidden');
   document.getElementById('departmentGate').classList.add('hidden');
   const base=document.querySelector('#loginGate .login-card');
   const card=base.cloneNode(true);
   card.querySelectorAll('[id]').forEach(el=>el.id='admin'+el.id.charAt(0).toUpperCase()+el.id.slice(1));
-  card.querySelector('[data-secure-entry="password"]')?.closest('label')?.remove();
+  const passwordInput=card.querySelector('[data-secure-entry="password"]');
+  if(passwordInput){passwordInput.value='';passwordInput.required=true;passwordInput.setAttribute('autocomplete','off')};
   const brand=card.querySelector('.login-brand strong');if(brand)brand.textContent='ADMIN ACCESS';
-  const intro=card.querySelector('p');if(intro)intro.textContent='Enter your name to access all departments as a company leader. Only authorized leaders can continue. You will stay signed in on this device until logout.';
+  const intro=card.querySelector('p');if(intro)intro.textContent='Enter your approved name and Admin password to access department management.';
   const label=card.querySelector('label');if(label&&label.firstChild)label.firstChild.textContent='Your name';
   const input=card.querySelector('input');input.value='';input.placeholder='Enter your name';input.setAttribute('autocomplete','name');
   const submit=card.querySelector('button[type="submit"]');if(submit)submit.textContent='CONTINUE →';
@@ -665,7 +681,7 @@ function openDepartmentAdminLogin(){
   const suggestion=card.querySelector('[id$="LoginSuggestion"]');if(suggestion)suggestion.innerHTML='';
   const back=card.querySelector('[id$="BackToDepartmentsBtn"]');if(back){back.textContent='← All departments';back.onclick=()=>{gate.remove();showDepartmentGate()}}
   const form=card.querySelector('form');
-  form.onsubmit=event=>{event.preventDefault();message.textContent='';try{departmentAdminLogin(input.value);gate.remove();showDepartmentGate()}catch(error){message.textContent='Wrong / Not authorized'}};
+  form.onsubmit=async event=>{event.preventDefault();message.textContent='';const submitButton=form.querySelector('button[type="submit"]');submitButton.disabled=true;try{await departmentAdminLogin(input.value,passwordInput?.value||'');gate.remove();showDepartmentGate()}catch(error){message.textContent=error?.message||'Unable to sign in.';submitButton.disabled=false}};
   gate.replaceChildren(card);gate.hidden=false;input.focus();
 }
 
@@ -692,7 +708,7 @@ function openDepartmentForAdmin(department,generic){
   $('#loginGate').classList.add('hidden');
   const adminGate=document.getElementById('departmentAdminLoginGate');if(adminGate)adminGate.hidden=true;
   if(normalizeName(department.name)==='quality'){
-    window.departmentWorkspace?.close?.();window.closeProduction?.();window.openQuality?.();return true;
+    window.closeQuality?.();window.closeProduction?.();window.departmentWorkspace?.open(department);return true;
   }
   window.closeQuality?.();
   if(generic){window.closeProduction?.();window.departmentWorkspace.open(department);return true}
@@ -708,7 +724,7 @@ function selectDepartment(id,navigate=true){
   if(navigate)departmentHistory('workspace',department.id);
   localStorage.setItem('selectedDepartmentId',String(department.id));$('#departmentGate').classList.add('hidden');
   if(openDepartmentForAdmin(department,generic))return;
-  if(normalizeName(department.name)==='quality'){window.departmentWorkspace?.close?.();window.closeProduction?.();window.openQuality?.();return}
+  if(normalizeName(department.name)==='quality'){window.closeQuality?.();window.closeProduction?.();window.departmentWorkspace?.open(department);return}
   window.closeQuality?.();
   if(generic){window.closeProduction?.();window.departmentWorkspace.open(department);return}
   window.departmentWorkspace?.close?.();window.closeProduction?.();

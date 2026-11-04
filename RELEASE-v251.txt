@@ -1,0 +1,47 @@
+DFAB KPI / Work Tracker — v251 (Unified Department UX + Confirmed Save Feedback)
+
+Baseline: v250.
+LOCKED: R&D operational UI, all four Admin cards, existing KPI definitions,
+Timesheet master task options, stored Firebase schema, reporting and backup logic.
+
+CHANGES:
+- Common Quality/shared-department production layout and card padding.
+- Shared four-metric dashboard and Analytics filter containment, responsive sizes.
+- Dashboard route titles fixed (Assigned Tasks title previously fell back to Dashboard).
+- Technical connection wording replaced with readable synchronization status.
+- App-native accessible confirmation dialog for operational Kaizen/Time Sheet,
+  Quality idea/daily-task deletes and Manage Members delete.
+- Manage Members: Saving -> Saved/error feedback persists after list redraw.
+- Firestore member save: rely on awaited write + pending-write flush as server
+  acknowledgement, avoid a second forced read that may falsely report failure.
+- Quality and shared department KPI/Timesheet form status readability improvements.
+- No model/migration/role/KPI calculation changes; no existing record deletion.
+
+COMPATIBILITY:
+- Quality's existing inspection/training reports are intentionally preserved.
+  Shared dashboard layout is consistent; existing department-specific operational
+  fields remain where they already existed rather than being destructively removed.
+- Long tables continue scrolling within their cards on desktop. Responsive forms
+  use natural scrolling on small screens.
+
+TESTS:
+- node --check for all modified JS: passed.
+- node verify.js: passed.
+- node verify-v249.js / verify-v250.js: passed.
+- node verify-v251.js: passed.
+- Browser mocked data/DOM: 12 configured shared departments at widths 1440,
+  1024, 768 and 390 (48 dashboard cases): passed.
+- Browser navigation across all shared department pages: passed.
+- Browser in-app confirmation Cancel/Delete and Saved notice: passed.
+- Existing older Quality legacy tests that fail on untouched v250 also fail here;
+  they were not rewritten. Test the live Firebase environment before deploying.
+
+DEPLOYMENT:
+- Deploy the full folder; don't merge only CSS without the JS references.
+- Verify real Firebase Auth/Firestore permissions on staging with a real member:
+  add member, edit password, login, save Kaizen/Timesheet/KPI, delete with dialog,
+  reload and confirm server-stored records persist.
+- Monthly backup deletion for non-R&D Leads now uses two in-app confirmations.
+  R&D backup confirmation remains unchanged.
+- Quality Kaizen register also uses in-app delete confirmation.
+- Password save browser-simulation test: verify-v251-password.js.

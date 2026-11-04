@@ -1,0 +1,10 @@
+DFAB KPI Tracker v259 - scoped changes from v258
+
+- Timesheet Saved Records: show all accessible saved dates initially; Date/WO/Task/Status filters remain supported. Clear restores the whole history.
+- Saved Records area: internal vertical scrolling with size constraints to prevent hidden historic rows.
+- KPI reporting: saved Kaizen idea count appears for the selected period unless an existing saved actual was entered by the user. Existing manual KPI fields and Quality-specific KPI calculations stay unchanged.
+- KPI card presentation: consistent responsive grid spacing, form widths, and overflow control.
+- All R&D operational logic, Admin-only pages, collection names, lead permissions, Assigned Tasks, backups, login, Timesheet save/update and week-lock remain unchanged.
+
+Checks: node verify.js; node verify-v255.js; node verify-v258.js; node verify-v259.js; node --check for changed JS; Chromium mock-data test for Quality/Outsourcing and 18 saved entries.
+Note: old verify-v251-v254 checks assume historical asset references and fail on the unmodified v258 baseline. Live Firebase deployment permissions and writes were NOT tested.

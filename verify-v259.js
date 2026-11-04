@@ -1,0 +1,15 @@
+'use strict';
+const fs=require('fs'),assert=require('assert');
+const read=name=>fs.readFileSync(__dirname+'/'+name,'utf8');
+const js=read('department-workspace.js'),html=read('index.html'),css=read('department-history-kpi-v259.css'),quality=read('quality-review.js');
+assert(html.includes('department-history-kpi-v259.css?v=259.0.0'),'v259 CSS must be loaded');
+assert(js.includes('id="dFilterDate" type="date" value=""'),'Saved Records should not silently filter out historic dates');
+assert(js.includes("content().querySelector('#dFilterDate').dataset.explicit='0';renderTimeRows()"),'Clear restores all history');
+assert(js.includes('const kpiActual=(metric,index)=>'),'KPI report must derive Kaizen actual count when not overridden');
+assert(js.includes('if(saved&&String(saved.actual??\'\').trim()!==\'\')return String(saved.actual)'),'Manual KPI values preserved');
+assert(js.includes('source.kaizenIdeas'),'KPI Kaizen count derives from saved ideas');
+assert(css.includes('overflow-y:auto!important'),'History must be scrollable');
+assert(css.includes('grid-template-columns:repeat(auto-fit'),'Cards must adapt to viewport width');
+assert(quality.includes("count('daily_idea',range,name)"),'Existing Quality KPI count continues to derive from its historical source');
+assert(js.includes("window.rndCloud.saveDepartmentRecord")&&js.includes("window.rndCloud.saveQualityTime"),'Firebase save adapters intact');
+console.log('v259 PASS: Saved Records history, date filtering, KPI idea count, editable KPI actual, responsive card layout, Firebase adapters preserved');

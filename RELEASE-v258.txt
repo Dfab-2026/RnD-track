@@ -1,0 +1,24 @@
+DFAB KPI R&D v258 — Shared Quality reconstruction and records visibility
+Baseline: DFAB_KPI_v257_scoped_UI.zip
+Date: 2026-11-04
+
+Changes requested:
+1. Quality card now opens the same department-workspace.js renderer used by other non-R&D departments. The standalone Quality page is not routed from the department chooser anymore. Its legacy data and specialized inspection/training/KPI actions remain available through an adapter; no Firebase migration or data deletion.
+2. Timesheet saved record lists for shared departments now render every matching row inside an internally scrollable history panel rather than limiting visibility to 1–3 rows. Existing date/WO/task/status filtering, Continue/Update and week-lock validation stay unchanged.
+3. Weekly Report task cards now show the selected/logged task names (including manual Others and legacy tasks), plus hours and status counts. Zero-record task cards are omitted; no fabricated hours.
+4. Quality's old KPI report and Quality inspection/training tools are mounted in the shared department workspace and use their original Quality Firebase record streams and write handlers.
+5. Preserved Quality member credentials, Quality-specific monthly backup mode and mobile nav open/close behavior.
+
+No destructive migration. Old Quality runtime source files remain in the archive because the retained KPI, inspection/training, login/backup and Firebase behaviors depend on them; their standalone UI is no longer opened from the department card.
+
+Verification:
+ - node verify.js                 PASS
+ - node verify-v251-password.js    PASS
+ - node verify-v255.js            PASS
+ - node verify-v258.js            PASS
+ - node --check changed JS        PASS
+ - Headless browser with mocked Firebase: Quality shared navigation; 18 saved record scrolling; logged ERP Entry / Incoming Inspection task labels; KPI and Quality inspection/training tabs; other department isolation; mobile reopen and backdrop: PASS
+ - Headless member test: Quality Continue -> Update reuses original Quality entry ID and shows Updated: PASS
+ - ZIP integrity: PASS
+
+No live/deployed Firebase write was performed; production security-rule and network tests require the live configured Firebase environment. Old cache-version-specific test scripts may still expect previous file version strings.

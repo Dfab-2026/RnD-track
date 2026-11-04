@@ -1,0 +1,13 @@
+/* v263: isolated Settings support modal */
+.dfab-help-dialog{border:0;padding:0;border-radius:18px;width:min(550px,calc(100vw - 28px));max-height:min(94dvh,760px);background:#fff;box-shadow:0 28px 75px #051e3e55;color:#123154;overflow:auto}
+.dfab-help-dialog::backdrop{background:rgba(5,22,48,.62);backdrop-filter:blur(3px)}
+.dfab-help-panel{display:grid;gap:16px;padding:clamp(18px,3vw,28px)}
+.dfab-help-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.dfab-help-head h2{font-size:23px;margin:5px 0}.dfab-help-head p{color:#62758e;margin:4px 0}
+.dfab-help-head button{border:0;background:#eef3fa;border-radius:10px;font-size:24px;width:36px;height:36px;cursor:pointer}
+.dfab-help-panel label{display:grid;gap:8px;font-weight:700;font-size:13px}
+.dfab-help-panel input,.dfab-help-panel textarea{width:100%;box-sizing:border-box;border:1px solid #cbd9eb;border-radius:11px;padding:12px;font:inherit;resize:vertical}
+.dfab-help-panel input:focus-visible,.dfab-help-panel textarea:focus-visible{outline:3px solid #3c8de655;outline-offset:1px}
+.dfab-help-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}.dfab-help-note{font-size:12px;color:#657993;margin:0}
+.dfab-help-button{margin:8px 0;min-height:38px}
+@media(max-width:550px){.dfab-help-actions>*{flex:1}.dfab-help-panel{gap:12px}}

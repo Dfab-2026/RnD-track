@@ -1,0 +1,58 @@
+const assert=require('assert');
+const fs=require('fs');
+const vm=require('vm');
+
+const review=fs.readFileSync(__dirname+'/quality-review.js','utf8');
+const cloud=fs.readFileSync(__dirname+'/firebase-cloud.js','utf8');
+const leader=fs.readFileSync(__dirname+'/leader-center.js','utf8');
+const html=fs.readFileSync(__dirname+'/index.html','utf8');
+const context={window:{},console,Date,setTimeout,clearTimeout};
+context.esc=value=>String(value??'');
+context.fmtDate=value=>String(value??'');
+context.today=()=> '2026-11-03';
+context.activeDepartments=()=>[{id:1,name:'Production'}];
+vm.createContext(context);
+vm.runInContext(review.replace('window.qualityReview={','window.testQualityReview={seed(records,m="2026-11",w=1,p="weekly"){ctx={records,timeEntries:[],ready:true,person:()=>"Navarasu",upsert:row=>{ctx.records=[...ctx.records.filter(r=>r.id!==row.id),row]}};month=m;week=w;period=p},setHost(value){host=value},report,actualKey,actualRecord};window.qualityReview={'),context);
+
+const api=context.window.qualityReview,test=context.window.testQualityReview;
+const item={id:'ideas_2026-11-01_navarasu'};
+test.seed([]);
+const weeklyKey=test.actualKey(item);
+assert(weeklyKey.includes('weekly_2026-11_week1'));
+test.seed([], '2026-11', 1, 'monthly');
+assert.notStrictEqual(test.actualKey(item),weeklyKey,'monthly and first-week actuals must remain separate');
+const monthlyKey=test.actualKey(item);
+test.seed([{kind:'quality_kpi_actual',person:'Navarasu',review_key:monthlyKey,value:4,updated_at:'2026-11-03T08:00:00Z'}], '2026-11', 1, 'monthly');
+assert.strictEqual(test.actualRecord(item).value,4,'saved manual actual must be found for the selected period');
+assert(api.validate({kind:'quality_kpi_actual',person:'Navarasu',review_key:monthlyKey,value:4}));
+assert.throws(()=>api.validate({kind:'quality_kpi_actual',person:'Navarasu',review_key:monthlyKey,value:1.5}),/whole-number KPI actual/);
+assert( review.includes('data-qr-actual="${esc(item.id)}"'),'non-percentage KPI cards must have editable actual fields');
+assert(review.includes("kind:'quality_kpi_actual'")&&review.includes("'quality_actual_'+actualKey(item)"),'manual actuals must save through the Quality Firebase record flow');
+assert(review.includes('data-qr-actual-clear')&&review.includes('deleteQualityRecord(button.dataset.qrActualClear)'),'manual actuals must be clearable back to auto-filled values');
+assert(cloud.includes("put('y',String(r.review_key||'').slice(0,220))")&&cloud.includes('if(d.y!==undefined)out.review_key=d.y'),'manual actual period keys must survive Firebase encoding');
+assert(leader.includes("'quality_kpi_actual'"),'All Departments Leader report must include saved manual Quality actuals');
+assert(html.includes('quality-review.js?v=144.0.0'),'Quality KPI changes must bypass stale browser cache');
+
+const writes=[];
+context.window.rndCloud={saveQualityTime:async(...args)=>writes.push(args)};
+const submitButton={dataset:{},disabled:false};
+const saveMessage={textContent:''};
+const actualForm={dataset:{qrActual:item.id},elements:{actual:{value:'3'}},querySelector(selector){return selector==='[type=submit]'?submitButton:saveMessage}};
+let activeForms=[actualForm];
+const nodes=new Map();
+const host={innerHTML:'',querySelector(selector){if(!nodes.has(selector))nodes.set(selector,{value:'',classList:{toggle(){}}});return nodes.get(selector)},querySelectorAll(selector){return selector==='[data-qr-actual]'?activeForms:[]}};
+test.seed([]);
+test.setHost(host);
+test.report();
+assert(host.innerHTML.includes('Actual / result · editable'),'report should render manual actual fields');
+(async()=>{
+  await actualForm.onsubmit({preventDefault(){}});
+  assert.strictEqual(writes.length,1,'manual actual should save once');
+  assert.strictEqual(writes[0][0],'records');
+  assert.strictEqual(writes[0][2].kind,'quality_kpi_actual');
+  assert.strictEqual(writes[0][2].value,3);
+  assert.strictEqual(writes[0][2].review_key,weeklyKey);
+  assert(writes[0][1].includes('quality_actual_weekly_2026-11_week1'),'save ID should be stable for selected week');
+  assert(host.innerHTML.includes('Manual actual saved'),'saved actual should appear on rerender');
+  console.log('PASS: Quality KPI actuals are period-specific, editable, validated, Firebase-backed and resettable.');
+})().catch(error=>{console.error(error);process.exitCode=1});

@@ -1,0 +1,10 @@
+/* v261 — shared Timesheet record actions and four leadership cards only. */
+#departmentWorkspace .dept-time-delete,
+#qualityWorkspace .dept-time-delete{display:inline-grid;place-items:center;flex:none;width:30px;height:30px;min-width:30px;border:1px solid #f1bbc1;border-radius:9px;background:#fff3f3;color:#af2638;font-size:21px;font-weight:700;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+#departmentWorkspace .dept-time-delete:hover:not(:disabled),#qualityWorkspace .dept-time-delete:hover:not(:disabled){background:#ffe2e7;border-color:#da6573;transform:scale(1.04)}
+#departmentWorkspace .dept-time-delete:focus-visible,#qualityWorkspace .dept-time-delete:focus-visible{outline:3px solid #f69fac;outline-offset:2px}
+#departmentWorkspace .dept-update-chip,#qualityWorkspace .dept-update-chip{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#e9f7ef;border:1px solid #9bd6b8;color:#176a4a;font-size:10px;font-weight:800;letter-spacing:.02em}
+#departmentWorkspace .dept-updated-at,#qualityWorkspace .dept-updated-at{color:#53768e;font-size:10px;white-space:normal}
+#departmentWorkspace .qt-entry-meta,#qualityWorkspace .qt-entry-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#departmentWorkspace .dept-record-updated,#qualityWorkspace .dept-record-updated{border-left:3px solid #31a576!important;background:linear-gradient(90deg,rgba(46,172,115,.055),rgba(255,255,255,0) 48%)!important}
+#departmentWorkspace .dept-record-updated:hover,#qualityWorkspace .dept-record-updated:hover{box-shadow:0 6px 20px rgba(30,95,72,.09)}
