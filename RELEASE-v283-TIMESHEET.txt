@@ -1,0 +1,13 @@
+DFAB KPI v283 — Time Sheet persistence and work-date records (all departments)
+
+Scoped changes:
+- Shared department Time Sheet now reflects the exact server-confirmed saved record in the Saved Records list without waiting for the next live snapshot.
+- The Saved Records date filter selects the entered work date after a successful save, including an earlier permitted date, instead of hiding entries under today's filter.
+- Firebase subscription updates refresh the Time Sheet records without destroying a user's active form (for the same logged-in member).
+- R&D and Quality dedicated Time Sheet views also select the saved work date after a confirmed Firebase save.
+- Time Sheet Save can attempt the verified Firebase write while unrelated listener metadata is still syncing. Failed writes report errors; they are not shown as saved.
+- Existing record ownership filters, no-overlap validation and prior-week edit restrictions are retained.
+- Firebase collection names, security rules, other department screens, admin cards and stored data are unchanged.
+
+Validation: node --check on every root JS file, check-deployment.js, verify-v283-timesheet-persistence.js, verify-timesheet-controls.js.
+Limit: Live Firebase save, page refresh, and multi-user browser tests need production credentials and are not verified here. Existing historical tests may have expectations unrelated to these modifications.

@@ -35,7 +35,7 @@
   function paint(){
     if(!root||root.hidden)return;
     const date=$('Date');if(date&&!date.value)date.value=today();
-    if($('Save'))$('Save').disabled=saving||!connected;
+    if($('Save'))$('Save').disabled=saving||!window.rndCloud?.saveQualityTime;
     const f=filters();
     const rows=entries.filter(e=>key(e.owner)===key(owner())&&(!f.date||e.date===f.date)&&(!f.po||key(e.po_number).includes(f.po))&&(!f.task||e.project_id===f.task)&&(!f.state||e.status===f.state)).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.from).localeCompare(String(a.from)));
     const filterKey=JSON.stringify(f);if(filterKey!==recordsFilterKey){recordsFilterKey=filterKey;recordsPage=0}const pageSize=window.innerHeight<850?1:window.innerHeight<1100?2:3;const pageCount=Math.max(1,Math.ceil(rows.length/pageSize));recordsPage=Math.min(recordsPage,pageCount-1);const pageRows=rows.slice(recordsPage*pageSize,(recordsPage+1)*pageSize);
@@ -75,7 +75,7 @@
     status('Edit cancelled.');
   }
   async function save(event){
-    event.preventDefault();if(saving)return;if(!connected)return status('Firebase is still connecting. Please retry in a moment.');
+    event.preventDefault();if(saving)return;if(!window.rndCloud?.saveQualityTime)return status('Firebase Time Sheet service is unavailable.');
     const date=$('Date').value,po=$('Po').value.trim(),task=$('Task').value,customTask=$('OtherTask')?.value.trim()||'',from=$('From').value,to=$('To').value,state=$('EntryStatus').value,remarks=$('Remarks').value.trim(),minutes=window.rndTimeConsume.minutes(to)-window.rndTimeConsume.minutes(from);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return status('Choose a valid date.');if(!policy().permitted(date))return status(policy().message());if(!po)return status('Enter a WO, or use NA / N/A when not applicable.');if(!TASKS.some(t=>t.value===task))return status('Choose a task.');if(task==='other'&&!customTask)return status('Enter the task name for Others.');if(!['completed','in_progress','pending'].includes(state))return status('Choose a valid status.');if(remarks.length>1000)return status('Keep remarks within 1,000 characters.');if(!Number.isFinite(minutes)||minutes<=0)return status('Choose a To time later than the From time.');
     const original=editing?entries.find(entry=>String(entry.id)===String(editing)):null;
@@ -88,7 +88,9 @@
       const id=editing||crypto.randomUUID(),now=new Date().toISOString();
       const row={...original,project_id:task,owner:owner(),date,po_number:po,from,to,minutes,work:task==='other'?customTask:taskLabel(task),custom_task:task==='other'?customTask:'',status:state,remarks,created_at:original?.created_at||original?.updated_at||now,updated_at:now};
       const confirmed=await window.rndCloud.saveQualityTime('entries',id,row);
+      if(String(confirmed?.date||'')!==date||key(confirmed?.owner)!==key(owner()))throw Error('Firebase returned a different record date or owner. Refresh before retrying.');
       entries=[...entries.filter(entry=>String(entry.id)!==String(id)),{...row,...confirmed,id:confirmed?.id||id}];
+      $('FilterDate').value=date;for(const field of ['FilterPo','FilterTask','FilterStatus'])$(''+field).value='';recordsPage=0;
       editing='';$('Save').textContent='Save';$('CancelEdit').hidden=true;
       $('From').value=to;$('To').value='';$('Remarks').value='';$('EntryStatus').value='completed';if($('Task').value==='other')$('OtherTask').value='';
       status(original?'Updated · '+new Date(now).toLocaleString('en-IN'):'Saved · '+new Date(now).toLocaleString('en-IN'));window.departmentUX?.notice?.(original?'Time Sheet updated.':'Time Sheet saved.');
