@@ -1,0 +1,18 @@
+/* v284: stable, vertically scrollable pending dialogs; avoid horizontal clipping. */
+#pendingTaskDialog{width:min(680px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;overflow:hidden!important;}
+#pendingTaskDialog .pending-task-panel{display:flex!important;flex-direction:column!important;max-height:calc(100dvh - 26px)!important;min-height:0!important;}
+#pendingTaskDialog .modal-head{flex:0 0 auto!important;gap:12px;}
+#pendingTaskContent{display:block!important;flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;max-height:none!important;overscroll-behavior:contain;scrollbar-gutter:stable;}
+#pendingTaskContent .pending-task-item{min-width:0;align-items:flex-start!important;}
+#pendingTaskContent .pending-task-item>div{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+#pendingTaskContent .pending-status{flex:0 0 auto;max-width:38%;white-space:normal;overflow-wrap:anywhere;}
+#pendingTaskDialog .pending-actions{flex:0 0 auto!important;}
+.dept-hourly-reminder{width:min(680px,calc(100vw - 24px))!important;max-height:calc(100dvh - 24px)!important;padding:0!important;overflow:hidden!important;}
+.dept-hourly-reminder>.tc-clock-inner{max-height:calc(100dvh - 26px);display:flex;flex-direction:column;min-height:0;padding:20px;}
+.dept-hourly-reminder .dept-reminder-pending{flex:1 1 auto;min-height:0;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;display:block!important;}
+.dept-hourly-reminder .dept-reminder-pending section{min-width:0;}
+.dept-hourly-reminder .pending-task-item{width:100%;display:flex;gap:12px;align-items:flex-start;text-align:left;min-width:0;}
+.dept-hourly-reminder .pending-task-item>div{flex:1;min-width:0;overflow-wrap:anywhere;}
+.dept-hourly-reminder .pending-task-item .pending-status{flex-shrink:0;}
+.dept-hourly-reminder .tc-clock-actions{flex:0 0 auto;flex-wrap:wrap;}
+@media(max-width:580px){#pendingTaskDialog .modal-head{padding:14px!important;}#pendingTaskContent{padding:10px!important;}#pendingTaskDialog .pending-actions{padding:10px!important;}}

@@ -1,0 +1,11 @@
+DFAB KPI v284 — scoped Time Sheet & pending popup release
+Based on v283 (the user-provided latest build).
+Changes:
+- Shared department and Quality date pickers accept past work dates, including outside current period. Future and malformed dates remain rejected.
+- R&D save validates that selected dates are not in the future.
+- Removed overlapping-interval blockers from R&D, Quality, and the shared department Time Sheet saving path; each record's duration remains derived from its own From/To fields and must be positive.
+- Retained Firebase server-verified writes, per-person scoping, and immediate Saved Records filtering to the entry date.
+- Added a scoped stylesheet for R&D pending-task and department hourly pending dialogs with readable alignment and vertical scrolling.
+- Bumped cache-busting versions for touched web assets.
+Not modified: admin cards, KPI logic, Kaizen logic, Firebase rules, account roles, assigned-task data, existing records.
+Caution: No live Firebase credentials/browser session were available; production writes require post-deploy confirmation. Older tests asserting the former week-lock policy are intentionally incompatible with the requested historical entry behavior.

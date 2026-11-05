@@ -1,4 +1,4 @@
-/* 7-day month blocks for department Time Sheet entry; R&D remains unchanged. */
+/* Time Sheet work dates may be today or any valid past date; never a future date. */
 (function(){
   'use strict';
   const iso=date=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -15,11 +15,11 @@
     if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date))return false;
     const parsed=new Date(date+'T12:00:00');
     if(!Number.isFinite(parsed.getTime())||iso(parsed)!==date)return false;
-    const {start,max}=bounds(at);return date>=start&&date<=max;
+    const {start,max}=bounds(at);return date<=max;
   }
   function message(at=new Date()){
     const {start,max,end}=bounds(at);
-    return `Entries can be created or updated only from ${start} through ${max} (current period ends ${end}). Earlier weeks are read-only.`;
+    return `Choose today or a previous work date (through ${max}). Future dates are not allowed.`;
   }
   window.departmentTimesheetPolicy=Object.freeze({bounds,permitted,message,today});
 })();
