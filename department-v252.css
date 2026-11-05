@@ -1,0 +1,218 @@
+/* v252 — Shared departments and Quality ONLY. R&D and Admin tool cards are locked. */
+:where(#qualityWorkspace,#departmentWorkspace,#qualityTimeWorkspace){
+ --v252-ink:#18334d;--v252-stroke:#dce8f3;--v252-blue:#235fbc;
+}
+/* Kaizen submission cloned for Quality / other departments: name and date on first row. */
+dialog.department-kaizen-dialog.idea-entry-dialog{
+ width:min(890px,calc(100vw - 24px));max-width:890px;
+ max-height:min(94dvh,720px);border-radius:18px;
+}
+dialog.department-kaizen-dialog.idea-entry-dialog > form{
+ max-height:min(94dvh,720px);min-height:0;
+}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-head{
+ padding:14px 20px!important;
+ background:linear-gradient(110deg,#e7f6f4,#ebf4ff 65%,#f3f0ff);
+}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid{
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:11px 13px!important;padding:14px 20px!important;
+ overflow:visible!important;
+}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label{
+ gap:4px;line-height:1.28;font-size:11px;
+}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label:has(#qiIdeaBenefit),
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label:has(#dkIdeaBenefit){grid-column:span 2}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid :is(input,select){min-height:37px;height:37px;padding:6px 9px}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid textarea{
+ min-height:73px;height:73px;max-height:100px;padding:8px 10px;resize:vertical;
+}
+dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-actions{
+ padding:10px 19px!important;
+}
+dialog.department-kaizen-dialog.idea-entry-dialog .qi-save-note{
+ min-height:0;margin:0 20px;color:#a24b20;font-size:12px;
+}
+/* Real Kaizen history stays a semantic table; empty state no longer stretches into a huge blank white box. */
+:is(#qualityWorkspace,#departmentWorkspace).q-kaizen-page :is(#qiRegister,#dKaizenRegister){
+ align-content:start!important;min-height:0!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-kaizen-page :is(#qiRegister,#dKaizenRegister) .table-wrap{
+ min-height:0!important;height:auto!important;max-height:min(43dvh,380px)!important;
+ overflow:auto;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .dept-kaizen-empty td{
+ height:auto!important;padding:0!important;vertical-align:top;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .dept-empty-wrap{
+ display:flex;align-items:center;justify-content:center;gap:7px;
+ min-height:102px;box-sizing:border-box;max-width:100%;
+ padding:18px 14px;color:#657b92;
+ background:linear-gradient(150deg,#fafcff,#f3f8fd);
+}
+:is(#qualityWorkspace,#departmentWorkspace) .dept-empty-wrap .dept-empty-icon{
+ display:grid;place-items:center;flex:0 0 31px;height:31px;
+ border-radius:10px;background:#e7f2ff;color:#3970aa;font-size:21px;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .dept-empty-wrap strong{font-size:12px;color:#254868;white-space:nowrap}
+:is(#qualityWorkspace,#departmentWorkspace) .dept-empty-wrap span:last-child{font-size:11px;line-height:1.4}
+/* Quality, shared Weekly Reports, KPI and Assigned Tasks get coordinated status-aware color. */
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-report-panel,.q-weekly-workspace,.q-weekly-panel-grid>article){
+ border-color:#e3dbf4!important;
+ background:linear-gradient(160deg,#fff 76%,#faf7ff)!important;
+ box-shadow:0 5px 16px rgba(90,66,151,.055)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-tabs,.report-tabs){
+ background:#f5f0ff!important;border-color:#e2d7fb!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-tabs,.report-tabs)>button:hover:not(:disabled){
+ color:#5b3ca1;background:#e9defd;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.kpi101-card,.q-quality-kpi-grid>article){
+ box-shadow:0 5px 16px rgba(37,93,179,.065)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.kpi101-card,.q-quality-kpi-grid>article):hover{
+ border-color:#b6c8e2!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.assigned-task-item,.assigned-task-admin-row,[class*='assigned-task-card']){
+ min-width:0;transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.assigned-task-item,.assigned-task-admin-row,[class*='assigned-task-card']):hover{
+ box-shadow:0 7px 19px rgba(32,79,143,.1)!important;border-color:#bdd6f1!important;
+}
+/* Continued/updated Time Sheet records. No inflated empty cards. */
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-time-actions{
+ grid-column:span 3!important;display:flex;gap:8px;align-items:end;flex-wrap:wrap;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-time-actions button{min-height:41px;flex:1 1 auto;min-width:90px}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-week-guide{
+ grid-column:1/-1!important;align-self:start;
+ border:1px solid #cfe2f5;border-radius:9px;
+ background:#edf6ff;color:#315b85;
+ padding:8px 11px;font-size:11px;line-height:1.5;margin:0;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-resume{
+ border-radius:8px!important;background:linear-gradient(115deg,#1d64cb,#1653a8)!important;
+ color:white!important;padding:7px 12px;min-height:33px;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-resume:hover{filter:brightness(1.08)}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-locked-label{
+ font-size:11px;color:#7a899b;background:#edf1f6;border:1px solid #dfe7f0;
+ padding:6px 9px;border-radius:8px;white-space:nowrap;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-updated-at{
+ color:#366798;font-size:10px;white-space:normal;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .qt-entry-row{
+ background:linear-gradient(145deg,#fff,#fafdff)!important;
+ transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .qt-entry-row:hover{
+ border-color:#a9cdef!important;box-shadow:0 4px 13px rgba(41,95,153,.08);
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .tc-clock-field [data-qt-clock],
+:where(#qualityTimeWorkspace,#departmentWorkspace) .tc-clock-field [data-d-clock]{
+ display:grid;place-items:center;color:#2262b0;background:#edf5ff;
+ border:1px solid #cce1fa;border-radius:9px;cursor:pointer;
+ transition:background .2s ease,box-shadow .2s ease,transform .2s ease;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .tc-clock-field [data-qt-clock]:hover,
+:where(#qualityTimeWorkspace,#departmentWorkspace) .tc-clock-field [data-d-clock]:hover{
+ background:#dceeff;transform:translateY(-1px);box-shadow:0 3px 9px rgba(32,99,176,.14);
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .dept-clock-svg .dept-clock-hand{
+ transform-origin:12px 12px;transition:transform .3s ease;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .tc-clock-field button:hover .dept-clock-hand{
+ transform:rotate(35deg);
+}
+@media(max-width:1000px){
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;overflow:auto!important}
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label:has(#qiIdeaBenefit),
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label:has(#dkIdeaBenefit){grid-column:1}
+}
+@media(max-width:760px){
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding:12px!important;gap:10px!important;overflow:auto!important}
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label.full{grid-column:1/-1!important}
+ :where(#qualityTimeWorkspace,#departmentWorkspace) .dept-time-actions{grid-column:span 2!important}
+ :is(#qualityWorkspace,#departmentWorkspace) .dept-empty-wrap{flex-wrap:wrap;text-align:center}
+}
+@media(max-width:480px){
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid{grid-template-columns:1fr!important;overflow:auto!important}
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label:has(#qiIdeaBenefit),
+ dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid label:has(#dkIdeaBenefit){grid-column:1/-1!important}
+ :where(#qualityTimeWorkspace,#departmentWorkspace) .dept-time-actions{grid-column:1/-1!important}
+ :is(#qualityWorkspace,#departmentWorkspace) .dept-empty-wrap{min-height:95px}
+}
+@media(max-height:720px){dialog.department-kaizen-dialog.idea-entry-dialog .idea-entry-grid{overflow:auto!important}}
+@media(prefers-reduced-motion:reduce){
+ :where(#qualityTimeWorkspace,#departmentWorkspace) .dept-clock-svg .dept-clock-hand,
+ :is(#qualityWorkspace,#departmentWorkspace) :is(.assigned-task-item,.assigned-task-admin-row){transition:none!important;transform:none!important}
+}
+
+/* Production-finish cards: restrained depth, departmental colors, no forced heights. */
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-command{
+ background:linear-gradient(120deg,#f7f2ff,#fff 55%,#f0f6ff)!important;
+ border:1px solid #ded4f5!important;border-left:4px solid #8663ce!important;
+ border-radius:14px!important;padding:clamp(12px,1.2vw,17px)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-overview>article{
+ position:relative;min-height:0!important;height:auto!important;
+ background:#fff!important;border:1px solid #e3dff0!important;
+ border-top:3px solid #8c6bd3!important;border-radius:12px!important;
+ box-shadow:0 4px 14px rgba(83,62,139,.065);
+}
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-overview>article:nth-child(2){border-top-color:#d19333!important}
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-overview>article:nth-child(3){border-top-color:#1c9f95!important}
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-overview>article:hover{
+ transform:translateY(-1px);box-shadow:0 6px 18px rgba(88,66,149,.11);
+}
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-tabs>button[aria-selected='true'],
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-tabs>button.active{
+ color:#fff!important;background:#674fbc!important;box-shadow:0 3px 9px rgba(103,79,188,.18);
+}
+:is(#qualityWorkspace,#departmentWorkspace) .kpi101-card{
+ position:relative;min-height:0!important;align-self:start;
+ background:linear-gradient(180deg,#fff 84%,#f7faff)!important;
+ border-radius:14px!important;transition:border-color .18s ease,box-shadow .18s ease;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .kpi101-card :is(input,select,textarea){
+ background:#fafdff;border:1px solid #ccdaeb;border-radius:9px;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-page-summary{
+ gap:11px!important;align-items:stretch;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-page-summary>article{
+ min-height:0;height:auto;border-radius:13px!important;
+ border:1px solid #d9e5f2!important;border-top:3px solid #3474d6!important;
+ background:linear-gradient(140deg,#fff,#f2f7ff)!important;
+ box-shadow:0 5px 15px rgba(32,79,143,.055);
+ padding:14px!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-page-summary>article:nth-child(2){border-top-color:#d88f3a!important;background:linear-gradient(140deg,#fff,#fff7eb)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-page-summary>article:nth-child(3){border-top-color:#17a087!important;background:linear-gradient(140deg,#fff,#effbf7)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-page-summary>article:nth-child(4){border-top-color:#8564ce!important;background:linear-gradient(140deg,#fff,#f8f5ff)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-page-panel{
+ border:1px solid #dae6f3!important;border-radius:15px!important;
+ box-shadow:0 5px 17px rgba(35,81,132,.06)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-list>.assigned-task-item{
+ border:1px solid #dce6f3!important;border-radius:12px!important;
+ padding:clamp(12px,1vw,17px)!important;align-items:start;
+ background:linear-gradient(135deg,#fff 72%,#f5f9ff)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-list>.assigned-task-item.done{
+ border-color:#cde7dc!important;background:linear-gradient(135deg,#fff 72%,#eef9f3)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .assigned-task-list>.assigned-task-item:hover{
+ box-shadow:0 7px 18px rgba(29,82,141,.09)!important;border-color:#bdd3ed!important;
+}
+:where(#qualityTimeWorkspace,#departmentWorkspace) .tc-panel{
+ border-color:#d6e5f1!important;
+ background:linear-gradient(180deg,#faffff,#fff 26%)!important;
+ border-radius:14px!important;
+}
+@media(prefers-reduced-motion:reduce){
+ :is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-overview>article,.assigned-task-item){transform:none!important;transition:none!important}
+}

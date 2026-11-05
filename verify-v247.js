@@ -1,0 +1,13 @@
+const fs=require('fs');
+const dep=fs.readFileSync('department-workspace.js','utf8');
+const qd=fs.readFileSync('quality-daily.js','utf8');
+const app=fs.readFileSync('app.js','utf8');
+const css=fs.readFileSync('production-polish.css','utf8');
+const ok=(v,m)=>{if(!v)throw new Error('FAIL: '+m);console.log('PASS:',m)};
+ok(dep.includes('recordsLoaded=false')&&dep.includes('recordsLoaded=true'),'shared department dashboard waits for first Firebase records snapshot');
+ok(dep.includes('closeHeaderPanels')&&dep.includes('outsideHeaderPanels')&&dep.includes("aria-expanded','false"),'shared profile/notification popovers close safely and track expanded state');
+ok(dep.includes("function go(next){root?.querySelector('#dProfilePanel')"),'shared header popovers close during navigation');
+ok(qd.includes('recordsReady=Boolean(context?.ready)')&&qd.includes("Syncing Firebase…"),'Quality dashboard distinguishes loading state from real zero data');
+ok(app.includes('host._adminOutside')&&app.includes("closest?.('.department-admin-profile')"),'department-gate Admin profile closes on outside click');
+ok(css.includes('v247 — production dashboard + header interaction hardening')&&css.includes('#departmentWorkspace .side-note{display:none!important}'),'production layout cleanup is present');
+console.log('PASS v247 production dashboard/header hardening');

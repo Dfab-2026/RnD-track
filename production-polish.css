@@ -1,0 +1,783 @@
+/* v246 — production presentation hardening only.
+   This file intentionally does not change business logic, Firebase paths, roles, or page flow. */
+
+:root{
+  --prod-card-radius:16px;
+  --prod-control-height:42px;
+  --prod-gap:14px;
+  --prod-soft-shadow:0 8px 24px rgba(17,56,101,.055);
+  --prod-card-border:#d9e5f1;
+}
+
+/* Shared control consistency */
+button,input,select,textarea{box-sizing:border-box}
+button{touch-action:manipulation}
+.primary-btn,.secondary-btn,.ghost-btn,.icon-btn{
+  min-height:var(--prod-control-height);
+  border-radius:10px;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select{
+  min-height:var(--prod-control-height);
+}
+textarea{line-height:1.5}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid rgba(37,99,235,.28);
+  outline-offset:2px;
+}
+button:disabled{cursor:not-allowed;opacity:.62}
+
+/* Common card / panel rhythm */
+.panel,.metric,.department-choice,.leader-tool-card,.leader-summary-card,
+.assigned-task-item,.assigned-task-admin-row,.member-admin-row,.q-department-card,
+.q-inspection-card,.q-training-record-card,.kpi101-card,.kpi-report-grid article{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.panel{
+  border-radius:var(--prod-card-radius);
+  box-shadow:var(--prod-soft-shadow);
+}
+.panel-head{align-items:flex-start}
+.panel-head>*,.section-toolbar>*,.assigned-task-form-head>*{min-width:0}
+.panel h2,.panel h3,.panel h4,.section-toolbar h2{overflow-wrap:anywhere}
+
+/* R&D main workspace: consistent spacing without changing navigation or data. */
+@media (min-width:981px){
+  #appShell:not(.app-locked)>.main>.page{padding:22px 26px 32px}
+  #appShell:not(.app-locked)>.main>.topbar{padding:18px 26px}
+  #appShell .metric-grid{gap:10px;background:transparent;border:0;overflow:visible}
+  #appShell .metric-grid>.metric{border:1px solid var(--prod-card-border);border-radius:14px;box-shadow:var(--prod-soft-shadow)}
+  #appShell .dashboard-grid{align-items:stretch;gap:14px}
+  #appShell .dashboard-grid>.panel{height:100%}
+}
+
+/* Department selection: retain the requested five cards per desktop row. */
+.department-gate-grid{align-items:stretch}
+.department-choice,.department-gate-grid .leader-tool-card{
+  height:100%;
+  justify-content:space-between;
+}
+.department-choice strong,.department-gate-grid .leader-tool-card strong{
+  display:block;
+  overflow-wrap:anywhere;
+}
+@media (min-width:981px){
+  .department-gate-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:10px!important}
+  .department-choice,.department-gate-grid .leader-tool-card{
+    min-height:96px!important;
+    max-height:none!important;
+    padding:12px 13px!important;
+  }
+}
+@media (max-width:980px) and (min-width:641px){
+  .department-gate-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+
+/* Quality workspace: align the actual Copilot-updated screens. */
+#qualityWorkspace .q-main{min-width:0}
+#qualityWorkspace .topbar{min-height:80px}
+#qualityWorkspace .q-scroll{min-width:0}
+#qualityWorkspace .quality-person{gap:14px;flex-wrap:wrap}
+#qualityWorkspace .quality-person>*{min-width:0}
+#qualityWorkspace .qd-four-metrics,
+#qualityWorkspace .q-overview-metrics{
+  align-items:stretch;
+}
+#qualityWorkspace .qd-four-metrics>.metric,
+#qualityWorkspace .q-overview-metrics>*{
+  height:100%;
+}
+#qualityWorkspace .qd-task-analytics .panel-head{
+  align-items:flex-end;
+  gap:16px;
+}
+#qualityWorkspace .qd-task-analytics .panel-head>div:last-child{
+  flex:0 0 auto;
+}
+#qualityWorkspace #qiRegister .filter-line>*{min-width:0}
+#qualityWorkspace #qiRegister .table-wrap{border-radius:14px}
+#qualityWorkspace .q-weekly-panel-grid{align-items:start}
+#qualityWorkspace .q-inspection-grid>*,
+#qualityWorkspace .q-training-record-grid>*{min-width:0}
+
+@media (min-width:981px){
+  #qualityWorkspace .q-scroll{padding:14px 22px 20px}
+  #qualityWorkspace .qd-four-metrics{gap:10px}
+  #qualityWorkspace .qd-four-metrics>.metric{border-radius:14px}
+  #qualityWorkspace #qiRegister .filter-line{display:grid;grid-template-columns:minmax(260px,1.7fr) minmax(150px,.7fr) minmax(170px,.8fr) minmax(175px,.75fr) auto;gap:10px;align-items:center}
+  #qualityWorkspace #qiRegister .filter-line>*{width:100%;margin:0}
+  #qualityWorkspace #qiRegister .filter-line>button{width:auto;min-width:76px}
+}
+@media (max-width:980px){
+  #qualityWorkspace #qiRegister .filter-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #qualityWorkspace #qiRegister .filter-line>input:first-child{grid-column:1/-1}
+}
+@media (max-width:620px){
+  #qualityWorkspace #qiRegister .filter-line{grid-template-columns:1fr}
+  #qualityWorkspace #qiRegister .filter-line>*{grid-column:1!important}
+}
+
+/* Time Sheet: keep all fields aligned, readable and within the card. */
+#qualityTimeWorkspace .qt-inline-form{align-items:end!important;gap:10px!important}
+#qualityTimeWorkspace .qt-inline-form>label{min-width:0}
+#qualityTimeWorkspace .qt-inline-form input,
+#qualityTimeWorkspace .qt-inline-form select,
+#qualityTimeWorkspace .qt-inline-form textarea{width:100%;min-width:0}
+#qualityTimeWorkspace #qtSave{min-height:42px}
+#qualityTimeWorkspace .qt-entry-row{min-width:0}
+#qualityTimeWorkspace .qt-entry-row>*{min-width:0}
+#qualityTimeWorkspace #qtEntries{scrollbar-gutter:stable}
+
+/* Assigned Tasks — employee and lead/admin screens. */
+.assigned-task-page-summary,
+.assigned-task-admin-stats{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  align-items:stretch;
+}
+.assigned-task-page-summary>* , .assigned-task-admin-stats>*{height:100%;min-width:0}
+.assigned-task-page-list,.assigned-task-admin-list{display:grid;gap:10px}
+.assigned-task-item,.assigned-task-admin-row{border-radius:14px}
+.assigned-task-admin-row{align-items:center}
+.assigned-task-admin-row>*,.assigned-task-item>*{min-width:0}
+.assigned-task-actions,.assigned-task-admin-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.assigned-rating-wait,.assigned-rated-by,.assigned-task-row-meta{overflow-wrap:anywhere}
+@media(max-width:760px){
+  .assigned-task-page-summary,.assigned-task-admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:430px){
+  .assigned-task-page-summary,.assigned-task-admin-stats{grid-template-columns:1fr}
+}
+
+/* Manage Members / credentials — keep rows and actions aligned. */
+.member-admin-filter{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.member-admin-filter>label{flex:1 1 220px;min-width:180px}
+.member-admin-filter>button{flex:0 0 auto}
+.member-admin-add-password{align-items:end}
+.member-admin-row{align-items:center;gap:9px}
+.member-admin-row>input,.member-admin-row>.password-entry-wrap,.member-admin-row>select{min-width:0}
+.member-admin-row .secondary-btn,.member-admin-row .icon-btn{flex:0 0 auto}
+.member-excel-preview-summary{align-items:stretch}
+.member-excel-preview-table-wrap{overflow:auto;max-width:100%;scrollbar-gutter:stable}
+@media(max-width:820px){
+  .member-admin-filter>button{flex:1 1 170px}
+}
+
+/* Leader/Admin center — equal cards and controlled overflow. */
+.leader-center-shell{min-width:0}
+.leader-center-body{min-width:0}
+.leader-summary-grid{align-items:stretch}
+.leader-summary-card{height:100%}
+.leader-table-wrap{max-width:100%;overflow:auto;scrollbar-gutter:stable}
+.leader-filter{align-items:end}
+.leader-filter>*{min-width:0}
+
+/* KPI cards: keep content aligned even when copy lengths differ. */
+.kpi101-grid,.kpi-report-grid{align-items:stretch}
+.kpi101-card,.kpi-report-grid article{height:100%}
+.kpi101-card h4{overflow-wrap:anywhere}
+.kpi101-card form{margin-top:auto}
+.kpi101-card textarea{resize:vertical}
+.kpi101-save-state:empty{display:none}
+
+/* Tables: production-safe horizontal overflow, sticky headings and readable cells. */
+.table-wrap,.leader-table-wrap,.member-excel-preview-table-wrap{overscroll-behavior:contain}
+.table-wrap table,.leader-table,.member-excel-preview-table{width:100%}
+th{white-space:nowrap}
+td{overflow-wrap:anywhere}
+
+/* Empty states should not look like broken cards. */
+.empty-state,.leader-empty{
+  display:grid;
+  place-items:center;
+  min-height:120px;
+  text-align:center;
+}
+
+/* Hide only empty status/helper containers; populated content remains untouched. */
+[role="status"]:empty:not(.profile-cloud-dot),
+.department-gate-message:empty,
+.login-message:empty{
+  min-height:0!important;
+  margin-top:0!important;
+  margin-bottom:0!important;
+}
+
+/* Small-screen safety. */
+@media(max-width:700px){
+  .section-toolbar{align-items:stretch;flex-direction:column}
+  .section-toolbar>.primary-btn,.section-toolbar>.secondary-btn,.section-toolbar>.ghost-btn{width:100%}
+  .panel{padding:14px}
+  .topbar h1{font-size:22px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+
+/* v247 — production dashboard + header interaction hardening */
+#qualityWorkspace .side-note,
+#departmentWorkspace .side-note{display:none!important}
+
+#qualityWorkspace .quality-person,
+#departmentWorkspace .quality-person{
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  padding:6px 2px 10px;
+}
+#qualityWorkspace .quality-person>span:last-child,
+#departmentWorkspace .quality-person>span:last-child{
+  margin-left:auto;
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted,#64748b);
+}
+
+#qualityWorkspace .qd-four-metrics,
+#departmentWorkspace .qd-four-metrics{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;
+  align-items:stretch!important;
+}
+#qualityWorkspace .qd-four-metrics>.metric,
+#departmentWorkspace .qd-four-metrics>.metric{
+  min-height:98px!important;
+  height:100%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:flex-start!important;
+  gap:5px!important;
+  padding:16px 18px!important;
+  text-align:left!important;
+}
+#qualityWorkspace .qd-four-metrics>.metric strong,
+#departmentWorkspace .qd-four-metrics>.metric strong{
+  line-height:1!important;
+  font-variant-numeric:tabular-nums;
+}
+#qualityWorkspace .qd-four-metrics>.metric small,
+#departmentWorkspace .qd-four-metrics>.metric small{
+  min-height:18px;
+  display:flex;
+  align-items:center;
+}
+
+#qualityWorkspace .qd-task-analytics,
+#departmentWorkspace .qd-task-analytics{
+  display:flex;
+  flex-direction:column;
+  min-height:0!important;
+}
+#qualityWorkspace .qd-task-analytics .panel-head,
+#departmentWorkspace .qd-task-analytics .panel-head{
+  align-items:flex-end!important;
+  gap:18px!important;
+}
+#qualityWorkspace .qd-chart-filters,
+#departmentWorkspace .qd-chart-filters{
+  display:grid!important;
+  grid-template-columns:minmax(170px,1fr) minmax(120px,.55fr)!important;
+  gap:10px!important;
+  min-width:min(100%,360px)!important;
+}
+#qualityWorkspace .qd-chart-filters label,
+#departmentWorkspace .qd-chart-filters label{
+  display:grid!important;
+  gap:5px!important;
+  margin:0!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+#qualityWorkspace .qd-chart-filters select,
+#departmentWorkspace .qd-chart-filters select{
+  width:100%!important;
+  min-height:42px!important;
+}
+
+.dashboard-loading-panel{
+  display:flex;
+  min-height:230px;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:8px;
+}
+.dashboard-loading-panel h3{margin:0}
+.dashboard-loading-panel p{margin:0;max-width:520px;color:var(--muted,#64748b)}
+.dashboard-metric-loading strong{color:var(--muted,#64748b)!important}
+.dashboard-inline-loading{
+  width:100%;min-height:180px;display:grid;place-items:center;
+  color:var(--muted,#64748b);font-weight:700;text-align:center;
+}
+
+/* Header popovers: clear stacking and predictable production sizing. */
+#qualityWorkspace .notification-panel,
+#departmentWorkspace .notification-panel,
+#appShell .notification-panel,
+#qualityWorkspace .profile-quick-panel,
+#departmentWorkspace .profile-quick-panel,
+#appShell .profile-quick-panel{
+  z-index:1000!important;
+  max-width:min(390px,calc(100vw - 24px))!important;
+}
+#qualityWorkspace .header-tool-btn,
+#departmentWorkspace .header-tool-btn,
+#qualityWorkspace .profile-quick-btn,
+#departmentWorkspace .profile-quick-btn{
+  flex:0 0 auto;
+}
+
+/* Keep functional areas; remove decorative copy that adds no operational value. */
+#qualityWorkspace .section-toolbar p:empty,
+#departmentWorkspace .section-toolbar p:empty,
+#qualityWorkspace .panel>p:empty,
+#departmentWorkspace .panel>p:empty{display:none!important}
+
+@media(max-width:980px){
+  #qualityWorkspace .qd-four-metrics,
+  #departmentWorkspace .qd-four-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #qualityWorkspace .qd-chart-filters,
+  #departmentWorkspace .qd-chart-filters{grid-template-columns:1fr 1fr!important;min-width:0!important;width:100%!important}
+}
+@media(max-width:620px){
+  #qualityWorkspace .qd-four-metrics,
+  #departmentWorkspace .qd-four-metrics{grid-template-columns:1fr 1fr!important}
+  #qualityWorkspace .qd-four-metrics>.metric,
+  #departmentWorkspace .qd-four-metrics>.metric{min-height:90px!important;padding:14px!important}
+  #qualityWorkspace .qd-task-analytics .panel-head,
+  #departmentWorkspace .qd-task-analytics .panel-head{align-items:stretch!important}
+  #qualityWorkspace .qd-chart-filters,
+  #departmentWorkspace .qd-chart-filters{grid-template-columns:1fr!important}
+}
+
+/* v248 — production layout completion pass.
+   Scope: presentation only. Preserve business logic, Firebase, permissions and page flows. */
+:root{
+  --prod-page-pad-x:clamp(16px,2vw,30px);
+  --prod-page-pad-y:clamp(16px,1.65vw,24px);
+  --prod-section-gap:clamp(12px,1.2vw,18px);
+  --prod-card-pad:clamp(14px,1.2vw,20px);
+}
+
+/* Never sacrifice operational content to a fixed viewport height. */
+#appShell .main>#dashboardPage.active{
+  height:auto!important;
+  min-height:calc(100dvh - var(--app-header-height,88px))!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:var(--prod-page-pad-y) var(--prod-page-pad-x) 36px!important;
+}
+#dashboardPage .dashboard-grid{
+  flex:0 0 auto!important;
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible!important;
+  align-items:stretch!important;
+  gap:var(--prod-section-gap)!important;
+}
+#dashboardPage .dashboard-grid>.panel{
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible!important;
+  padding:var(--prod-card-pad)!important;
+}
+#dashboardPage .metric-grid{
+  overflow:visible!important;
+  align-items:stretch!important;
+}
+#dashboardPage .metric-grid>.metric{height:100%!important;min-height:96px!important}
+
+/* Quality + all shared department dashboards: allow the page to grow/scroll instead of clipping analytics. */
+#qualityWorkspace.q-dashboard-page .q-scroll,
+#departmentWorkspace.q-dashboard-page .q-scroll{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:var(--prod-page-pad-y) var(--prod-page-pad-x) 36px!important;
+  scrollbar-gutter:stable;
+}
+#qualityWorkspace.q-dashboard-page #qRecordArea,
+#departmentWorkspace.q-dashboard-page #dContent,
+#departmentWorkspace.q-dashboard-page #qRecordArea{
+  height:auto!important;
+  min-height:0!important;
+  display:block!important;
+}
+#qualityWorkspace.q-dashboard-page #qFormHost,
+#departmentWorkspace.q-dashboard-page #qFormHost{
+  height:auto!important;
+  min-height:0!important;
+}
+#qualityWorkspace.q-dashboard-page .qd-dashboard,
+#departmentWorkspace.q-dashboard-page .qd-dashboard{
+  height:auto!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto!important;
+  gap:var(--prod-section-gap)!important;
+}
+#qualityWorkspace.q-dashboard-page .qd-task-analytics,
+#departmentWorkspace.q-dashboard-page .qd-task-analytics{
+  height:auto!important;
+  min-height:430px!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:18px 20px 24px!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+#qualityWorkspace.q-dashboard-page .qd-task-analytics .panel-head,
+#departmentWorkspace.q-dashboard-page .qd-task-analytics .panel-head{
+  flex:0 0 auto!important;
+  margin-bottom:8px!important;
+}
+#qualityWorkspace.q-dashboard-page .qd-chart-summary,
+#departmentWorkspace.q-dashboard-page .qd-chart-summary{
+  flex:0 0 auto!important;
+  margin:6px 0 12px!important;
+}
+#qualityWorkspace.q-dashboard-page .qd-task-chart,
+#departmentWorkspace.q-dashboard-page .qd-task-chart{
+  flex:1 0 300px!important;
+  height:auto!important;
+  min-height:300px!important;
+  max-height:none!important;
+  overflow-x:auto!important;
+  overflow-y:visible!important;
+  padding:18px 8px 12px!important;
+  scrollbar-gutter:stable;
+}
+#qualityWorkspace.q-dashboard-page .qd-task-chart-col,
+#departmentWorkspace.q-dashboard-page .qd-task-chart-col{
+  height:280px!important;
+  min-height:280px!important;
+  max-height:none!important;
+  grid-template-rows:minmax(0,1fr) auto auto!important;
+}
+#qualityWorkspace.q-dashboard-page .qd-task-chart-bar,
+#departmentWorkspace.q-dashboard-page .qd-task-chart-bar{
+  height:220px!important;
+  min-height:220px!important;
+  max-height:none!important;
+}
+
+/* Consistent page padding/rhythm for every Quality/shared-department screen. */
+#qualityWorkspace .q-scroll,
+#departmentWorkspace .q-scroll{
+  padding-left:var(--prod-page-pad-x);
+  padding-right:var(--prod-page-pad-x);
+  padding-bottom:36px;
+}
+#qualityWorkspace .q-scroll>*,
+#departmentWorkspace .q-scroll>*{min-width:0}
+#qualityWorkspace .panel,
+#departmentWorkspace .panel{
+  min-width:0;
+  box-sizing:border-box;
+}
+#qualityWorkspace .section-toolbar,
+#departmentWorkspace .section-toolbar,
+#qualityWorkspace .panel-head,
+#departmentWorkspace .panel-head{
+  gap:12px;
+}
+
+/* Card collections: equal rows, natural content height, no visual clipping. */
+.department-gate-grid,
+.leader-summary-grid,
+.assigned-task-page-summary,
+.assigned-task-admin-stats,
+#qualityWorkspace .q-quality-kpi-grid,
+#qualityWorkspace .kpi101-grid,
+#departmentWorkspace .kpi101-grid{
+  align-items:stretch!important;
+}
+.department-choice,
+.department-gate-grid .leader-tool-card,
+.leader-summary-card,
+.assigned-task-item,
+.assigned-task-admin-row,
+.member-admin-row,
+#qualityWorkspace .q-department-card,
+#qualityWorkspace .q-inspection-card,
+#qualityWorkspace .q-training-record-card,
+#qualityWorkspace .kpi101-card,
+#departmentWorkspace .kpi101-card{
+  box-sizing:border-box;
+  max-height:none!important;
+  overflow:visible!important;
+}
+
+/* Remove old presentation-only text truncation where it can hide real operational content. */
+.work-project-grid{grid-auto-rows:auto!important;align-items:stretch!important}
+.work-project-grid .work-project-card{height:auto!important;min-height:100%!important;overflow:visible!important}
+.work-project-grid .work-project-card h4{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  display:block!important;
+  -webkit-line-clamp:unset!important;
+}
+.work-project-grid .work-project-meta{height:auto!important;max-height:none!important;overflow:visible!important}
+#weeklySetup .weekly-idea-list{grid-auto-rows:auto!important;grid-template-rows:none!important}
+#weeklySetup .weekly-idea-card{
+  height:auto!important;
+  min-height:148px!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+#weeklySetup .weekly-idea-main{grid-template-rows:auto auto auto auto!important}
+#weeklySetup .weekly-idea-top>b,
+#weeklySetup .weekly-idea-meta,
+#weeklySetup .weekly-idea-main p{
+  max-height:none!important;
+  overflow:visible!important;
+  display:block!important;
+  -webkit-line-clamp:unset!important;
+}
+
+/* Tables/forms stay inside their cards without cutting actions or controls. */
+.table-wrap,
+.rnd-sheet-wrap,
+.leader-table-wrap,
+.member-excel-preview-table-wrap{
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:visible;
+  scrollbar-gutter:stable;
+}
+.panel-head,.section-toolbar,.settings-card-head,.assigned-task-form-head{flex-wrap:wrap}
+.panel-head>* ,.section-toolbar>* ,.settings-card-head>* ,.assigned-task-form-head>*{min-width:0}
+
+@media(max-width:1180px){
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics,
+  #departmentWorkspace.q-dashboard-page .qd-task-analytics{min-height:400px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart{min-height:270px!important;flex-basis:270px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-col{height:250px!important;min-height:250px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-bar{height:190px!important;min-height:190px!important}
+}
+@media(max-width:760px){
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics,
+  #departmentWorkspace.q-dashboard-page .qd-task-analytics{min-height:360px!important;padding:15px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart{min-height:230px!important;flex-basis:230px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-col{height:215px!important;min-height:215px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-bar{height:155px!important;min-height:155px!important}
+  #appShell .main>#dashboardPage.active{padding-bottom:28px!important}
+}
+
+/* v249 — fixed-workspace + interactive production UI pass.
+   Desktop pages stay viewport-contained. Long operational data scrolls only inside the
+   relevant card/list/table, so nothing is clipped or hidden. Business logic is untouched. */
+:root{
+  --prod-hover-shadow:0 14px 34px rgba(23,55,91,.10);
+  --prod-hover-border:#b9cce1;
+  --prod-active-ring:0 0 0 3px rgba(37,99,235,.10);
+}
+
+/* Subtle, useful interaction feedback — no decorative movement that changes layout. */
+.panel,.metric,.department-choice,.leader-tool-card,.leader-summary-card,
+.assigned-task-item,.assigned-task-admin-row,.q-department-card,.q-inspection-card,
+.q-training-record-card,.kpi101-card,.work-project-card,.weekly-idea-card{
+  transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease,transform .16s ease;
+}
+@media (hover:hover) and (pointer:fine){
+  .panel:hover,.metric:hover,.department-choice:hover,.leader-tool-card:hover,
+  .leader-summary-card:hover,.assigned-task-item:hover,.assigned-task-admin-row:hover,
+  .q-department-card:hover,.q-inspection-card:hover,.q-training-record-card:hover,
+  .kpi101-card:hover,.work-project-card:hover,.weekly-idea-card:hover{
+    border-color:var(--prod-hover-border)!important;
+    box-shadow:var(--prod-hover-shadow)!important;
+  }
+  .department-choice:hover,.leader-tool-card:hover,.work-project-card:hover{transform:translateY(-2px)}
+  button:not(:disabled):hover{filter:brightness(.985)}
+}
+.panel:focus-within,.assigned-task-item:focus-within,.member-admin-row:focus-within,
+.kpi101-card:focus-within{box-shadow:var(--prod-active-ring),var(--prod-soft-shadow)}
+
+/* Clear active/clickable card affordance. */
+.department-choice,.leader-tool-card,.work-project-card,.project-list-item{cursor:pointer}
+.project-list-item:hover{border-color:var(--prod-hover-border)}
+.project-list-item.active{box-shadow:inset 4px 0 0 var(--accent),0 8px 22px rgba(23,55,91,.08)}
+
+@media (min-width:981px){
+  html,body{height:100%;overflow:hidden!important}
+  #appShell{height:100dvh!important;min-height:0!important;overflow:hidden!important}
+  #appShell>.main{height:100dvh!important;min-height:0!important;overflow:hidden!important}
+  #appShell>.main>.topbar{position:relative!important;flex:0 0 auto!important}
+
+  /* R&D pages: fixed page shell; only the operational content region may scroll. */
+  #appShell>.main>.page.active{
+    box-sizing:border-box!important;
+    height:calc(100dvh - var(--app-header-height,88px))!important;
+    min-height:0!important;
+    max-height:calc(100dvh - var(--app-header-height,88px))!important;
+    overflow:hidden!important;
+  }
+
+  /* Dashboard — everything fits in one viewport, analytics/records stay visible. */
+  #appShell .main>#dashboardPage.active{
+    display:flex!important;
+    flex-direction:column!important;
+    padding:12px 22px 16px!important;
+  }
+  #dashboardPage .dashboard-hero-strip,#dashboardPage .hero-strip{
+    flex:0 0 96px!important;
+    min-height:96px!important;
+    padding:12px 20px!important;
+  }
+  #dashboardPage .hero-strip h2{font-size:25px!important;margin:7px 0 4px!important}
+  #dashboardPage .hero-strip p{font-size:10px!important;line-height:1.3!important}
+  #dashboardPage .metric-grid{flex:0 0 auto!important;margin:9px 0!important;gap:9px!important}
+  #dashboardPage .metric-grid>.metric{min-height:82px!important;padding:12px 14px!important}
+  #dashboardPage .metric-grid>.metric strong{font-size:27px!important;margin-top:7px!important}
+  #dashboardPage .dashboard-grid{
+    flex:1 1 0!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    gap:12px!important;
+  }
+  #dashboardPage .dashboard-grid>.panel{
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding:16px!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  #dashboardPage .dashboard-grid>.panel>.panel-head{flex:0 0 auto!important;margin-bottom:10px!important}
+  #dashboardPage #todayActivity,#dashboardPage #weeklyFocus{
+    flex:1 1 0!important;
+    min-height:0!important;
+    overflow:auto!important;
+    scrollbar-gutter:stable;
+  }
+
+  /* Idea register — fixed toolbar, records scroll inside the table only. */
+  #ideasPage.active{display:flex!important;flex-direction:column!important;padding:16px 24px!important}
+  #ideasPage>.section-toolbar,#ideasPage>.filter-line{flex:0 0 auto!important}
+  #ideasPage>.section-toolbar{margin-bottom:12px!important}
+  #ideasPage>.table-wrap{flex:1 1 0!important;min-height:0!important;overflow:auto!important}
+
+  /* Weekly — existing cards stay visible, long lists scroll inside the weekly workspace. */
+  #weeklyPage.active{display:flex!important;flex-direction:column!important;padding:14px 24px 16px!important}
+  #weeklyPage>.week-selector{flex:0 0 auto!important}
+  #weeklySetup{flex:1 1 0!important;min-height:0!important;overflow:hidden!important}
+  #weeklySetup .weekly-backlog-panel,#weeklySetup .weekly-selection-panel,
+  #weeklySetup .weekly-selected-panel{min-height:0!important;overflow:auto!important;scrollbar-gutter:stable}
+
+  /* Work tracking — filters stay fixed, detail content scrolls inside its card. */
+  #progressPage.active{display:flex!important;flex-direction:column!important;padding:14px 24px 16px!important}
+  #progressPage>.section-toolbar,#progressPage>.work-selected-projects,#progressPage>.work-filter-bar{flex:0 0 auto!important}
+  #progressPage .work-layout{flex:1 1 0!important;min-height:0!important;overflow:hidden!important}
+  #progressPage .project-detail{height:100%!important;min-height:0!important;overflow:auto!important;scrollbar-gutter:stable}
+
+  /* R&D module roots get the viewport and own their internal scrolling. */
+  #timeconsumePage.active,#datasPage.active,#kpiPage.active,#assignedPage.active,#settingsPage.active{
+    display:flex!important;flex-direction:column!important;padding:14px 24px 16px!important;
+  }
+  #timeconsumePage>#timeConsumeRoot,#datasPage>#rndDataRoot,#assignedPage>#rndAssignedTasksPage,
+  #kpiPage>#kpiReportContent{
+    flex:1 1 0!important;min-height:0!important;overflow:auto!important;scrollbar-gutter:stable;
+  }
+  #kpiPage>.section-toolbar,#kpiPage>.kpi-filter-panel,#assignedPage>.section-toolbar,
+  #settingsPage>.section-toolbar{flex:0 0 auto!important}
+  #settingsPage .settings-master-row{flex:1 1 0!important;min-height:0!important;overflow:auto!important;scrollbar-gutter:stable}
+  #settingsPage .settings-secondary-row{flex:0 0 auto!important;max-height:34%;overflow:auto!important}
+
+  /* Quality + shared department workspaces: never scroll the whole page. */
+  #qualityWorkspace .q-scroll,#departmentWorkspace .q-scroll{
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding:10px 18px 12px!important;
+  }
+  #qualityWorkspace #qRecordArea{
+    height:100%!important;min-height:0!important;overflow:hidden!important;
+    display:flex!important;flex-direction:column!important;
+  }
+  #qualityWorkspace #qRecordArea>.quality-person{flex:0 0 auto!important}
+  #qualityWorkspace #qRecordArea>.tc-panel{
+    min-height:0!important;
+    overflow:auto!important;
+    scrollbar-gutter:stable;
+  }
+  #qualityWorkspace #qRecordArea>.tc-panel:not(#qSavedPanel){flex:1 1 0!important}
+  #qualityWorkspace #qSavedPanel:not([hidden]){flex:1 1 0!important}
+  #qualityWorkspace #qTimeHost:not([hidden]){height:100%!important;min-height:0!important;overflow:hidden!important}
+
+  #departmentWorkspace #dScroll{
+    height:100%!important;min-height:0!important;overflow:hidden!important;
+    display:flex!important;flex-direction:column!important;
+  }
+  #departmentWorkspace #dScroll>.quality-person{flex:0 0 auto!important}
+  #departmentWorkspace #dContent{
+    flex:1 1 0!important;min-height:0!important;overflow:auto!important;scrollbar-gutter:stable;
+  }
+
+  /* Quality/shared dashboards: cards fit the available viewport; chart itself can scroll horizontally only. */
+  #qualityWorkspace.q-dashboard-page #qRecordArea>.tc-panel,
+  #departmentWorkspace.q-dashboard-page #dContent{overflow:hidden!important}
+  #qualityWorkspace.q-dashboard-page #qFormHost,
+  #departmentWorkspace.q-dashboard-page .qd-dashboard{height:100%!important;min-height:0!important}
+  #qualityWorkspace.q-dashboard-page .qd-dashboard,
+  #departmentWorkspace.q-dashboard-page .qd-dashboard{
+    display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;gap:9px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics,
+  #departmentWorkspace.q-dashboard-page .qd-four-metrics{gap:9px!important}
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics>.metric,
+  #departmentWorkspace.q-dashboard-page .qd-four-metrics>.metric{min-height:72px!important;padding:10px 13px!important}
+  #qualityWorkspace.q-dashboard-page .qd-four-metrics>.metric strong,
+  #departmentWorkspace.q-dashboard-page .qd-four-metrics>.metric strong{font-size:25px!important;margin-top:5px!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-analytics,
+  #departmentWorkspace.q-dashboard-page .qd-task-analytics{
+    height:100%!important;min-height:0!important;max-height:none!important;overflow:hidden!important;
+    padding:14px 16px!important;display:grid!important;grid-template-rows:auto auto minmax(0,1fr)!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart{
+    height:100%!important;min-height:0!important;max-height:none!important;overflow-x:auto!important;overflow-y:hidden!important;
+    padding:8px 4px 2px!important;
+  }
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-col,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-col{height:100%!important;min-height:135px!important;max-height:none!important}
+  #qualityWorkspace.q-dashboard-page .qd-task-chart-bar,
+  #departmentWorkspace.q-dashboard-page .qd-task-chart-bar{height:calc(100% - 42px)!important;min-height:88px!important;max-height:none!important}
+
+  /* Quality Kaizen: only register body scrolls, toolbar/filter remain visible. */
+  #qualityWorkspace.q-kaizen-page #qRecordArea>.tc-panel{overflow:hidden!important}
+  #qualityWorkspace.q-kaizen-page #qiRegister{height:100%!important;min-height:0!important;display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto!important}
+  #qualityWorkspace.q-kaizen-page #qiRegister .table-wrap{height:100%!important;min-height:0!important;overflow:auto!important}
+
+  /* Time Sheet shells own their data scrolling, never the page. */
+  #qualityTimeWorkspace,#departmentTimeWorkspace{height:100%!important;min-height:0!important;overflow:hidden!important}
+  #qualityTimeWorkspace #qtEntries,#departmentTimeWorkspace #dtEntries{min-height:0!important;overflow:auto!important;scrollbar-gutter:stable}
+}
+
+/* Compact card hierarchy makes dense screens feel interactive without hiding data. */
+.metric .m-label,.assigned-task-page-summary small,.assigned-task-admin-stats small{font-weight:800;letter-spacing:.06em}
+.metric strong,.leader-summary-card strong{font-variant-numeric:tabular-nums}
+.panel-head h3,.section-toolbar h2{letter-spacing:-.015em}
+.empty-state{border-style:dashed!important;background:linear-gradient(180deg,rgba(248,251,255,.65),rgba(255,255,255,.85))}
+
+/* On touch/smaller screens, natural document scrolling is safer and more accessible. */
+@media (max-width:980px){
+  html,body{height:auto;overflow:auto!important}
+  #appShell{height:auto!important;min-height:100dvh!important;overflow:visible!important}
+  #appShell>.main{height:auto!important;overflow:visible!important}
+}

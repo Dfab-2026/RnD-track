@@ -1,0 +1,1 @@
+v262 scoped fixes: restore v260 homepage admin card appearance; repair Quality Admin KPI render; add name+password gate to four company-admin accounts. Do not treat client-side credential check as production security; configure server-side authentication and Firebase rules before deployment. No Firebase schema or stored data was changed.

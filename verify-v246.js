@@ -1,0 +1,13 @@
+const fs=require('fs');
+const assert=require('assert');
+const html=fs.readFileSync('index.html','utf8');
+const css=fs.readFileSync('production-polish.css','utf8');
+assert(html.includes('production-polish.css?v=246.0.0'),'production polish stylesheet not loaded last');
+assert(html.indexOf('production-polish.css?v=246.0.0')>html.indexOf('time-consume.css?v=219.0.0'),'production polish must load after runtime styles');
+for(const token of ['repeat(5,minmax(0,1fr))','assigned-task-page-summary','member-admin-row','#qualityTimeWorkspace .qt-inline-form','#qualityWorkspace #qiRegister .filter-line','.kpi101-grid']) assert(css.includes(token),`missing production rule: ${token}`);
+for(const locked of ['firebase-cloud.js?v=232.0.0','assigned-tasks.js?v=246.0.0','member-password-import.js?v=245.0.0','leader-center.js?v=245.0.2','app.js?v=241.0.0']) assert(html.includes(locked),`locked runtime reference changed: ${locked}`);
+const assigned=fs.readFileSync('assigned-tasks.js','utf8');
+assert(assigned.includes("workspaceVisible('qualityWorkspace')"),'Quality assigned-task context isolation missing');
+assert(assigned.includes("workspaceVisible('departmentWorkspace')"),'Shared department assigned-task context isolation missing');
+assert(assigned.includes("!app.classList.contains('app-locked')"),'R&D assigned-task context isolation missing');
+console.log('PASS v246: production alignment plus active-workspace assigned-task isolation verified.');

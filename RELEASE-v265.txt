@@ -1,0 +1,13 @@
+DFAB KPI Tracker v265
+Scoped fix from v264.
+
+Changed only:
+- Timesheet Saved Records actions:
+  * Pending/In Progress: Continue + X delete.
+  * Completed: X delete only.
+  * Admin/direct department view can Continue current-week Pending/In Progress records while preserving original employee owner and record ID.
+  * X delete is available for visible managed records with the existing in-app confirmation.
+- Restored Production KPI master in the shared department workspace so KPI Report/Weekly KPI/Admin KPI sections render like the other departments.
+- Cache-bumped department-workspace.js.
+
+No Firebase schema, R&D, Admin card layout, Kaizen, Weekly Report structure, login/password, backup, rating, member management, or unrelated flow changes.

@@ -1,0 +1,22 @@
+DFAB KPI TRACKER v271 — scoped KPI report-only update (baseline v270)
+
+Scope
+- Every department KPI page now displays the reference-style editable report instead of extra KPI cards/focus panels. Weekly/monthly period controls remain.
+- Each row edits Completion Status and Percentage independently and saves through the existing department-specific Firebase record path.
+- Quality KPI report uses the original Quality records collection/app_meta adapter; records are stored with kind quality_kpi_report and a stable per-period review_key. Existing historical inspection/training/KPI evidence is not migrated or deleted.
+- The Admin All Department KPI Reports tool uses the same report component and writes to the same department/period KPI record IDs. R&D Admin report reads the existing R&D department KPI record source only when Admin KPI is opened.
+- PDF download is single-page A4 LANDSCAPE (841.89 x 595.28 points), containing the report table, donut/bar charts, summary and footer.
+
+Locked/unmodified
+- Time Sheet, Kaizen, Weekly Report, Assigned Tasks, ratings, member roles, authentication, Admin Time Sheet/Analytics/Assign Task, backups, Firebase collection paths and existing KPI master definitions.
+
+Checks
+- verify-v271.js PASS
+- verify.js PASS
+- verify-timesheet-controls.js PASS
+- verify-v260.js PASS
+- verify-v263.js PASS
+- Chromium interactive preview/PDF checks PASS (9 and 16 rows, status/percent edit, A4 page size)
+- JavaScript syntax PASS; ZIP integrity PASS
+- Older v265/v267/v269/v270 tests contain hard-coded historical cache names or expect the old extra KPI UI; they do not match the requested v271 UI.
+- Live production Firebase write/read tests were NOT run. Use a test/staging project to validate permissions and sync before production rollout.

@@ -1,6 +1,6 @@
 .quality-workspace{min-height:100dvh;background:var(--bg);padding:24px 18px;color:var(--ink)}.quality-workspace[hidden]{display:none!important}.quality-inner{max-width:1100px;margin:auto}.quality-nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.quality-nav button{font-size:12px;min-height:38px}.quality-nav .q-active{background:var(--dark);color:#fff}.quality-person{display:flex;align-items:end;gap:18px;margin-bottom:18px}.quality-person label{display:grid;gap:6px;font-size:12px;font-weight:600;width:min(320px,100%)}.quality-person>span{font-size:12px;color:var(--muted);padding-bottom:10px}.q-fields{display:grid;grid-template-columns:1fr 1fr;gap:15px}.q-full{grid-column:1/-1}.q-check{display:flex!important;align-items:center;gap:8px!important}.q-check input{width:18px;height:18px}.q-status{display:inline-block;border-radius:20px;padding:4px 8px}.q-status.done{background:#def3e5;color:#21633c}.q-status.open{background:#fff0d2;color:#885800}#qSummary{font-size:12px;color:var(--muted)}@media(max-width:600px){.q-fields{grid-template-columns:1fr}.quality-person{align-items:start;flex-direction:column;gap:5px}.quality-nav{gap:6px}.quality-nav button{font-size:11px;padding:8px}.quality-workspace .panel-head{flex-wrap:wrap;gap:8px}}
 .quality-workspace{padding:0!important;height:100dvh;min-height:0;overflow:hidden}
-.quality-shell{height:100%;display:grid;grid-template-columns:240px minmax(0,1fr);transition:grid-template-columns .2s ease}
+.quality-shell{height:100%;display:grid;grid-template-columns:240px minmax(0,1fr);grid-template-rows:minmax(0,1fr);transition:grid-template-columns .2s ease}
 #qualityWorkspace .q-sidebar{position:relative!important;inset:auto!important;width:240px!important;height:100%;min-height:0;overflow:hidden;transform:none!important;opacity:1!important;padding:24px 18px;display:flex;flex-direction:column;z-index:1002}
 #qualityWorkspace .q-sidebar nav{display:grid;gap:5px}.q-sidebar .nav-btn{width:100%;text-align:left;white-space:normal;line-height:1.4;min-height:44px}.q-sidebar .nav-btn b{font-size:12px;font-weight:600}.q-sidebar .brand{padding-right:24px!important;flex-shrink:0}.q-sidebar .brand-copy strong{font-size:13px}.q-sidebar .brand-copy small{font-size:8px}.q-sidebar .side-note{margin-top:auto}.q-sidebar .q-departments{margin-top:16px}
 #qualityWorkspace .q-main{min-width:0;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;padding:0!important}
@@ -15,12 +15,13 @@
 @media(max-width:600px){#qualityWorkspace .topbar{padding:12px;min-height:66px}#qualityWorkspace .topbar h1{font-size:19px}.q-scroll{padding:14px 12px 24px}.q-sidebar .nav-btn{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.quality-shell,#qualityWorkspace .q-sidebar{transition:none}.q-scroll{scroll-behavior:auto}}
 .q-profile{display:flex;align-items:center;gap:12px;margin-left:auto}.q-profile strong,.q-signed-in{font-size:12px}.q-profile button{font-size:11px;min-height:34px}.quality-person .q-signed-in{padding-bottom:10px}.q-signed-in strong{margin-left:5px}#qualityLoginGate[hidden]{display:none!important}@media(max-width:600px){.q-profile{gap:6px}.q-profile strong{font-size:10px}.q-profile button{padding:5px 8px}}
-.quality-workspace.q-collapsed .quality-shell{grid-template-columns:0 minmax(0,1fr)}#qualityWorkspace.q-collapsed .q-sidebar{width:240px!important;padding:26px 18px;transform:translateX(-100%)!important;opacity:0!important;pointer-events:none}#qualityWorkspace .q-sidebar{padding-top:26px;padding-bottom:26px}.q-sidebar .nav-btn b{font-weight:inherit;font-size:inherit}.q-sidebar .nav-btn{padding:13px 12px}.q-reopen{display:none;position:fixed;left:4px;top:14px;z-index:1003;width:24px;height:30px;border:1px solid #ceddf0;border-radius:6px;background:#0f5599;color:white;cursor:pointer}.q-collapsed .q-reopen{display:grid;place-items:center}#qualityWorkspace .topbar .top-actions{margin-left:auto}#qualityWorkspace .profile-quick-panel,#qualityWorkspace .notification-panel{z-index:1100}#qSavedPanel[hidden]{display:none!important}
-@media(max-width:980px){.quality-workspace.q-collapsed .quality-shell{grid-template-columns:minmax(0,1fr)}#qualityWorkspace.q-collapsed .q-sidebar{opacity:1!important;pointer-events:auto}#qualityWorkspace.q-collapsed .q-sidebar.open{transform:translateX(0)!important}.q-reopen,.q-collapsed .q-reopen{display:none}.q-sidebar .nav-btn b{font-size:inherit}}
+.quality-workspace.q-collapsed .quality-shell{grid-template-columns:72px minmax(0,1fr)}#qualityWorkspace.q-collapsed .q-sidebar{width:72px!important;padding:24px 8px;transform:none!important;opacity:1!important;pointer-events:auto}#qualityWorkspace.q-collapsed .q-collapse{position:static;transform:rotate(180deg)}#qualityWorkspace .q-sidebar{padding-top:26px;padding-bottom:26px}.q-sidebar .nav-btn b{font-weight:inherit;font-size:inherit}.q-sidebar .nav-btn{padding:13px 12px}#qualityWorkspace .topbar .top-actions{margin-left:auto}#qualityWorkspace .profile-quick-panel,#qualityWorkspace .notification-panel{z-index:1100}#qSavedPanel[hidden]{display:none!important}
+@media(max-width:980px){.quality-workspace.q-collapsed .quality-shell{grid-template-columns:minmax(0,1fr)}#qualityWorkspace.q-collapsed .q-sidebar{opacity:1!important;pointer-events:auto}#qualityWorkspace.q-collapsed .q-sidebar.open{transform:translateX(0)!important}.q-sidebar .nav-btn b{font-size:inherit}}
 /* Quality-only navigation: fixed panel, R&D controls, content-only scrolling. */
 #qualityWorkspace .q-sidebar{overflow:hidden!important;overscroll-behavior:none}
 #qualityWorkspace .q-sidebar nav{min-height:0;flex-shrink:1}
 #qualityWorkspace .q-collapse{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:21px;min-width:21px;height:21px;padding:0;border:1px solid rgba(255,255,255,.16);border-radius:6px;background:rgba(255,255,255,.06);color:#dceaff;font-size:14px;font-weight:900}
+#qualityWorkspace .q-reopen{display:none!important}
 #qualityWorkspace .q-reopen{left:0;top:50%;transform:translateY(-50%);width:30px;height:62px;padding:0;margin:0;border:1px solid #b9d0e7;border-left:0;border-radius:0 13px 13px 0;background:#0f5599;color:#fff;box-shadow:5px 0 18px rgba(12,60,105,.25);font-size:22px;line-height:1;font-weight:900}
 @media(max-height:760px){#qualityWorkspace .q-sidebar,#qualityWorkspace.q-collapsed .q-sidebar{padding:16px 18px}#qualityWorkspace .q-sidebar .brand{padding-bottom:14px}#qualityWorkspace .q-sidebar nav{margin-top:14px;gap:3px}#qualityWorkspace .q-sidebar .nav-btn{min-height:32px;padding:8px 10px;font-size:11px}#qualityWorkspace .q-sidebar .side-note{display:none}#qualityWorkspace .q-sidebar .q-departments{margin-top:auto}}
 @media(max-height:500px){#qualityWorkspace .q-sidebar,#qualityWorkspace.q-collapsed .q-sidebar{padding:8px 14px}#qualityWorkspace .q-sidebar .brand{padding-bottom:8px;min-height:40px}#qualityWorkspace .q-sidebar nav{margin-top:8px;gap:1px}#qualityWorkspace .q-sidebar .nav-btn{min-height:24px;padding:4px 8px;font-size:10px;line-height:1.15}#qualityWorkspace .q-sidebar .brand-mark{width:30px;height:30px}#qualityWorkspace .q-sidebar .brand-copy small{display:none}}
@@ -55,6 +56,7 @@
 #qualityTimeWorkspace .qt-inline-form{display:grid;grid-template-columns:150px 140px minmax(240px,1.7fr) 110px 110px 140px minmax(180px,1.2fr) auto;gap:10px;align-items:end}
 #qualityTimeWorkspace .qt-inline-form label{display:grid;gap:6px;min-width:0;font-size:11px;font-weight:700;color:var(--muted)}
 #qualityTimeWorkspace .qt-inline-form input,#qualityTimeWorkspace .qt-inline-form select{width:100%;min-width:0}
+#qualityTimeWorkspace .qt-inline-form .qt-form-actions{grid-column:8;display:flex;align-items:center;gap:8px}
 #qualityTimeWorkspace .qt-inline-form .qt-inline-status{grid-column:1/-1;margin:0;min-height:18px}
 #qualityTimeWorkspace .qt-inline-form .primary-btn{min-height:42px;white-space:nowrap}
 #qualityTimeWorkspace .qt-filters{display:grid;grid-template-columns:160px 160px minmax(220px,1fr) 160px auto;gap:10px;align-items:end;margin-bottom:14px}
@@ -62,8 +64,8 @@
 #qualityTimeWorkspace .qt-filters input,#qualityTimeWorkspace .qt-filters select{width:100%;min-width:0}
 #qualityTimeWorkspace .qt-entry-row{display:grid;gap:8px}
 #qualityTimeWorkspace .qt-entry-meta{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-@media(max-width:1200px){#qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}#qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field{grid-column:span 2}#qualityTimeWorkspace .qt-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:760px){#qualityWorkspace .qd-dashboard-two .qd-two-metrics{grid-template-columns:1fr}#qualityTimeWorkspace .qt-inline-form,#qualityTimeWorkspace .qt-filters{grid-template-columns:1fr}#qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field{grid-column:auto}}
+@media(max-width:1200px){#qualityTimeWorkspace .qt-inline-form{grid-template-columns:repeat(4,minmax(0,1fr))}#qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field,#qualityTimeWorkspace .qt-form-actions{grid-column:span 2}#qualityTimeWorkspace .qt-filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){#qualityWorkspace .qd-dashboard-two .qd-two-metrics{grid-template-columns:1fr}#qualityTimeWorkspace .qt-inline-form,#qualityTimeWorkspace .qt-filters{grid-template-columns:1fr}#qualityTimeWorkspace .qt-task-field,#qualityTimeWorkspace .qt-remarks-field,#qualityTimeWorkspace .qt-form-actions{grid-column:auto}}
 
 /* v172 — Quality Time Sheet alignment only. No behavior/data changes. */
 #qualityTimeWorkspace .qt-rnd-sheet{width:min(100%,1540px);margin:0 auto}
@@ -368,3 +370,8 @@
   #qualityTimeWorkspace .qt-inline-form>label:nth-child(n),
   #qualityTimeWorkspace .qt-inline-form>#qtSave{grid-column:1}
 }
+
+#qualityWorkspace.q-timesheet-page .q-scroll{overflow-x:hidden!important;overflow-y:auto!important}
+#qualityTimeWorkspace #qtEntries{max-height:min(56vh,620px);min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 6px 2px 0;scrollbar-width:thin;scrollbar-color:#b5c9e0 transparent}
+#qualityTimeWorkspace #qtEntries::-webkit-scrollbar{width:7px}
+#qualityTimeWorkspace #qtEntries::-webkit-scrollbar-thumb{background:#b5c9e0;border-radius:8px}

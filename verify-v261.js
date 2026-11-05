@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('fs'),assert=require('node:assert/strict');
+const d=fs.readFileSync('department-workspace.js','utf8');
+const f=fs.readFileSync('firebase-cloud.js','utf8');
+const css=fs.readFileSync('department-v261.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+assert(d.includes('data-time-delete=')&&d.includes('removeTimeRecord(entry.id)'),'Owner scoped Time Sheet delete button missing');
+assert(d.includes('window.departmentUX.confirm(\'Delete this saved Time Sheet record? This cannot be undone.\')'),'In-app delete confirmation missing');
+assert(d.includes('timePolicy().permitted(entry.date)'),'Week lock on deleting saved Time Sheet entry missing');
+assert(d.includes('data-time-edit=')&&d.includes('continueTime(b.dataset.timeEdit)'),'Continue/Edit not bound');
+assert(d.includes('revision:original?(Number(original.revision)||0)+1:0'),'Revision on saved updates missing');
+assert(d.includes('Last updated')&&d.includes('dept-update-chip')&&d.includes('dept-record-updated'),'Updated record card missing');
+assert(f.includes('async function deleteQualityTimeEntry(id)')&&f.includes('window.rndCloud={deleteQualityTimeEntry,'),'Quality timesheet delete endpoint missing');
+assert(f.includes('put(\'V\',Number(r.revision)||0)')&&f.includes('revision:Number(v.V)||0'),'Department update revision persistence missing');
+assert(f.includes('revision:Number(d.V)||0'),'Quality update revision persistence missing');
+assert(css.includes('.leader-tool-card')&&css.includes('.dept-time-delete')&&css.includes('.dept-record-updated'),'Scoped UI style missing');
+assert(html.includes('department-v261.css?v=261.0.0'),'New stylesheet missing');
+console.log('v261 PASS: scoped delete, Continue/Update, persisted revision, updated cards, admin polish');
