@@ -1,0 +1,13 @@
+DFAB KPI v275 — scoped changes only
+
+1. FIREBASE: firestore.rules now permits the 'y' idea_type field already written by firebase-cloud.js. Without this, new Kaizen/Innovation ideas can fail with permission-denied during initial sync.
+2. FIREBASE: error messages distinguish Firebase Firestore rules, disabled Anonymous Auth, unauthorized domains, and network unavailability. Existing connection retry, cache and data flows are retained.
+3. ADMIN CARDS: The 4 admin tool screens hide all left-side navigation through admin-navigation-v275.css. Ordinary department sidebars, forms, routes and records are unchanged.
+
+REQUIRED LIVE CONFIGURATION (cannot be changed by editing ZIP alone):
+  In project dfab-rnd-track, enable Authentication > Sign-in method > Anonymous;
+  verify hosting domain is authorized in Authentication > Settings > Authorized domains;
+  deploy updated rules from this folder: firebase deploy --only firestore:rules --project dfab-rnd-track
+  ensure Cloud Firestore database exists and the account has rights to deploy rules.
+
+The deployed Firebase connection cannot be tested offline from this ZIP. Do not delete/recreate Firestore data or force-push GitHub. Existing records have not been touched.

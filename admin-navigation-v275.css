@@ -1,0 +1,9 @@
+/* Only the four admin-card tool views: hide all department side navigation. */
+body.leader-center-active #sidebar,
+body.leader-center-active #sidebarReopenBtn,
+body.leader-center-active #menuBtn,
+body.leader-center-active #qualityWorkspace .q-sidebar,
+body.leader-center-active #qualityWorkspace .q-reopen,
+body.leader-center-active #departmentWorkspace .q-sidebar,
+body.leader-center-active #departmentWorkspace .q-reopen { display:none!important;visibility:hidden!important;pointer-events:none!important; }
+body.leader-center-active .leader-center-shell {grid-template-columns:minmax(0,1fr)!important;width:100%;}

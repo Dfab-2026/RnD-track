@@ -840,7 +840,7 @@ async function bootCloud(){
   }catch(e){
     cloudBooted=false;cloudWatching=false;
     console.error('Firebase startup failed',e);
-    setCloudRuntimeStatus('offline',`${e?.code?e.code+': ':''}${e?.message||e}`);
+    const code=String(e?.code||''); const detail=code.includes('permission-denied')?'Firebase permission denied. Deploy firestore.rules and verify Anonymous Authentication is enabled.':code.includes('auth/operation-not-allowed')?'Enable Anonymous Authentication in Firebase Console → Authentication → Sign-in method.':code.includes('auth/unauthorized-domain')?'Add this website domain to Firebase Authentication authorized domains.':code.includes('unavailable')?'Firebase network unavailable. Check network and Firestore service.':String(e?.message||e); setCloudRuntimeStatus('offline',`${code?code+': ':''}${detail}`);
   }finally{cloudBootInFlight=false}
 }
 async function load(){

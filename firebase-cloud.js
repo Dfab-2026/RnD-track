@@ -118,7 +118,7 @@
       await enableDurablePersistence();
       try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){console.warn('Auth persistence',e)}
       let user=auth.currentUser;if(!user){const credential=await auth.signInAnonymously();user=credential?.user||auth.currentUser}if(!user)user=await waitForAuthUser();authUid=user?.uid||null;if(!authUid)throw new Error('Anonymous Firebase authentication did not return a user.');
-      await db.collection('members').limit(1).get({source:'server'});ready=true;return{enabled:true,user:authUid};
+      await db.collection('members').limit(1).get({source:'server'});ready=true;lastError=null;return{enabled:true,user:authUid};
     }catch(e){ready=false;lastError=e;console.error('Firebase init failed',e);throw e}
   }
   async function loadSnapshot(){
