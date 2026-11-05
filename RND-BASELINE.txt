@@ -1,0 +1,16 @@
+R&D BASELINE — v127
+
+The existing R&D workspace is the preserved baseline for future department work.
+Keep new department pages, records and permissions separate from R&D. Do not
+modify existing R&D flows unless explicitly requested.
+
+Department selection persists on refresh. Browser Back returns to the department
+cards; Forward re-enters the selected workspace. Existing login remains saved.
+
+Business records use the existing Firebase connection: ideas, weekly cycles,
+projects, progress, manual Time Sheet entries, KPI reviews and chat. Device login,
+navigation preferences and offline retry queues remain local by design.
+
+Deploy with the real firebase-config.js and the included firestore.rules. This
+delivery has no live Firebase credentials; cloud serialization and save paths
+were checked locally, not against your deployed database.

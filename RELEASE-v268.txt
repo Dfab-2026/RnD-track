@@ -1,0 +1,36 @@
+DFAB KPI Tracker v268
+Released: 2026-11-04
+
+Scope (v267 locked baseline):
+- KPI Master(1).pptx is the source of truth for department KPI names, targets and frequencies.
+- R&D: 8 master KPIs.
+- Quality: 11 master KPIs, retaining Quality evidence/manual override flow.
+- Production, NPD, Sales (RFQ master), Outsourcing, Purchase, Stores, HR & Admin, Accounts, Finance, Maintenance and Digital Marketing mapped to the supplied master.
+- Welding Qualification retains the Production KPI set because the supplied master does not contain a separate Welding Qualification KPI table.
+- Weekly KPI view includes every configured KPI; daily/monthly/yearly frequencies are shown as weekly checkpoints/equivalents without changing the original source target/frequency.
+- Kabil is excluded from KPI contributor counting only in R&D. Other departments include Kabil when configured as an active member.
+- Department notification panel shows MY PENDING and TEAM PENDING. Hourly popup remains MY PENDING only.
+- Legacy R&D hourly popup is MY PENDING only.
+- Kaizen register saved text wraps to multiple lines instead of single-line truncation.
+- Admin KPI mirror uses the same weekly-target conversion helper.
+
+Locked / unchanged:
+- Firebase collection/schema and existing record IDs.
+- Timesheet save/update/week-lock flow.
+- Weekly report task flow.
+- Assigned tasks/rating.
+- Login/password and backup/help flows.
+- Other unrelated UI/actions.
+
+Verification:
+- verify.js PASS
+- verify-v260.js PASS
+- verify-v263.js PASS
+- verify-quality.js PASS
+- verify-timesheet-controls.js PASS
+- verify-v268.js PASS
+- JS syntax PASS
+- No existing files removed.
+
+Note:
+- Live production Firebase write/delete was not performed during verification.

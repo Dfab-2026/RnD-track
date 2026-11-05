@@ -1,0 +1,10 @@
+v213 — Dashboard Graph Card Height Fix
+
+Only dashboard graph-card sizing changed.
+
+- Removed the effective old chart-height cap by adding the final desktop override after all legacy CSS rules.
+- Quality dashboard analytics card now fills the remaining viewport and is visibly taller.
+- All shared department dashboard analytics cards now use the same taller sizing.
+- Desktop no-scroll dashboard behavior is preserved.
+- Tablet/mobile behavior is unchanged.
+- No Firebase, routing, Time Sheet, KPI, backup, login, sidebar, or data logic changed.

@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8');
+const config=fs.readFileSync('firebase-config.js','utf8');
+assert(config.includes('window.RND_FIREBASE_CONFIG'),'R&D and Quality share one Firebase config object');
+assert(cloud.includes("store.collection('app_meta').doc(qualityMetaId(kind,id))"),'Quality writes to same top-level app_meta collection as R&D');
+assert(cloud.includes("store.collection('app_meta').where('kind','==',qualityMetaKind(kind))"),'Quality live reads from shared app_meta collection');
+assert(!cloud.includes("const ref=departmentId\n      ? qualityDepartmentCollection"),'Quality no longer writes new data to department subcollections');
+assert(cloud.includes("const qualityDepartmentId=row=>"),'department id remains encoded/separated in Quality records');
+assert(cloud.includes('Legacy reader only'),'older department-subcollection data remains readable');
+console.log('PASS: Quality uses the same Firebase database/top-level app_meta path as R&D while preserving department separation');

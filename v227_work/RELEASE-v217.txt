@@ -1,0 +1,18 @@
+DFAB KPI Tracker v217
+
+Scoped changes only:
+1. Time Sheet manual clock dialog is fully viewport-contained on desktop/mobile, with complete hour/minute/AM-PM controls visible.
+2. Quality and all shared-department Dashboard Task Analytics use the same responsive line-chart renderer.
+3. R&D Datas now includes Weekly Task Summary and Weekly KPI Status using the same weekly-report card/tabs pattern as other departments.
+
+Preserved:
+- Firebase schemas and save/read-back flows
+- PO Number behavior
+- animated clock storage format/overlap calculations
+- Dashboard cards and no-scroll layout
+- Admin cards/member management/background push
+- Backup/PDF cleanup flow
+- KPI/Kaizen/Weekly/Time Sheet content outside the requested changes
+- Sidebar/login/role rules
+
+Current targeted verification: PASS.

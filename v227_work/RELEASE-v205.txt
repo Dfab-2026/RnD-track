@@ -1,0 +1,23 @@
+DFAB KPI TRACKER v205 - RECONSTRUCTED STABLE BUILD
+
+BASE
+- Stable v203 architecture and features preserved.
+
+FIXED
+- Removed the unsafe v204 Production->Welding department migration that could break department initialization.
+- Production display renamed safely to Welding Qualification without changing the internal Firebase/storage key.
+- Exact Time Sheet selectable task lists applied from the supplied department screenshots.
+- Others/manual task entry preserved everywhere.
+- Historical Time Sheet values remain readable through legacy labels/fallback task text.
+
+UNCHANGED / PRESERVED
+- R&D Dashboard, Daily Ideas, Weekly Tasks, KPI, Time Sheet, Datas and Hours summary.
+- Quality Dashboard, Kaizen, Weekly Report, KPI, Time Sheet, inspection/training flows.
+- All shared department Dashboard/Kaizen/Weekly/KPI/Time Sheet/Settings flows.
+- Admin name-only login, all-department leader access, Manage Members, inline KPI/Time/Analytics cards.
+- Outsourcing users/roles.
+- Lead-only monthly backup/cleanup.
+- Firebase compact schemas and server read-back verification.
+
+DEPLOYMENT NOTE
+- firebase-config.js in this package still contains placeholders. Copy the real Firebase Web config from the currently working deployment before production deployment if your deployment process does not inject it separately.

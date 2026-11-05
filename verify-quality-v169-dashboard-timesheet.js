@@ -1,0 +1,16 @@
+const fs=require('fs');
+const q=fs.readFileSync('quality.js','utf8');
+const d=fs.readFileSync('quality-daily.js','utf8');
+const t=fs.readFileSync('quality-time.js','utf8');
+const c=fs.readFileSync('firebase-cloud.js','utf8');
+const css=fs.readFileSync('quality.css','utf8');
+const check=(ok,msg)=>{if(!ok){console.error('FAIL:',msg);process.exit(1)}};
+check(q.includes("ideas:'Kaizen Ideas'")&&!q.includes("daily:'Daily Task'"),'Quality nav uses Kaizen Ideas and removes Daily Task');
+check(d.includes('KAIZEN IDEAS')&&d.includes('TIME SHEET · 8 HRS/DAY'),'Dashboard contains exactly requested card concepts');
+check(d.includes('weekMinutes')&&d.includes('monthMinutes'),'Dashboard computes weekly/monthly Time Sheet totals');
+check(t.includes('qt-inline-form')&&t.includes('id="qtDate"')&&t.includes('id="qtMonth"')&&t.includes('id="qtTask"')&&t.includes('id="qtFrom"')&&t.includes('id="qtTo"')&&t.includes('id="qtEntryStatus"')&&t.includes('id="qtRemarks"'),'Time Sheet single-row fields present');
+check(t.includes("group:'Weekly'")&&t.includes("group:'Monthly'")&&t.includes("group:'ISO / Periodic'"),'Task dropdown includes weekly/monthly/periodic work');
+check(t.includes('qtFilterDate')&&t.includes('qtFilterMonth')&&t.includes('qtFilterTask')&&t.includes('qtFilterStatus'),'Saved-record filters present');
+check(c.includes("put('s',String(r.status||'completed')")&&c.includes("status:d.s||'completed'"),'Time Sheet status persists through compact Firebase encoding');
+check(css.includes('#qualityTimeWorkspace .qt-inline-form')&&css.includes('grid-template-columns'),'Time Sheet alignment CSS present');
+console.log('PASS: v169 Quality dashboard, Kaizen navigation, single-row Time Sheet, filters and Firebase status persistence');

@@ -1,0 +1,9 @@
+v232 - Manage Members Excel export
+
+Requested-only update:
+- Added Download Excel button in Manage Department Members.
+- Export is generated from the latest member data at click time, department-wise.
+- Workbook contains All Members plus one worksheet per department.
+- Columns: S.No, Department, Name, Role, Password.
+- Password column reports Set (secured) / Not set because v231 stores salted password hashes; original password text cannot be recovered safely.
+- No other flows changed.

@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert'),vm=require('vm');
+const src=fs.readFileSync(__dirname+'/quality-review.js','utf8'),context={window:{},Date,console};
+vm.createContext(context);vm.runInContext(src,context);
+const api=context.window.qualityReview;
+assert.deepEqual({...api.weekSpan('2026-11-03')},{start:'2026-11-02',end:'2026-11-08'},'Tuesday belongs to the Monday-Sunday reporting week');
+assert.deepEqual({...api.weekSpan('2026-11-08')},{start:'2026-11-02',end:'2026-11-08'},'Sunday belongs to the same Monday-Sunday reporting week');
+assert(src.includes("timeRows().filter(r=>{const date=timeDate(r);return date>=span.start&&date<=span.end})"),'weekly Time Sheet aggregation normalizes current and legacy date fields');
+assert(src.includes('weeklyDate=e.target.value;weeklyRefresh()'),'changing the selected report date immediately refreshes the report');
+assert(src.includes('data-qw-timesheet-status'),'Time Sheet sync status is visible instead of displaying misleading zeros');
+console.log('PASS: Quality weekly Time Sheet uses the same Monday-Sunday dates as the Dashboard and reports sync status');

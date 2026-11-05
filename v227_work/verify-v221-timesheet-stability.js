@@ -1,0 +1,20 @@
+const fs=require('fs');
+const read=f=>fs.readFileSync(f,'utf8');
+const rnd=read('time-consume.js'), q=read('quality-time.js'), d=read('department-workspace.js'), cloud=read('firebase-cloud.js');
+function ok(name,cond){if(!cond)throw new Error('FAIL '+name);console.log('PASS '+name)}
+ok('R&D clock opens from icon',rnd.includes("[data-rnd-clock]")&&rnd.includes('b.onclick=()=>openClock(input)'));
+ok('R&D clock opens from field',rnd.includes('input.onclick=()=>openClock(input)'));
+ok('R&D clock emits input and change',rnd.includes("new Event('input',{bubbles:true})")&&rnd.includes("new Event('change',{bubbles:true})"));
+ok('R&D validates positive duration',rnd.includes("mins<=0")&&rnd.includes('overlaps a saved entry'));
+ok('R&D Firebase Time Sheet save',rnd.includes('saveRndTime(crypto.randomUUID()'));
+ok('Quality clock opens from icon and field',q.includes('b.onclick=open')&&q.includes('input.onclick=open'));
+ok('Quality current clock helper required',q.includes("typeof window.rndTimeClock==='function'"));
+ok('Quality Firebase Time Sheet save',q.includes("saveQualityTime('entries'"));
+ok('Quality PO and Others validation',q.includes('NA / N/A / NO PO')&&q.includes("task==='other'&&!customTask"));
+ok('Shared department clock opens from icon and field',d.includes('b.onclick=open')&&d.includes('input.onclick=open'));
+ok('Shared department current clock helper required',d.includes("typeof window.rndTimeClock==='function'"));
+ok('Shared department positive duration/overlap',d.includes('To time must be later than From time.')&&d.includes('This time overlaps a saved record.'));
+ok('Shared department Firebase save path',d.includes('await save(crypto.randomUUID(),row)'));
+ok('Shared department Others stored',d.includes("custom_task:type==='other'?custom:''"));
+ok('Cloud supports R&D time server save',cloud.includes('saveRndTime'));
+ok('Cloud supports Quality time server save',cloud.includes('saveQualityTime'));

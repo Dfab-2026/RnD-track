@@ -1,0 +1,11 @@
+const fs=require('fs');
+const quality=fs.readFileSync('quality.js','utf8');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8');
+const must=(ok,msg)=>{if(!ok){console.error('FAIL:',msg);process.exit(1)}};
+must(quality.includes("serverConnected?'live':ready?'connecting':'offline'"),'profile dot must reflect server/cached/offline state');
+must(quality.includes("Saved and verified in Firebase."),'Quality save must report verified Firebase save');
+must(quality.includes("serverConnected=Boolean(meta.connected)"),'Quality listener must use server metadata');
+must(cloud.includes("ref.get({source:'server'})"),'Quality save must confirm record from Firestore server');
+must(cloud.includes('includeMetadataChanges:true'),'Quality listener must observe cache/server metadata');
+must(cloud.includes('connected:serverBacked'),'Quality listener must expose server-backed connection state');
+console.log('PASS: Quality profile green state is server-backed; Firebase saves are read-back verified; cached records remain displayable while syncing');

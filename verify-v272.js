@@ -1,0 +1,24 @@
+/* v272 regression: filter layout and Settings UI only, locked KPI save/export features */
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const read=name=>fs.readFileSync(name,'utf8');
+const css=read('kpi-settings-layout-v272.css'),dw=read('department-workspace.js'),index=read('index.html');
+assert(index.includes('kpi-settings-layout-v272.css?v=272.0.0'));
+assert(index.includes('department-workspace.js?v=272.0.0'));
+assert(css.includes('.kref-only-filter.kpi-premium-filter'));
+assert(css.includes('.dept-kpi-week-range'));
+assert(css.includes('grid-template-columns:minmax(0,1.08fr)'));
+assert(css.includes('.dw-settings-card'));
+assert(css.includes('#settingsPage .settings-master-row'));
+assert(dw.includes('class="dw-settings-identity"'));
+assert(dw.includes('id="dLogout"'));
+assert(dw.includes("window.dfabHelp?.button?.()"));
+assert(dw.includes('window.monthBackup?.mount(content().querySelector(\'#dMonthlyBackup\')'));
+assert(dw.includes('window.dfabWeeklyKpiReport?.preview(reportModel,{editable:true})'));
+assert(dw.includes('window.dfabWeeklyKpiReport?.bindEditable'));
+assert(dw.includes('progress:edited.percent,status:edited.status'));
+assert(dw.includes('window.dfabWeeklyKpiReport.download(reportModel)'));
+new vm.Script(dw,{filename:'department-workspace.js'});
+const ctx={window:{},console,document:{addEventListener(){}}};vm.runInNewContext(dw,ctx,{filename:'department-workspace.js'});
+const all=['rnd','production','productiondept','npd','rfq','outsourcing','quality','purchase','stores','hradmin','accounts','finance','maintenance','digitalmarketing'];
+for(const key of all)assert(ctx.window.departmentWorkspace.configs[key]?.kpis?.length,`Missing KPI config for ${key}`);
+console.log('v272 PASS: KPI filter CSS, Settings rendering/action anchors, locked KPI save/download and 14 department configs.');

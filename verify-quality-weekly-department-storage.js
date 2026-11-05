@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const review=fs.readFileSync('quality-review.js','utf8');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8');
+const css=fs.readFileSync('quality-review.css','utf8');
+assert(review.includes('data-qw-board="${kind}"'),'weekly report has department board');
+assert(review.includes('q-department-card'),'weekly report renders department cards');
+assert(review.includes('data-department-id="${dept.id}"'),'each weekly department card carries its department id');
+assert(review.includes('weekly_${kind}_${weeklyDate}_${departmentId}_${clean(row.person)}'),'department weekly records have stable per-department IDs');
+assert(cloud.includes("const ref=store.collection('app_meta').doc(qualityMetaId(kind,id))"),'all new Quality data uses the same top-level app_meta collection as R&D');
+assert(cloud.includes('field `a`')&&cloud.includes('Department separation stays inside the compact payload'),'department identity remains separated in compact Quality payloads');
+assert(cloud.includes("if(kind==='records')QUALITY_DEPARTMENT_IDS.forEach"),'only Quality records open department listeners');
+assert(cloud.includes('return decodeQualityMeta(kind,confirmed)'),'Quality saves are server read-back decoded from app_meta');
+assert(css.includes('.q-department-board')&&css.includes('.q-department-card.completed'),'department board has responsive/status styling');
+console.log('PASS: Quality weekly department board uses the shared R&D app_meta Firebase database with department-separated payloads');

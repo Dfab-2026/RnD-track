@@ -1,0 +1,13 @@
+'use strict';
+const fs=require('fs'),assert=require('assert');
+const js=fs.readFileSync('department-workspace.js','utf8');
+const css=fs.readFileSync('department-history-weekly-v260.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+assert(js.includes('const tasks=[...choices,...legacy.map')&&js.includes("{value:'other',label:'Others'"),'All configured weekly task cards and consolidated Others card');
+assert(js.includes('const list=times.filter(r=>(r.task_type||\'other\')===t.value)'),'Other records aggregated by task type');
+assert(css.includes('#departmentWorkspace:has(#dTimeForm) #dContent')&&css.includes('overflow-y:auto!important'),'Timesheet page content scrolling');
+assert(css.includes('#dContent>.tc-panel:last-of-type')&&css.includes('flex:0 0 auto!important'),'Saved Records content-sized panel');
+assert(css.includes('max-height:none!important')&&css.includes('overflow:visible!important'),'All saved rows accessible');
+assert(css.includes('.kpi101-grid')&&css.includes('align-items:stretch!important'),'KPI card alignment');
+assert(html.includes('department-history-weekly-v260.css?v=260.0.0'),'v260 CSS linked');
+console.log('v260 PASS: workspace scrolling, all weekly task cards, grouped Others, KPI geometry');

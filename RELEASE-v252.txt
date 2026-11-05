@@ -1,0 +1,25 @@
+DFAB KPI v252 — Shared Department & Quality UX / Time Sheet completion
+Baseline: DFAB_KPI_v251.zip
+
+Scope locked: R&D operational workflow, Admin-only cards, Firebase schemas, all existing KPI/Kaizen/Weekly Report/Backup/Member/Excel functions.
+
+Requested changes:
+- Kaizen dialog (Quality and non-R&D shared departments): date immediately after member name; compact responsive form, no desktop form scroll at normal viewport size, original image field remains hidden (v251 behavior).
+- Kaizen register: compact, clearly labelled empty-results state instead of oversized blank region.
+- Quality and shared department Weekly Report, KPI, Assigned Tasks, Time Sheet: coordinated color accents, compact content-based cards, subtle transitions and reduced-motion support.
+- Time Sheet 12-hour clock buttons: styled SVG clocks and hover/focus interaction (original time-picker handlers remain).
+- Pending/In-progress Time Sheet entry: Continue button preloads its saved fields; Update uses the identical record ID. Completed entries retain Edit during the active week.
+- Updated status after Firebase write, including local date/time, and a persistent per-row update timestamp when the previous timestamp is available.
+- Date entry/edit restrictions: within the current calendar-month 7-day block (1–7, 8–14, 15–21, 22–month-end), no future date; past blocks read-only. Existing records from closed weeks remain readable.
+- Quality and shared departments retain existing Firebase save helpers and schemas, and previous-week dates are validated before any save is attempted.
+
+Checks: verify.js, verify-v251.js, verify-v251-password.js, verify-v250.js,
+verify-v252.js, verify-timesheet-controls.js, verify-quality-ideas.js,
+Quality and shared department headless browser Continue→Update mock-Firebase tests,
+Kaizen modal 1440/1280/1024/768/390 CSS layout checks.
+
+Not verified: live production Firebase writes, production Firestore security-rule enforcement of calendar lock,
+and all live deployments. The date restriction is UI/client validation, not a new server security rule.
+
+Legacy note: verify-quality-time.js expects old 'Save changes' text and old in-progress-only Continue behavior.
+That expectation is intentionally superseded by v252. Some historical Quality Weekly verification scripts also fail on the unchanged v251 baseline.

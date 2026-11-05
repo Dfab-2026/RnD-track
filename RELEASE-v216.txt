@@ -1,0 +1,17 @@
+V216 — DASHBOARD VIEWPORT FILL + DEPARTMENT GRID FIT
+
+Changes are layout-only on top of v215.
+
+1. Dashboard analytics card
+- Quality and shared-department dashboards now calculate the exact remaining desktop viewport height at runtime.
+- The analytics card fills the remaining space below the four summary cards.
+- The layout recalculates on dashboard changes and browser resize.
+- Desktop dashboard stays no-scroll; mobile/tablet behavior is unchanged.
+
+2. Department/Admin card screen
+- Uses wider desktop workspace (up to 1440px).
+- 5 columns on desktop and 6 columns on wider desktop screens.
+- Department and Admin cards are more compact vertically.
+- All department cards + the three locked/unlocked Admin cards fit within the desktop viewport without page scrolling.
+
+No data, Firebase, login, notification, KPI, Time Sheet, backup, or role logic was changed.

@@ -1,0 +1,143 @@
+/* v272: KPI filter containment and Settings presentation only. No workflow changes. */
+/* KPI period / month / week / dates are aligned as a consistent grid on shared department pages. */
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.87fr) minmax(0,1.75fr)!important;
+  align-items:end!important;
+  gap:clamp(10px,1.35vw,18px)!important;
+  padding:18px 20px!important;
+  margin-bottom:16px!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+  box-sizing:border-box;
+  background:#fff;
+  border:1px solid #d5e3f2;
+  border-radius:17px;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter>label{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  flex:none!important;min-width:0!important;width:100%!important;
+  gap:8px!important;margin:0!important;align-self:end;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range{
+  display:grid!important;
+  grid-template-columns:minmax(0,.78fr) minmax(0,1.03fr) minmax(0,1.03fr)!important;
+  align-items:end!important;gap:10px!important;flex:none!important;
+  min-width:0!important;width:100%!important;max-width:100%!important;
+  margin:0!important;padding:10px 12px!important;
+  border:1px solid #e0eaf6;border-radius:13px;background:#f2f7fd;
+  box-sizing:border-box;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range>label{
+  display:grid!important;gap:7px!important;min-width:0!important;width:auto!important;
+  flex:none!important;margin:0!important;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range.dept-kpi-monthly{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range.dept-kpi-monthly>label:first-child{display:none!important}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter :is(input,select){
+  display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  height:42px!important;min-height:42px!important;padding:8px 10px!important;
+  border:1px solid #cbdced;border-radius:10px;background:#fff;color:#183d66;
+  box-sizing:border-box;font-size:clamp(11px,.95vw,13px)!important;
+  line-height:1.3;white-space:nowrap;text-overflow:clip;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter input[readonly]{font-variant-numeric:tabular-nums;font-weight:750;text-align:center;padding-inline:5px!important}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter label>span{
+  display:block;font-size:10px;font-weight:850;letter-spacing:.07em;color:#52729b;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-title{align-items:center;gap:14px;min-height:52px}
+:is(#departmentWorkspace,#qualityWorkspace) .kref-only-title button{min-height:42px;white-space:nowrap;padding-inline:15px}
+@media(max-width:1160px){
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  }
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range{
+    grid-column:1/-1;width:100%;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+}
+@media(max-width:640px){
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;padding:14px!important;
+  }
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range{
+    grid-column:1;grid-template-columns:minmax(0,.78fr) minmax(0,1fr) minmax(0,1fr)!important;
+    gap:6px!important;padding:8px!important;
+  }
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range input[readonly]{font-size:11px!important}
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-title{align-items:stretch}
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-title button{width:100%}
+}
+@media(max-width:365px){
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range{grid-template-columns:1fr 1fr!important}
+  :is(#departmentWorkspace,#qualityWorkspace) .kref-only-filter.kpi-premium-filter .dept-kpi-week-range>label:first-child{grid-column:1/-1}
+}
+/* Quality's native filter path (if still mounted) gets the same basic alignment. */
+:is(#departmentWorkspace,#qualityWorkspace) .q-review-filter.kpi-premium-filter:not(.kref-only-filter){
+  align-items:end!important;gap:12px!important;max-width:100%;padding:16px!important;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .q-review-filter.kpi-premium-filter:not(.kref-only-filter) .dept-kpi-week-range{
+  min-width:0;max-width:100%;box-sizing:border-box;
+}
+/* Shared department Settings: compact cards, no giant blank heights. */
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-heading{margin-bottom:17px!important;min-height:0!important}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-heading p{font-size:13px;color:#6b829d;margin:5px 0 0}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:start!important;gap:16px!important;min-height:0!important;
+}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings .dw-settings-card{
+  position:relative;display:flex;flex-direction:column;align-items:stretch;
+  gap:0;min-width:0;min-height:0!important;height:auto!important;
+  padding:23px!important;border:1px solid #d4e3f1!important;border-radius:18px!important;
+  background:linear-gradient(155deg,#fff,#f8fbff)!important;
+  box-shadow:0 7px 22px rgba(18,66,119,.045);
+}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-card-head{display:flex;align-items:center;gap:12px;min-width:0;padding-bottom:15px;border-bottom:1px solid #e4edf6}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-card-head h3{margin:3px 0 0;font-size:19px;line-height:1.25;color:#17375c}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-symbol{display:grid;flex:none;place-items:center;width:46px;height:46px;border-radius:14px;background:#e6f0ff;color:#1e62b4;font-size:24px}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-symbol-data{background:#e7f8ef;color:#138956}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-identity{display:flex;align-items:center;gap:13px;margin-top:18px;padding:15px;border:1px solid #e1ebf5;border-radius:13px;background:#fff;min-width:0}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-avatar{display:grid;flex:none;place-items:center;width:47px;height:47px;background:#1f64b1;color:#fff;font-weight:850;font-size:18px;border-radius:13px}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-person{display:grid;gap:4px;min-width:0}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-person strong{font-size:16px;color:#153459;overflow-wrap:anywhere}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-person span{font-size:12px;color:#66809b}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-description{font-size:13px;line-height:1.55;color:#657d95;margin:14px 0 0}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-actions button{min-height:42px!important;margin:0!important;max-width:100%}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-connection{display:flex;align-items:center;gap:12px;min-height:66px;margin-top:18px;padding:17px;border:1px solid #ccebd9;border-radius:12px;background:#f1fbf5;color:#176a43;font-size:14px}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-indicator{width:12px;height:12px;flex:none;border-radius:50%}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-indicator.is-connected{background:#23ad69;box-shadow:0 0 0 4px rgba(35,173,105,.12)}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-indicator.is-syncing{background:#e3a12e;box-shadow:0 0 0 4px rgba(227,161,46,.12)}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-backup{margin-top:17px;min-width:0}
+:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-backup>*{max-width:100%}
+@media(max-width:850px){:is(#departmentWorkspace,#qualityWorkspace) .dw-settings{grid-template-columns:1fr!important}}
+@media(max-width:550px){:is(#departmentWorkspace,#qualityWorkspace) .dw-settings .dw-settings-card{padding:16px!important}:is(#departmentWorkspace,#qualityWorkspace) .dw-settings-actions button{width:100%}}
+/* Dedicated R&D Settings: consistent master cards and their internal scrollers. */
+#appShell #settingsPage>.section-toolbar{margin-bottom:17px;min-height:0!important}
+#appShell #settingsPage .settings-master-row{gap:16px!important;align-items:start!important;min-height:0!important}
+#appShell #settingsPage .settings-secondary-row{gap:16px!important;align-items:start!important}
+#appShell #settingsPage :is(.settings-dept-panel,.settings-members-panel,.settings-backup-panel,.session-panel){
+  min-width:0!important;min-height:0!important;height:auto!important;
+  border:1px solid #d7e4f1!important;border-radius:18px!important;
+  padding:20px!important;background:linear-gradient(155deg,#fff,#fbfdff)!important;
+  box-shadow:0 7px 22px rgba(13,56,108,.04)!important;
+}
+#appShell #settingsPage .settings-card-head{align-items:center;gap:10px;margin-bottom:11px}
+#appShell #settingsPage .settings-card-head h3{font-size:19px;color:#17375c}
+#appShell #settingsPage :is(.roster-list,.dept-fixed-grid){scrollbar-gutter:stable;overflow:auto;max-height:clamp(160px,36vh,390px)}
+#appShell #settingsPage .settings-dept-panel #departmentsSettings{display:block!important;min-height:0!important;flex:none!important}
+#appShell #settingsPage .settings-dept-panel .dept-fixed-grid{display:grid!important;grid-template-rows:none!important;grid-auto-rows:auto!important;height:auto!important;align-content:start!important}
+#appShell #settingsPage .settings-dept-panel .dept-fixed{height:auto!important;min-height:48px!important}
+#appShell #settingsPage .roster-slot{height:auto!important;min-height:0!important}
+#appShell #settingsPage .settings-lock{font-size:10px}
+#appShell #settingsPage .database-stats>div{border-radius:12px;background:#f5f9fd;border-color:#dce8f4}
+#appShell #settingsPage .db-actions{align-items:center;gap:9px}
+#appShell #settingsPage .session-panel{width:100%!important;justify-self:stretch!important}
+#appShell #settingsPage :is(input,select,button):focus-visible{outline:3px solid #81b9ed;outline-offset:2px}
+@media(max-width:1080px){#appShell #settingsPage .settings-master-row{grid-template-columns:1fr!important}}
+@media(max-width:680px){#appShell #settingsPage :is(.settings-dept-panel,.settings-members-panel,.settings-backup-panel,.session-panel){padding:14px!important}}
+@media(prefers-reduced-motion:reduce){:is(#departmentWorkspace,#qualityWorkspace) .dw-settings *{transition:none!important}}

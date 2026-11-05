@@ -1,0 +1,44 @@
+R&D TRACK v109 - Responsive update
+
+For your existing Firebase/Vercel deployment:
+1. KEEP your existing firebase-config.js with the real Firebase values.
+2. Deploy the complete extracted folder, including responsive.css, responsive.js,
+   kpi-chat.js and kpi-pdf.js. Do not deploy a ZIP as the site root.
+3. Keep index.html and all linked JS/CSS files in the same directory.
+4. Commit and push the updated files, then wait for the Vercel deployment.
+5. Hard refresh each existing browser once (Ctrl + Shift + R).
+
+No database migration, new Firebase project, security-rule change, or browser
+library is required by this responsive update. Existing saved data is retained.
+
+Checks (Node.js):
+  node verify.js
+  node verify-responsive.js
+  node verify-task-access.js
+  node verify-live-sync.js
+  node verify-project-schema.js
+  node verify-kpi-chat.js
+
+The mobile navigation drawer supports outside click, Escape and keyboard focus.
+KPI filters stay in one horizontally scrollable row on narrow screens.
+Large tracking tables scroll inside their own container; chat keeps its composer
+visible as the available viewport changes.
+
+Structured data is stored in Firestore. Preserve your existing real Firebase
+configuration; the bundled firebase-config.js is a setup template.
+
+V109: Work Tracking Daily Target and four Timings Worked slots. Choose a slot to enter details; Save closes it. Eye opens saved details, Close collapses it. Only project owners edit. Offline saves remain queued until Firebase reconnects. Existing task text is retained under Previous task entry.
+
+V110: Equal work cards, Read more titles, equal timing controls. Timing status never changes daily completion. To clear earlier work records, log in as Kabil, open Settings > Database & Backup > Back up & delete earlier work records. Fixed cutoff 26 October 2026. Requires connected Firebase; downloads backup, clears earlier work records, preserves profiles/departments/chat/settings. KPI manual entries are retained.
+
+V111: Fixed tracker row deletion/insertion to preserve six fixed dates and all other timing details. Added automated member, department, idea, week, project and progress edit/delete coverage. Live data has NOT been purged: actual Firebase config/admin access required, including administrator removal of recovery copies in activity_logs.
+
+V113: Reverts V112 desktop layout rewrite. Only restricts the mobile page-scroll overrides to mobile widths and removes the override that broke matching Settings card heights. Original page/card sizes and layout rules restored. Application and Firebase code unchanged.
+
+V114: Work Tracking automatically shows every calendar date from project Start Date through Deadline, inclusive. Removed six-date truncation. Daily completion is calculated across that displayed date range; time-slot statuses remain separate. No CSS/layout, Firebase schema or permission changes.
+
+V115: Daily Ideas edit/delete controls enabled for every R&D member, including assigned ideas. Visitor read-only, lead-only priority/weekly assignment, owner-only tracker editing and existing deletion cascade unchanged. No layout changes.
+
+V116: Each R&D member can self-assign up to two tasks per existing week. Other-owner assignment and priority changes remain lead-only. Excel and timing rows dated before today lock for members; lead can edit those past rows, including teammates. Current/future teammate rows remain view-only. Date locks recheck on edits and at midnight. Visitors stay view-only. Application-level permissions use the existing name login; Firebase rules/schema and layout are unchanged.
+
+V117: Weekly idea cards have contained long text, equal heights and Read more; Selected Week/Other Dates clarify submission date labels. Daily Excel reminders start at local 17:00 for any missing daily target/status, regardless of project completion. Owner sees own missing rows; lead sees team missing rows; visitors excluded. Repeats every minute while site is open; stops once filled. In Progress/Issue are valid reports. Include daily-sheet-reminder.js when deploying. Existing permissions and backend files unchanged.

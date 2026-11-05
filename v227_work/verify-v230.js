@@ -1,0 +1,15 @@
+const fs=require('fs'),path=require('path');
+const read=f=>fs.readFileSync(path.join(__dirname,f),'utf8');
+const assert=(ok,msg)=>{if(!ok)throw new Error(msg)};
+const assigned=read('assigned-tasks.js'),leader=read('leader-center.js'),dept=read('department-workspace.js'),quality=read('quality.js'),app=read('app.js'),responsive=read('responsive.css'),html=read('index.html');
+assert(assigned.includes("localStorage.getItem('dfabDepartmentLeadSession')"),'Assign Task manager must use the latest department lead session');
+assert(!assigned.includes("window.departmentAssignedTaskLeadAccess?.()||window.qualityAssignedTaskLeadAccess?.()||window.rndAssignedTaskLeadAccess?.()"),'Stale cross-department lead fallbacks must not unlock Assign Task');
+assert(dept.includes("else localStorage.removeItem(leadSessionKey)"),'Generic non-lead login must clear lead access');
+assert(quality.includes("departmentKey:'quality',department:'Quality',person:n")&&quality.includes("else localStorage.removeItem(key)"),'Quality login must synchronize lead-only gate access');
+assert(app.includes("departmentKey:'rnd',department:'R&D',person:member.name")&&app.includes("else localStorage.removeItem(key)"),'R&D login must synchronize lead-only gate access');
+assert(leader.includes("card.kind==='assign'&&Boolean(window.assignedTasks?.canManage?.())"),'Assign card must remain permission-gated');
+assert(assigned.includes("tasks.filter(t=>t.department_key===access?.departmentKey)"),'Department lead task data must remain own-department scoped');
+assert(responsive.includes('@media(min-width:981px){#appShell #sidebar')&&responsive.includes('overflow:hidden!important'),'R&D desktop sidebar must be fixed/sticky with no internal scrolling');
+for(const f of ['quality.js','department-workspace.js','assigned-tasks.js','leader-center.js','app.js'])assert(html.includes(f+'?v=230.0.0'),f+' cache version not bumped to v230');
+assert(html.includes('responsive.css?v=230.0.0'),'Responsive CSS cache version not bumped to v230');
+console.log('PASS: v230 Assign Task is enabled only for the latest logged-in department lead; non-leads are locked; R&D desktop sidebar has no internal scrolling.');

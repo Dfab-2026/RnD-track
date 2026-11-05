@@ -1,0 +1,21 @@
+DFAB R&D TIMESHEET - LOCAL WINDOWS USAGE AGENT v1.2
+
+1) Open PowerShell (normal user is enough).
+2) Run:
+   cd "D:\DFAB PROJECT\KPI R&D\usage-agent"
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\Prepare-Kabil-Agent.ps1
+   .\Install-Agent.ps1
+
+3) Health check:
+   Invoke-RestMethod http://127.0.0.1:8765/health
+
+4) Foreground-app check:
+   Open Excel, click inside Excel, then from another PowerShell window run:
+   Invoke-RestMethod http://127.0.0.1:8765/current
+   app_name should say Microsoft Excel.
+
+5) Chrome/Edge websites:
+   Load usage-agent\browser-extension from chrome://extensions or edge://extensions.
+
+The Timesheet page is visible to every logged-in team member. Each Windows PC that should report its own app usage must run its own local agent configured for that member/device.

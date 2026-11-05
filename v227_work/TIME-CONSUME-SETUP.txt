@@ -1,0 +1,22 @@
+TIME CONSUME — v125
+
+Deploy this complete folder with your existing Firebase configuration.
+Publish the included firestore.rules before using Time Consume. The project
+allowlist now includes field l for manual time entries. No database reset is needed.
+
+Time Consume shows all projects assigned to the signed-in member. Date is today's
+date automatically. Enter work, From/To time and optional remarks, then Save.
+Use the clock icon for the animated clock selector; the time field also accepts
+exact minutes through typing or the device's native time picker.
+Entries persist with the project, sync through the existing Firebase queue and
+are included in existing database backups. Overlapping periods are rejected
+across that person's projects. Existing project completion is unaffected.
+
+The hourly reminder runs from 10 AM through 5 PM, Monday–Saturday, in the device's
+local time. It appears once per hour per member while the site is open, and waits
+until the user finishes typing or closes another dialog. A hidden tab catches up
+when brought forward. A closed browser cannot show an in-site popup.
+
+Past Excel dates are editable by their project owner again. Existing lead access
+and other-person restrictions are retained. The 5 PM unfilled-sheet reminder has
+been removed from the page. The Timesheet page and bundled Windows usage agent have been removed.

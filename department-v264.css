@@ -1,0 +1,22 @@
+/* v264 — scoped Timesheet Continue visibility + Admin data presentation only. */
+#departmentWorkspace .qt-entry-meta .dept-continue{
+  display:inline-flex!important;align-items:center;justify-content:center;min-width:96px;min-height:34px;
+  border:1px solid #1d64cb!important;background:linear-gradient(115deg,#1d64cb,#124b9d)!important;
+  color:#fff!important;font-weight:800;box-shadow:0 5px 13px rgba(29,100,203,.18);opacity:1!important;visibility:visible!important;
+}
+#departmentWorkspace .qt-entry-meta .dept-continue::before{content:'↻';margin-right:6px;font-size:14px;line-height:1}
+#departmentWorkspace .qt-entry-meta .dept-edit{display:inline-flex!important;align-items:center;justify-content:center;min-height:34px}
+#departmentWorkspace .dept-time-edit-active{border-color:#6ba7ec!important;box-shadow:0 0 0 3px rgba(50,125,218,.10),0 10px 24px rgba(22,73,130,.07)!important}
+#departmentWorkspace .dept-time-edit-active #dTimeForm [data-time-submit]{background:linear-gradient(115deg,#147c59,#0d6547)!important}
+#departmentWorkspace #dTimeRows{overflow-y:auto!important;overscroll-behavior:contain;scrollbar-gutter:stable;min-height:110px}
+
+.leader-center .leader-kpi-live-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.leader-center .leader-kpi-live-summary article{min-width:0;border:1px solid #dbe7f2;border-radius:13px;background:linear-gradient(145deg,#fff,#f7fbff);padding:12px 14px;box-shadow:0 5px 14px rgba(27,65,101,.045)}
+.leader-center .leader-kpi-live-summary span{display:block;color:#6a7e94;font-size:8px;font-weight:900;letter-spacing:.08em}
+.leader-center .leader-kpi-live-summary strong{display:block;margin-top:5px;color:#123e6e;font-size:17px;line-height:1.2;overflow-wrap:anywhere}
+.leader-center #leaderKpiReportContent .kpi101-grid{align-items:stretch}
+.leader-center #leaderKpiReportContent .kpi101-card{height:auto;min-height:0}
+.leader-center .leader-time-table tbody tr:hover{background:#f5f9ff}
+.leader-center .leader-chart,.leader-center .leader-person-times{min-width:0}
+@media(max-width:820px){.leader-center .leader-kpi-live-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.leader-center .leader-kpi-live-summary{grid-template-columns:1fr}}

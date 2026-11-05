@@ -1,0 +1,7 @@
+DFAB KPI v264 — scoped repair from v263
+- Department KPI/Admin KPI owner synchronization hardened; Admin Quality KPI mirror no longer uses the logged-in Admin name as the Quality KPI owner.
+- Generic Admin KPI uses saved department owner, then department Lead/member fallback, and continues to save the exact same KPI document IDs/period keys as the department KPI page.
+- Timesheet edit state now survives live rerenders while remaining on the Timesheet page.
+- Current-week owner records show an explicit Continue action for Pending/In Progress, load the same record into the form, and Update the same Firebase document with revision + last-updated timestamp.
+- Four Admin tool entry points remain intact; Admin KPI view receives a compact live summary strip.
+- No schema migrations, role changes, Weekly Report/Kaizen/Backup/R&D flow changes.

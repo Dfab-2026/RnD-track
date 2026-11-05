@@ -1,0 +1,24 @@
+const fs=require('fs');
+const root=__dirname;
+const read=f=>fs.readFileSync(root+'/'+f,'utf8');
+const app=read('app.js'), dw=read('department-workspace.js'), tc=read('time-consume.js'), bk=read('backup-tools.js'), fb=read('firebase-cloud.js'), q=read('quality.js'), index=read('index.html');
+function ok(v,msg){if(!v)throw new Error(msg)}
+ok(app.includes("'Sales'"),'Sales department label missing');
+ok(!app.includes("'RFQ'];"),'Old RFQ default department still present');
+ok(dw.includes("rfq:{name:'Sales'"),'Sales workspace label missing');
+ok(dw.includes("if(n==='sales'||n==='rfq')return'rfq'"),'Sales/RFQ compatibility mapping missing');
+['Drawing Review for Production','Purchase Indent Creation','Fabrication Drawing Creation','Manufacturing Process Planning','Fabrication Fitup','Fabrication Welding','Inprocess Inspection','Final Inspection','Report / Quality / Project Report Preparation','Project Documentation','Internal Communication / Followup','External Communication / Followup','Training','Customer Visit','Leave'].forEach(x=>ok(dw.includes(`'${x}'`),`NPD task missing: ${x}`));
+ok(dw.includes('<option value="other">Others</option>'),'Others option missing from shared task dropdown');
+ok(tc.includes("{group:'R&D Task List'"),'R&D summary task cards missing');
+ok(tc.includes("{group:'Other',label:'Others'"),'R&D Others summary missing');
+ok(bk.includes('Download PDF backup'),'PDF backup control missing');
+ok(bk.includes('month-end-backup-reminder'),'Red month-end reminder missing');
+ok(bk.includes('once each hour until the backup is completed'),'Hourly reminder copy missing');
+ok(bk.includes('window.rndKpiPdf.build'),'PDF builder integration missing');
+ok(fb.includes("mode==='rnd'"),'R&D monthly backup mode missing');
+ok(app.includes("mode:'rnd'"),'R&D Settings backup mount missing');
+ok(dw.includes("monthBackup?.remind"),'Shared department month-end reminder missing');
+ok(q.includes("monthBackup?.remind"),'Quality month-end reminder missing');
+ok(tc.includes("monthBackup?.remind"),'R&D month-end reminder missing');
+ok(index.includes('backup-tools.js?v=209.0.0'),'Backup cache bust missing');
+console.log('v209 targeted verification passed');

@@ -1,0 +1,17 @@
+'use strict';
+const fs=require('fs'),assert=require('node:assert/strict');
+const d=fs.readFileSync('department-workspace.js','utf8');
+const l=fs.readFileSync('leader-center.js','utf8');
+const css=fs.readFileSync('department-v264.css','utf8');
+const html=fs.readFileSync('index.html','utf8');
+assert(d.includes("r.status==='pending'||r.status==='in_progress'?'dept-continue':'dept-edit'"),'Continue/Edit action state missing');
+assert(d.includes("continueTime(b.dataset.timeEdit)")&&d.includes("Changes update the same record"),'Continue flow not bound');
+assert(d.includes("revision:original?(Number(original.revision)||0)+1:0")&&d.includes('Last updated'),'Update revision/timestamp missing');
+assert(d.includes("if(next!=='timesheet'||page!=='timesheet')timeEditingId='';page=next"),'Timesheet edit state preservation missing');
+assert(css.includes('.dept-continue')&&css.includes('.dept-time-edit-active'),'Continue UI emphasis missing');
+assert(l.includes("person:()=> 'Navarasu'"),'Quality admin KPI owner still tied to logged admin');
+assert(l.includes('function departmentKpiOwner')&&l.includes('leader-kpi-live-summary'),'Admin KPI owner/data summary hardening missing');
+assert(l.includes("id=`kpi_${range.key.replace")&&l.includes('saveDepartmentRecord(key,id,row)'),'Admin KPI must update same department KPI document');
+for(const frag of ["openKpi", "openTime", "openAnalytics", "assignedTasks?.openAdmin"])assert(l.includes(frag),'Missing admin tool: '+frag);
+assert(html.includes('department-v264.css?v=264.0.0')&&html.includes('department-workspace.js?v=264.0.0')&&html.includes('leader-center.js?v=264.0.0'),'v264 assets not referenced');
+console.log('v264 PASS: department KPI owner/data mirror, Timesheet Continue/Update persistence, four Admin tools preserved');

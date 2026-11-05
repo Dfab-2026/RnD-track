@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="R&D daily idea and weekly KPI tracker" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>DFAB PULSE</title>
+  <link rel="icon" type="image/png" href="assets/dfab-logo.png?v=129.0.0">
+  <link rel="apple-touch-icon" href="assets/dfab-logo.png?v=129.0.0">
+  
+  
+  
+  
+
+
+
+
+
+
+  <link rel="stylesheet" href="tracker-unified-v256.css?v=256.0.0">
+  <link rel="stylesheet" href="department-consistency-v257.css?v=257.0.0">
+  <link rel="stylesheet" href="department-shared-v258.css?v=258.0.0">
+  <link rel="stylesheet" href="department-history-kpi-v259.css?v=259.0.0">
+  <link rel="stylesheet" href="department-history-weekly-v260.css?v=260.0.0">
+  <link rel="stylesheet" href="department-v261.css?v=262.0.0">
+  <link rel="stylesheet" href="support-help.css?v=263.0.0">
+  <link rel="stylesheet" href="department-v264.css?v=264.0.0">
+<<<<<<< HEAD
+  <link rel="stylesheet" href="v266-kpi-rnd-unified.css?v=266.0.0">
+  <link rel="stylesheet" href="kpi-premium-v267.css?v=267.0.0">
+  <link rel="stylesheet" href="kpi-master-v268.css?v=268.0.0">
+  <link rel="stylesheet" href="kpi-weekly-report.css?v=271.0.0">
+  <link rel="stylesheet" href="kpi-settings-layout-v272.css?v=272.0.0">
+  <link rel="stylesheet" href="kpi-a4-print-v273.css?v=273.0.0">
+=======
+>>>>>>> origin/main
+</head>
+<body spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off" autocapitalize="off">
+  <section class="department-gate hidden" id="departmentGate" aria-label="Select a department">
+    <div class="department-gate-card">
+      <div class="login-brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div><strong>DFAB PULSE</strong><small>DEPARTMENT WORKSPACE</small></div></div>
+      <span class="kicker">SELECT DEPARTMENT</span>
+      <h1>Choose your dashboard</h1>
+      <p>Select a department to open its KPI workspace. All departments use the same department workspace structure with their own KPI and task definitions.</p>
+      <div class="department-gate-grid" id="departmentGateGrid" aria-live="polite"></div>
+      <div id="departmentGateMessage" class="department-gate-message" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="login-gate hidden" id="loginGate" aria-label="R&D member login">
+    <div class="login-card">
+<<<<<<< HEAD
+      <div class="login-brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div><strong>R&amp;D TRACK</strong><small>DFAB OPERATIONS</small></div></div>
+=======
+      <div class="login-brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div><strong>DFAB PULSE</strong><small>R&amp;D TRACK</small></div></div>
+>>>>>>> origin/main
+      <span class="kicker">MEMBER ACCESS</span>
+      <h1>What is your name?</h1>
+      <p>Enter the same name saved in the R&D members list. You will stay signed in on this device until you log out from Settings.</p>
+      <form id="loginForm">
+        <label>Your name<input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="loginName" autocomplete="username" placeholder="Enter your saved name" maxlength="80" required autocorrect="off" autocapitalize="off"></label>
+        <label>Password<span class="password-entry-wrap"><input id="loginPassword" type="text" class="secure-password-entry" data-secure-entry="password" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" data-lpignore="true" data-1p-ignore="true" placeholder="Enter your password" minlength="4" maxlength="64" required><button class="password-visibility-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M2.5 12s3.3-7 9.5-7 9.5 7 9.5 7-3.3 7-9.5 7-9.5-7-9.5-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></span></label>
+        <button class="primary-btn login-submit" type="submit">CONTINUE →</button>
+      </form>
+      <div id="loginMessage" class="login-message" aria-live="polite"></div>
+      <div id="loginSuggestion"></div>
+      <button class="department-back-btn" id="backToDepartmentsBtn" type="button">← All departments</button>
+    </div>
+  </section>
+
+  <div class="app-shell app-locked" id="appShell">
+    <aside class="sidebar" id="sidebar">
+<<<<<<< HEAD
+      <div class="brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div class="brand-copy"><strong>R&amp;D TRACK</strong><small>DFAB OPERATIONS</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button><button class="brand-mini-toggle" id="menuBtn" type="button" aria-label="Toggle navigation" aria-expanded="true">‹</button></div>
+=======
+      <div class="brand"><span class="brand-mark dfab-brand-mark"><img src="assets/dfab-logo.png" alt="DFAB" width="44" height="44"></span><div class="brand-copy"><strong>DFAB PULSE</strong><small>R&amp;D TRACK</small></div><button id="sidebarCloseBtn" class="sidebar-close-btn" type="button" aria-label="Close navigation">×</button><button class="brand-mini-toggle" id="menuBtn" type="button" aria-label="Toggle navigation" aria-expanded="true">‹</button></div>
+>>>>>>> origin/main
+      <nav id="nav">
+        <button class="nav-btn active" data-page="dashboard"><span>01</span> Dashboard</button>
+        <button class="nav-btn" data-page="ideas"><span>02</span> Kaizen / Innovation</button>
+        <button class="nav-btn" data-page="weekly"><span>03</span> Weekly Report</button>
+        <button class="nav-btn" data-page="progress"><span>04</span> Work Tracking</button>
+        <button class="nav-btn" data-page="timeconsume"><span>◷</span> Time Sheet</button>
+        <button class="nav-btn" data-page="datas"><span>05</span> Datas</button>
+        <button class="nav-btn" data-page="chat"><span>06</span> Team Chat <em id="teamChatUnread" class="nav-chat-unread hidden" aria-label="Unread chat messages">0</em></button>
+        <button class="nav-btn" data-page="kpi"><span>07</span> KPI Report</button>
+        <button class="nav-btn" data-page="assigned"><span>08</span> Assigned Tasks</button>
+        <button class="nav-btn" data-page="settings"><span>09</span> Settings</button>
+      </nav>
+      <div class="side-note"><b>TEAM MODE</b><p>R&D idea and execution tracker with member and visitor access.</p></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        
+        <div><div class="eyebrow" id="pageEyebrow">R&D OPERATIONS</div><div class="dfab-page-heading"><img src="assets/dfab-logo.png" alt="DFAB" width="66" height="28"><h1 id="pageTitle">Dashboard</h1></div></div>
+        <div class="top-actions compact-top-actions">
+          <div class="notification-center-wrap header-tool-wrap">
+            <button class="header-tool-btn notification-bell" id="notificationBellBtn" type="button" aria-label="Open notifications" aria-expanded="false">🔔<span id="notificationBellBadge" class="notification-badge hidden">0</span></button>
+            <section class="notification-panel hidden" id="notificationPanel" aria-label="Pending task notifications">
+              <div class="notification-panel-head"><div><span class="kicker">TASK ALERTS</span><h3>Notifications</h3></div><button class="icon-btn" id="closeNotificationPanel" type="button" aria-label="Close notifications">×</button></div>
+              <div id="notificationPanelContent" class="notification-panel-content"></div>
+            </section>
+          </div>
+<div class="profile-quick-wrap">
+            <button class="profile-quick-btn" id="profileQuickBtn" type="button" aria-label="Open profile" aria-expanded="false">
+              <span id="profileQuickInitial">R</span>
+              <i id="profileCloudDot" class="profile-cloud-dot connecting" aria-hidden="true"></i>
+            </button>
+            <section class="profile-quick-panel hidden" id="profileQuickPanel" aria-label="Profile details">
+              <div class="profile-quick-head">
+                <div class="profile-quick-avatar" id="profileQuickAvatar">R</div>
+                <div><strong id="profileQuickName">—</strong><small id="profileQuickRole">R&D MEMBER</small></div>
+              </div>
+              <div class="profile-quick-row"><span>Cloud</span><b id="profileQuickCloud">Connecting</b></div>
+              <button type="button" class="ghost-btn profile-settings-link" id="profileSettingsBtn">Open Settings</button>
+            </section>
+          </div>
+        </div>
+      </header>
+
+      <section class="page active" id="dashboardPage">
+        <div class="hero-strip dashboard-hero-strip">
+          <div class="dashboard-hero-copy">
+            <div><span class="signal"></span><span id="todayLabel">TODAY</span></div>
+            <h2>Every problem is a measurable opportunity.</h2>
+            <p>Capture ideas daily, shortlist exactly two weekly priorities, and turn execution into visible progress.</p>
+          </div>
+          <button type="button" class="hero-pending-btn" id="dashboardPendingBtn" aria-label="Open my pending tasks">
+            <span>MY PENDING</span>
+            <b id="dashboardPendingCount">0</b>
+          </button>
+        </div>
+        <div class="metric-grid" id="dashboardMetrics"></div>
+        <div class="dashboard-grid">
+          <section class="panel wide"><div class="panel-head dashboard-idea-head"><div><span class="kicker">TODAY</span><h3>Idea Activity</h3></div><div id="dashboardCelebrationSlot" class="dashboard-celebration-slot"></div><button class="ghost-btn" data-go="ideas">Open register →</button></div><div id="todayActivity"></div></section>
+          <section class="panel"><div class="panel-head"><div><span class="kicker">CURRENT</span><h3>Weekly Focus</h3></div></div><div id="weeklyFocus"></div></section>
+        </div>
+      </section>
+
+      <section class="page" id="ideasPage">
+        <div class="section-toolbar"><div><span class="kicker">IDEA INPUT</span><h2>Kaizen &amp; Innovation Ideas</h2><p>Capture improvement Kaizen and innovation ideas in one register.</p></div><button class="primary-btn" id="newIdeaBtn">+ NEW IDEA</button></div>
+        <div class="filter-line"><input spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaSearch" placeholder="Search problem, idea, department..." autocorrect="off" autocapitalize="off"><select id="ideaPersonFilter"><option value="">All people</option></select><select id="ideaDeptFilter"><option value="">All departments</option></select><div class="idea-date-filter" aria-label="Filter ideas by date"><input type="text" id="ideaDateFilterDisplay" value="" readonly aria-label="Selected date"><input type="date" id="ideaDateFilter" aria-label="Choose date" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></div><button class="ghost-btn" id="clearIdeaFilters">Clear</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Idea</th><th>Type</th><th>Person</th><th>Department</th><th>Problem</th><th>Proposed Solution</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead><tbody id="ideasTable"></tbody></table></div>
+      </section>
+
+      <section class="page" id="weeklyPage">
+        <div class="week-selector weekly-working-row weekly-working-row-primary">
+          <div class="working-week-field"><span>WORKING WEEK</span><select id="weekSelect" aria-label="Working week"></select></div>
+          <button class="secondary-btn weekly-create-btn" id="newWeekBtn" type="button">+ CREATE WEEK</button>
+        </div>
+        <div id="weeklySetup"></div>
+      </section>
+
+      <section class="page" id="progressPage">
+        <div class="section-toolbar work-toolbar"><div><span class="kicker">EXECUTION CONTROL</span><h2>Work Tracking</h2><p>Run the two weekly priorities from assignment to completion with one live execution view.</p></div><div class="work-toolbar-actions"><div class="work-period-nav" aria-label="Work tracking period"><label class="work-period-month"><span>MONTH</span><select id="workMonthSelect" aria-label="Work tracking month"></select></label><label class="work-period-week"><span>WEEK</span><select id="workWeekSelect" aria-label="Work tracking week"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></div><div class="work-toolbar-note"><span class="signal"></span><b>LIVE WORKSPACE</b><small>Firebase shared</small></div></div></div>
+        <div class="work-selected-projects" aria-label="Selected weekly projects"><div id="projectList" class="project-list work-project-grid"></div></div>
+        <div class="work-filter-bar">
+          <div class="work-search"><span>⌕</span><input id="workSearch" placeholder="Search project, owner or department" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></div>
+          <select id="workStatusFilter"><option value="">All work</option><option value="assigned">Assigned</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="blocked">With blocker</option></select>
+          <button class="ghost-btn" id="clearWorkFilters" type="button">Clear</button>
+        </div>
+        <div class="work-layout work-layout-single"><div id="projectDetail" class="project-detail work-detail empty-state">Select a weekly project to open its execution workspace.</div></div>
+      </section>
+
+      <section class="page" id="timeconsumePage"><div id="timeConsumeRoot"></div></section>
+
+      <section class="page" id="datasPage"><div id="rndDataRoot"></div></section>
+
+      <section class="page" id="chatPage">
+        <section class="team-chat-page-shell" aria-label="R&D team chat">
+          <div id="teamChatMessages" class="team-chat-messages team-chat-page-messages" role="log" aria-live="polite" aria-relevant="additions"><div class="team-chat-empty">No messages yet. Start the team discussion.</div></div>
+          <form id="teamChatForm" class="team-chat-composer team-chat-page-composer">
+            <div class="team-chat-me" id="teamChatIdentity"><span class="team-chat-mini-avatar">R</span><span>Signed in profile</span></div>
+            <div class="team-chat-compose-row"><textarea id="teamChatInput" maxlength="1000" rows="2" placeholder="Write a message to the team…" aria-label="Team chat message" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></textarea><button id="teamChatSend" class="team-chat-send" type="submit">Send</button></div>
+          </form>
+        </section>
+      </section>
+
+      <section class="page" id="kpiPage">
+        <div class="section-toolbar"><div><span class="kicker">PERFORMANCE CONTROL</span><h2>KPI Report</h2><p>Weekly member performance and shared R&amp;D team targets from the existing tracker data.</p></div></div>
+        <section class="panel kpi-filter-panel"><label><span>MEMBER</span><select id="kpiMemberSelect"></select></label><label><span>PERIOD</span><select id="kpiPeriodType"><option value="weekly" selected>Weekly</option><option value="monthly">Monthly</option></select></label><label><span>WEEK</span><select id="kpiWeekSelect"><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></section>
+        <div id="kpiReportContent"></div>
+      </section>
+
+      <section class="page" id="assignedPage">
+        <div class="section-toolbar"><div><span class="kicker">WORK ASSIGNMENTS</span><h2>Assigned Tasks</h2><p>View your assigned work, completion status and Lead rating in one place.</p></div></div>
+        <div id="rndAssignedTasksPage"></div>
+      </section>
+
+      <section class="page" id="settingsPage">
+        <div class="section-toolbar"><div><span class="kicker">MASTER DATA</span><h2>Settings</h2><p>Manage departments, active member/visitor logins, database backup and your current session.</p></div></div>
+        <div class="settings-master-row">
+          <section class="panel settings-dept-panel"><div class="settings-card-head"><div><span class="kicker">DEPARTMENT MASTER</span><h3>Departments</h3></div><span class="settings-lock">EDITABLE</span></div><p class="muted">Add, rename or remove departments. Departments already used in history can be renamed but not deleted.</p><div id="departmentsSettings"></div></section>
+          <section class="panel settings-members-panel"><div class="settings-card-head"><div><span class="kicker">ACCESS MASTER</span><h3>Members & Visitors</h3></div><span class="settings-lock">EDITABLE LOGINS</span></div><p class="muted">Add, rename, change access or delete active logins. Duplicate names are blocked.</p><p id="visitorNotice" class="visitor-notice hidden">Admin mode: this login can manage Settings and master data, but is excluded from Daily Ideas and normal member work submissions.</p><div id="membersSettings"></div></section>
+        </div>
+        <div class="settings-secondary-row">
+          <section class="panel settings-backup-panel"><span class="kicker">LONG-TERM STORAGE</span><h3>Database & Backup</h3><p class="muted">Firestore is the shared source of truth. IndexedDB keeps an offline cache on this device.</p><div id="databaseStats" class="database-stats"></div><div class="session-user"><span>Storage mode</span><strong id="storageStatus">Checking…</strong></div><div class="db-actions"><button class="ghost-btn" id="requestStorageBtn" type="button">Protect browser storage</button><button class="secondary-btn" id="exportDbBtn" type="button">Export backup</button><label class="import-btn">Import backup<input type="file" id="importDbInput" accept="application/json,.json" hidden autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><p class="storage-note">Pending-task reminders use your weekly project assignments and show today plus yesterday when the site opens.</p></section>
+          <section class="panel session-panel"><span class="kicker">SESSION</span><h3>Login</h3><p class="muted">This device remembers this login until you explicitly log out.</p><div class="session-user"><span>Signed in as</span><div class="session-user-value"><strong id="settingsSignedInName">—</strong><span id="settingsSignedInRole" class="tag member">R&D MEMBER</span></div></div><button type="button" class="secondary-btn dfab-help-button" data-dfab-help>Help · Report an issue</button><button class="danger-btn" id="logoutBtn" type="button">Log out</button></section>
+        </div>
+      </section>
+    </main>
+  </div>
+  <dialog id="pendingTaskDialog" class="modal pending-task-dialog"><div class="pending-task-panel"><div class="modal-head"><div><span class="kicker">DAILY ATTENTION</span><h2>Pending Tasks</h2><p>Your pending ideas and task updates. Select an item to open it.</p></div><div class="pending-total"><span>PENDING</span><strong id="pendingTaskTotal">0</strong></div></div><div id="pendingTaskContent" class="pending-task-content"></div><div class="modal-actions pending-actions"><button class="secondary-btn" id="pendingNotificationBtn" type="button">Enable Chrome Notifications</button><button class="primary-btn" type="button" data-close="pendingTaskDialog">Got it</button></div></div></dialog>
+<<<<<<< HEAD
+  <dialog id="ideaDialog" class="modal idea-entry-dialog" aria-labelledby="ideaDialogTitle" aria-describedby="ideaDialogDescription"><form method="dialog" id="ideaForm"><div class="modal-head idea-entry-head"><div class="idea-entry-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M8.2 14.7a6 6 0 1 1 7.6 0c-.8.6-1.3 1.4-1.3 2.3h-5c0-.9-.5-1.7-1.3-2.3Z"/><path d="M12 1V0M3 5 1.5 4M21 5l1.5-1"/></svg></div><div class="idea-entry-heading"><span class="kicker">DAILY IDEAS · R&amp;D</span><h2 id="ideaDialogTitle">Submit Daily Idea</h2><p id="ideaDialogDescription">Turn an observation into your next improvement.</p></div><button type="button" class="icon-btn" data-close="ideaDialog" aria-label="Close daily idea form">×</button></div><div class="form-grid idea-entry-grid"><label><span class="idea-field-label">Submitted By <em>Required</em></span><select id="ideaMember" required></select></label><label><span class="idea-field-label">Department <em>Required</em></span><select id="ideaDepartment" required></select></label><label><span class="idea-field-label">Idea Type <em>Required</em></span><select id="ideaType" required><option value="kaizen">Kaizen</option><option value="innovation">Innovation Idea</option></select></label><label class="full idea-writing-field"><span class="idea-field-label">Problem / Observation <em>Required</em></span><textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProblem" placeholder="What problem did you notice? Describe where it happens and its impact." required maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label class="full idea-writing-field"><span class="idea-field-label">Idea / Proposed Solution <em>Required</em></span><textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProposal" placeholder="Describe your improvement and how it would solve the problem." required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label><span class="idea-field-label">Expected Benefit</span><select id="ideaBenefit"><option value="">Select benefit</option><option>Time Saving</option><option>Cost Saving</option><option>Quality Improvement</option><option>Safety</option><option>Productivity</option><option>Automation</option><option>Process Improvement</option><option>Other</option></select></label><label><span class="idea-field-label">Priority</span><select id="ideaPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label><label><span class="idea-field-label">Date <em>Required</em></span><input type="date" id="ideaDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label class="idea-attachment-field" hidden aria-hidden="true"><span class="idea-field-label">Attachment <em>Optional</em></span><small>Up to 8 MB · images auto-compressed</small><input type="file" id="ideaAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><div class="modal-actions idea-entry-actions"><button type="button" class="ghost-btn" data-close="ideaDialog">Cancel</button><button type="submit" class="primary-btn" value="default">Submit Idea</button></div></form></dialog>
+=======
+  <dialog id="ideaDialog" class="modal idea-entry-dialog" aria-labelledby="ideaDialogTitle" aria-describedby="ideaDialogDescription"><form method="dialog" id="ideaForm"><div class="modal-head idea-entry-head"><div class="idea-entry-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M8.2 14.7a6 6 0 1 1 7.6 0c-.8.6-1.3 1.4-1.3 2.3h-5c0-.9-.5-1.7-1.3-2.3Z"/><path d="M12 1V0M3 5 1.5 4M21 5l1.5-1"/></svg></div><div class="idea-entry-heading"><span class="kicker">DAILY IDEAS · R&amp;D</span><h2 id="ideaDialogTitle">Submit Daily Idea</h2><p id="ideaDialogDescription">Turn an observation into your next improvement.</p></div><button type="button" class="icon-btn" data-close="ideaDialog" aria-label="Close daily idea form">×</button></div><div class="form-grid idea-entry-grid"><label><span class="idea-field-label">Submitted By <em>Required</em></span><select id="ideaMember" required></select></label><label><span class="idea-field-label">Department <em>Required</em></span><select id="ideaDepartment" required></select></label><label class="full idea-writing-field"><span class="idea-field-label">Problem / Observation <em>Required</em></span><textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProblem" placeholder="What problem did you notice? Describe where it happens and its impact." required maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label class="full idea-writing-field"><span class="idea-field-label">Idea / Proposed Solution <em>Required</em></span><textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="ideaProposal" placeholder="Describe your improvement and how it would solve the problem." required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label><span class="idea-field-label">Expected Benefit</span><select id="ideaBenefit"><option value="">Select benefit</option><option>Time Saving</option><option>Cost Saving</option><option>Quality Improvement</option><option>Safety</option><option>Productivity</option><option>Automation</option><option>Process Improvement</option><option>Other</option></select></label><label><span class="idea-field-label">Priority</span><select id="ideaPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label><label><span class="idea-field-label">Date <em>Required</em></span><input type="date" id="ideaDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label class="idea-attachment-field" hidden aria-hidden="true"><span class="idea-field-label">Attachment <em>Optional</em></span><small>Up to 8 MB · images auto-compressed</small><input type="file" id="ideaAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label></div><div class="modal-actions idea-entry-actions"><button type="button" class="ghost-btn" data-close="ideaDialog">Cancel</button><button type="submit" class="primary-btn" value="default">Submit Idea</button></div></form></dialog>
+>>>>>>> origin/main
+
+  <dialog id="weekDialog" class="modal week-period-modal"><form method="dialog" id="weekForm"><div class="modal-head"><div><span class="kicker">NEW PERIOD</span><h2 id="weekDialogTitle">Create Working Week</h2></div><button type="button" class="icon-btn" data-close="weekDialog">×</button></div><div class="week-period-builder"><section class="month-picker-card" aria-label="Select working month"><div class="month-picker-year"><button type="button" class="month-year-nav" id="weekPrevYear" aria-label="Previous year">‹</button><strong id="weekYearLabel">2026</strong><button type="button" class="month-year-nav" id="weekNextYear" aria-label="Next year">›</button></div><div class="month-grid" id="weekMonthGrid"></div></section><div class="week-selection-row"><label>Selected Month<input id="weekMonthDisplay" type="text" readonly required></label><label>Week<select id="weekNumber" required><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select></label></div><div class="week-date-row"><label>Start Date<input type="date" id="weekStart" required readonly></label><label>End Date<input type="date" id="weekEnd" required readonly></label></div></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="weekDialog">Cancel</button><button class="primary-btn">Create Week</button></div></form></dialog>
+
+  <dialog id="progressDialog" class="modal"><form method="dialog" id="progressForm"><div class="modal-head"><div><span class="kicker">DAILY UPDATE</span><h2 id="progressDialogTitle">Update Project</h2></div><button type="button" class="icon-btn" data-close="progressDialog">×</button></div><div class="form-grid"><label>Updated By<select id="progressMember" required></select></label><label>Date<input type="date" id="progressDate" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Overall Completion %<input type="number" min="0" max="100" id="progressPercent" required autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label>Attachment<input type="file" id="progressAttachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" autocorrect="off" autocapitalize="off" spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false"></label><label class="full">Today's Work<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressWork" required maxlength="1600" autocorrect="off" autocapitalize="off"></textarea></label><label class="full">Remarks<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressRemarks" maxlength="1200" autocorrect="off" autocapitalize="off"></textarea></label><label>Blocker<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressBlocker" maxlength="800" autocorrect="off" autocapitalize="off"></textarea></label><label>Next Action<textarea spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" id="progressNext" maxlength="800" autocorrect="off" autocapitalize="off"></textarea></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="progressDialog">Cancel</button><button class="primary-btn">Save Progress</button></div></form></dialog>
+
+
+  <dialog id="projectEditDialog" class="modal small"><form method="dialog" id="projectEditForm"><input type="hidden" id="projectEditId"><div class="modal-head"><div><span class="kicker">PROJECT</span><h2>Edit Weekly Project</h2></div><button type="button" class="icon-btn" data-close="projectEditDialog">×</button></div><div class="form-grid one"><label>Project Title<input id="projectEditTitle" maxlength="140" required spellcheck="false" data-gramm="false" data-gramm_editor="false" data-enable-grammarly="false" autocorrect="off"></label><label>Owner<select id="projectEditOwner" required></select></label><label>Task Priority<select id="projectEditPriority"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></label><label>Start Date<input type="date" id="projectEditStart" required></label><label>End Date<input type="date" id="projectEditEnd" required></label></div><div class="modal-actions"><button type="button" class="ghost-btn" data-close="projectEditDialog">Cancel</button><button class="primary-btn">Save Project</button></div></form></dialog>
+
+  <button id="sidebarReopenBtn" class="sidebar-reopen-btn" type="button" aria-label="Open navigation">›</button>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/12.19.0/firebase-storage-compat.js"></script>
+  <script defer src="firebase-config.js?v=215.0.0"></script>
+<<<<<<< HEAD
+  <script defer src="firebase-cloud.js?v=267.0.0"></script>
+=======
+  <script defer src="firebase-cloud.js?v=263.0.0"></script>
+>>>>>>> origin/main
+  <script defer src="department-ux.js?v=251.0.0"></script>
+  <script defer src="department-timesheet-policy.js?v=252.0.0"></script>
+  <script defer src="kpi-auto-data.js?v=1.0.0"></script>
+  <script defer src="kpi-excel.js?v=267.0.0"></script>
+  <script defer src="push-notifications.js?v=215.0.0"></script>
+<script defer src="backup-tools.js?v=263.0.0"></script>
+<script defer src="department-shared-ui.js?v=255.0.0"></script>
+<script defer src="quality-login.js?v=231.0.1"></script>
+<script defer src="quality-time.js?v=254.0.0"></script>
+<script defer src="quality-ideas.js?v=252.0.0"></script>
+<script defer src="quality-daily.js?v=251.0.0"></script>
+<<<<<<< HEAD
+<script defer src="quality-review.js?v=273.0.0"></script>
+<script defer src="quality.js?v=255.0.0"></script>
+  <script defer src="production.js?v=205.0.0"></script>
+  <script defer src="support-help.js?v=263.0.0"></script>
+  <script defer src="kpi-weekly-report.js?v=274.0.0"></script>
+  <script defer src="department-workspace.js?v=273.0.0"></script>
+  <script defer src="assigned-tasks.js?v=246.0.0"></script>
+  <script defer src="member-password-import.js?v=245.0.0"></script>
+  <script defer src="leader-center.js?v=273.0.0"></script>
+  <script defer src="app.js?v=268.0.0"></script>
+=======
+<script defer src="quality-review.js?v=254.0.0"></script>
+<script defer src="quality.js?v=255.0.0"></script>
+  <script defer src="production.js?v=205.0.0"></script>
+  <script defer src="support-help.js?v=263.0.0"></script>
+  <script defer src="department-workspace.js?v=265.0.0"></script>
+  <script defer src="assigned-tasks.js?v=246.0.0"></script>
+  <script defer src="member-password-import.js?v=245.0.0"></script>
+  <script defer src="leader-center.js?v=264.0.0"></script>
+  <script defer src="app.js?v=262.0.0"></script>
+>>>>>>> origin/main
+  <script defer src="kpi-chat.js?v=129.0.0"></script>
+  <script defer src="kpi-pdf.js?v=129.0.0"></script>
+  <script defer src="responsive.js?v=129.0.0"></script>
+<script defer src="time-consume.js?v=218.0.0"></script>
+
+
+
+
+
+
+
+
+  <script src="layout-fit.js?v=216.0.0"></script>
+</body>
+</html>

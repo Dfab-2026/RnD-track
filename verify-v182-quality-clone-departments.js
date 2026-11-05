@@ -1,0 +1,20 @@
+const fs=require('fs');
+const dep=fs.readFileSync('department-workspace.js','utf8');
+const css=fs.readFileSync('department-workspace.css','utf8');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8');
+function ok(v,m){if(!v)throw new Error('FAIL: '+m);console.log('PASS',m)}
+const depts=['production','npd','rfq','outsourcing','purchase','stores','hradmin','accounts','finance','maintenance','digitalmarketing'];
+depts.forEach(d=>ok(dep.includes(`${d}:`),`department config ${d}`));
+ok(dep.includes("const PAGES={dashboard:'Dashboard',kaizen:'Kaizen Ideas',weekly:'Weekly Report',kpi:'KPI Report',settings:'Settings'}"),'Quality-reference page model');
+ok(dep.includes('quality-shell')&&dep.includes('q-sidebar')&&dep.includes('q-main'),'Quality shell/sidebar reused');
+ok(dep.includes('qd-four-metrics')&&dep.includes('qd-task-analytics'),'Quality dashboard cards and graph reused');
+ok(dep.includes('Problem / observation')&&dep.includes('Proposed Kaizen')&&dep.includes('Expected benefit'),'Quality-style Kaizen flow');
+ok(dep.includes('TIME SHEET SUMMARY')&&dep.includes('WEEKLY KPI STATUS'),'weekly report with Time Sheet summary');
+ok(dep.includes('kpi101-grid')&&dep.includes('kpi101-card'),'R&D/Quality KPI card system');
+ok(dep.includes('qt-inline-form')&&dep.includes('Saved records')&&dep.includes('Others'),'Quality single-row Time Sheet and Others');
+ok(dep.includes('Download PDF')&&dep.includes('rndKpiPdf'),'KPI PDF download');
+ok(dep.includes('notification-bell')&&dep.includes('pendingItems')&&dep.includes('hourlyReminder'),'notifications and hourly reminder');
+ok(cloud.includes("put('x',String(r.task_type")&&cloud.includes("put('c',String(r.custom_task")&&cloud.includes("put('b',String(r.benefit"),'Firebase compact schema preserves new Quality-reference fields');
+ok(cloud.includes('department_${k}_record')&&cloud.includes('source:\'server\''),'department-isolated Firebase with server verification');
+ok(css.includes('#departmentWorkspace .qd-dashboard')&&css.includes('#departmentWorkspace .qt-inline-form')&&css.includes('#departmentWorkspace .kpi101-grid'),'Quality component CSS mirrored to generic departments');
+console.log('v182 verification complete');

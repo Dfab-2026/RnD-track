@@ -1,0 +1,16 @@
+const fs=require('fs');
+const assert=require('assert');
+const q=fs.readFileSync('quality.js','utf8');
+const d=fs.readFileSync('department-workspace.js','utf8');
+const qc=fs.readFileSync('quality.css','utf8');
+const dc=fs.readFileSync('department-workspace.css','utf8');
+const rc=fs.readFileSync('responsive.css','utf8');
+assert(q.includes("classList.toggle('q-kaizen-page',page==='ideas')"),'Quality must expose Kaizen page state');
+assert(d.includes("classList.toggle('q-dashboard-page',page==='dashboard')"),'Shared departments must expose dashboard state');
+assert(d.includes("classList.toggle('q-kaizen-page',page==='kaizen')"),'Shared departments must expose Kaizen state');
+assert(qc.includes('#qualityWorkspace.q-dashboard-page .q-scroll')&&qc.includes('overflow:hidden'),'Quality dashboard must contain outer scroll on desktop');
+assert(qc.includes('#qualityWorkspace.q-kaizen-page #qiRegister .table-wrap')&&qc.includes('overflow:auto'),'Quality Kaizen table must retain internal scrolling');
+assert(dc.includes('#departmentWorkspace.q-kaizen-page #dKaizenRegister .table-wrap'),'Shared Kaizen table must retain internal scrolling');
+assert(rc.includes('#appShell .main>#ideasPage.active')&&rc.includes('#ideasPage .table-wrap{flex:1 1 auto'),'R&D Ideas must fit desktop viewport with internal table scrolling');
+assert(rc.includes('@media(max-width:980px)')&&rc.includes('#appShell .main>#dashboardPage.active,#appShell .main>#weeklyPage.active,#appShell .main>#ideasPage.active{height:auto!important'),'Mobile/tablet must keep natural scrolling');
+console.log('v210 dashboard/kaizen scroll containment verification passed');

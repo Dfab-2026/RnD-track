@@ -1,0 +1,24 @@
+DFAB KPI / Work Tracker — v248 Production Layout Completion Pass
+
+Baseline: v247 dashboard production pass.
+
+Scope intentionally limited to presentation/layout hardening:
+- Prevent R&D, Quality and shared-department dashboards from clipping card content.
+- Dashboard analytics panels can grow and the page scrolls when needed.
+- Standardize page/card padding and responsive spacing.
+- Keep dashboard chart bottoms and labels visible.
+- Remove presentation-only truncation from project and weekly idea cards so operational content remains visible.
+- Preserve all Firebase, role, password, KPI, Kaizen, Weekly Report, Time Sheet, Assigned Task, backup and member-management business logic.
+
+Runtime changes:
+- index.html: production-polish cache reference only.
+- production-polish.css: v248 layout overrides only.
+
+Verification:
+- verify.js PASS
+- verify-v247.js PASS
+- verify-responsive.js PASS
+- verify-desktop-layout.js PASS
+- verify-v248.js PASS
+- JS syntax checks PASS
+- verify-v246.js has an expected cache-version assertion failure because it explicitly requires production-polish.css?v=246.0.0.

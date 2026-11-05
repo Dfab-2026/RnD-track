@@ -1,0 +1,19 @@
+DFAB KPI Tracker v211
+
+Scope: only requested Time Sheet and R&D Weekly summary updates on top of v210.
+
+Changes:
+1. Stores Time Sheet task dropdown now includes:
+   Incoming Inspection, ERP ENTRY, Stock order, stock access, Internal communication,
+   Kaizen, 5S, No Work, Training, Meeting, Documentation, Leave, and Others.
+2. R&D, Quality, and shared-department Time Sheet From/To controls now use a 12-hour
+   AM/PM selector starting at 9:00 AM. Stored values remain HH:MM for existing Firebase
+   calculations and overlap checks.
+3. Others manual task entry is enabled/focused correctly and shared-department form
+   rerendering no longer wipes the active Time Sheet form while the user is typing.
+4. R&D Weekly Tasks page now includes the same Time Sheet Summary / Weekly KPI Status
+   report tabs and card layout used by other department Weekly Reports, below the existing
+   R&D weekly-assignment flow.
+
+Unchanged: all other UI, navigation, Firebase collections, PO flow, backup behavior,
+Admin tools, KPI pages, logins, sidebars, Kaizen, dashboards, and department task lists.

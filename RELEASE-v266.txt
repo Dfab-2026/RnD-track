@@ -1,0 +1,26 @@
+DFAB KPI Tracker v266
+Baseline: v265 (locked)
+
+Scoped changes only:
+- Department and Quality KPI Kaizen target/count based on eligible department members, excluding Kabil from target/member counts.
+- Kaizen KPI card shows per-member submitted/missing counts.
+- Department dashboard Kaizen metric uses the same eligible-member team logic.
+- R&D ideas add Kaizen / Innovation Idea type; type persists to Firebase and is shown in the saved register. Legacy R&D ideas read as Kaizen for compatibility. Only Kaizen type contributes to Kaizen KPI; all idea types remain in the idea register and regular idea reporting.
+- R&D KPI shows team Kaizen target/count and missing-member detail while retaining normal R&D idea and assignment reporting.
+- Hourly Time Sheet reminder/pending popup runs at most once per user + department + hour during working hours and shows MY PENDING / TEAM PENDING. R&D uses the same cadence.
+- Kabil remains a lead/access user but is excluded from KPI/team submission target denominators.
+- R&D visual layout aligned with the shared department workspace style (sidebar, header, cards, forms, tables, responsive layout) without changing the R&D data model.
+
+Preserved:
+- Existing Firebase collections/schema except additive R&D idea_type field.
+- Existing department KPI definitions and manual KPI save fields.
+- Existing Timesheet, Weekly Report, Assigned Tasks, ratings, backup, password/login and Admin flows.
+
+Verification:
+- node verify.js: PASS
+- node verify-v266.js: PASS
+- JS syntax: PASS for modified runtime JS files
+- 13 shared department KPI configurations present; R&D uses dedicated KPI module.
+- Legacy verify-all-department-kpis.js still expects old label RFQ; current product correctly uses Sales.
+
+Live production Firebase writes were not performed during verification.

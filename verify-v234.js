@@ -1,0 +1,13 @@
+const fs=require('fs'),assert=require('assert');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8'),app=fs.readFileSync('app.js','utf8');
+assert(cloud.includes('async function loadRndMembers()'),'R&D server member loader missing');
+assert(cloud.includes("get({source:'server'})"),'server-only credential read missing');
+assert(cloud.includes('async function saveRndMemberVerified(row)'),'verified R&D member save missing');
+assert(cloud.includes("'R&D member verify'"),'R&D member server verification missing');
+assert(cloud.includes('savedCredential.data()')&&cloud.includes("String(credential.h||'')!==String(row.password_hash)")&&cloud.includes("String(credential.s||'')!==String(row.password_salt)"),'R&D password must be confirmed from Firebase');
+assert(cloud.includes("withWriteRetry(()=>memberRef.get({source:'server'}),'R&D member verify')"),'R&D member details must be read back from Firebase');
+assert(cloud.includes("String(confirmed.password_hash)!==String(payload.h||'')")&&cloud.includes("String(confirmed.password_salt)!==String(payload.s||'')"),'Department password must be confirmed from Firebase');
+assert(app.includes('await window.rndCloud.saveRndMemberVerified(row)'),'Manage Members must await verified Firebase save');
+assert(app.includes("await window.rndCloud.loadRndMembers()"),'R&D login must reload latest Firebase credentials');
+assert(app.includes('await window.rndPassword.verify(password,result.member)'),'R&D password verification missing');
+console.log('PASS v234: R&D member/password saves are server-confirmed and R&D login verifies against latest Firebase credentials.');

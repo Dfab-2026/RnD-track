@@ -1,0 +1,8 @@
+﻿{
+    "MemberId":  1,
+    "MemberName":  "Kabil",
+    "DeviceId":  "DFAB-PC22",
+    "IdleThresholdSeconds":  300,
+    "PollSeconds":  10,
+    "LocalPort":  8765
+}

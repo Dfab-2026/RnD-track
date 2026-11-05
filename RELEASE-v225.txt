@@ -1,0 +1,9 @@
+v225 — R&D Datas Time Sheet Summary only
+
+Changed only R&D -> Datas:
+- Reconstructed it to match the other departments' Weekly Report Time Sheet Summary UI.
+- Keeps TIME SHEET SOURCE / Weekly Task Summary / logged-hours badge / two-column task cards.
+- Removed R&D Datas KPI summary, monthly task summary, and top overview metric cards from this page only.
+- Open Time Sheet remains available.
+
+No other project flow, Firebase path, role, dashboard, KPI page, Weekly Report, notification, backup, or Time Sheet entry logic changed.

@@ -1,0 +1,6 @@
+/* v273: Report print actions only; no changes to KPI editing, Settings, or other workspaces. */
+.kref-report-buttons{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px}
+.kref-report-buttons button{white-space:nowrap}
+.kref-report-action{justify-content:flex-end;gap:10px}
+#leaderKpiPrint,#leaderKpiA4{white-space:nowrap}
+@media (max-width:650px){.kref-report-buttons{width:100%;justify-content:stretch}.kref-report-buttons button{flex:1 1 auto}.kref-report-action{display:flex;flex-wrap:wrap;justify-content:stretch}.kref-report-action button{flex:1 1 130px}}

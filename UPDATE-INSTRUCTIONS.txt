@@ -1,0 +1,15 @@
+R&D TRACK V11 UPDATE
+====================
+
+Use the PATCH ZIP on your existing project.
+Replace only the files included in the patch.
+
+DO NOT replace or delete firebase-config.js.
+It contains your existing Firebase web configuration and remains permanent across updates.
+
+After replacing files:
+  git add .
+  git commit -m "Reconstruct R&D tracker UI and add editable records"
+  git push
+
+Vercel will redeploy automatically if the repository is connected.
