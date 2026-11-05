@@ -535,6 +535,7 @@
     if(!confirmed.exists)throw new Error('Firebase did not confirm the saved R&D Time Sheet record.');
     lastError=null;ready=true;return decodeRndTime(confirmed);
   }
+<<<<<<< HEAD
   async function deleteRndTime(id){
     const store=await productionDatabase();if(!id||String(id).includes('/'))throw new Error('Invalid R&D Time Sheet record id.');
     const ref=store.collection('app_meta').doc(rndTimeId(id));await withWriteRetry(()=>ref.delete(),'R&D Time Sheet delete');await flushPendingWrites();
@@ -544,6 +545,8 @@
     let unsubs=[],timer=null,last='';const emit=()=>{clearTimeout(timer);timer=setTimeout(()=>{const snap=makeSnapshot(),sig=JSON.stringify([snap.members||[],snap.departments||[],snap.ideas||[],snap.projects||[]]);if(sig===last)return;last=sig;onRows?.(snap,{connected:true})},30)};
     const start=async()=>{try{if(!ready)await init(true);for(const name of ['members','departments','ideas','projects'])unsubs.push(db.collection(name).onSnapshot({includeMetadataChanges:true},qs=>{if(qs.metadata?.fromCache&&!qs.metadata?.hasPendingWrites)return;remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));ready=true;lastError=null;emit()},err=>{lastError=err;onError?.(err)}))}catch(err){onError?.(err)}};start();return()=>{clearTimeout(timer);unsubs.forEach(fn=>{try{fn()}catch{}});unsubs=[]};
   }
+=======
+>>>>>>> origin/main
   async function loadRndTimeOnce(){
     const store=await productionDatabase();
     const snap=await store.collection('app_meta').where('kind','==',rndTimeKind).get({source:'server'});
@@ -555,5 +558,9 @@
     return q.onSnapshot({includeMetadataChanges:true},snap=>{const connected=!snap.metadata?.fromCache;if(connected){lastError=null;ready=true}onRows(snap.docs.map(decodeRndTime).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.from).localeCompare(String(b.from))),{connected,fromCache:!connected,hasPendingWrites:Boolean(snap.metadata?.hasPendingWrites)})},err=>{lastError=err;onError?.(err)});
   }
 
+<<<<<<< HEAD
   window.rndCloud={loadRndTimeOnce,deleteRndTime,watchRndWorkspace,deleteQualityTimeEntry,watchAssignedTasks,loadAssignedTasks,deleteAssignedTask,rateAssignedTask,updateAssignedTaskStatus,saveAssignedTask,watchRndTime,saveRndTime,watchDepartmentMembers,deleteDepartmentMember,saveDepartmentMember,loadDepartmentMembers,loadRndMembers,saveRndMemberVerified,loadReportDataOnce,deleteMonthData,markBackupDeleted,loadBackupHistory,saveBackupHistory,loadMonthBackup,loadQualityRecordsOnce,loadDepartmentRecordsOnce,deleteDepartmentRecord,watchDepartmentRecords,saveDepartmentRecord,deleteQualityRecord,saveQualityTime,watchQualityTime,saveProduction,watchProduction,watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+=======
+  window.rndCloud={loadRndTimeOnce,deleteQualityTimeEntry,watchAssignedTasks,loadAssignedTasks,deleteAssignedTask,rateAssignedTask,updateAssignedTaskStatus,saveAssignedTask,watchRndTime,saveRndTime,watchDepartmentMembers,deleteDepartmentMember,saveDepartmentMember,loadDepartmentMembers,loadRndMembers,saveRndMemberVerified,loadReportDataOnce,deleteMonthData,markBackupDeleted,loadBackupHistory,saveBackupHistory,loadMonthBackup,loadQualityRecordsOnce,loadDepartmentRecordsOnce,deleteDepartmentRecord,watchDepartmentRecords,saveDepartmentRecord,deleteQualityRecord,saveQualityTime,watchQualityTime,saveProduction,watchProduction,watchReportData,saveReportEntry,toggleChatReaction,configured,init,loadSnapshot,syncSnapshot,upsert,writeMany,deleteMany,watch,reconnect,flushPendingWrites,test,status,sendChatMessage,deleteChatMessage,watchChat,stopChat,createExcelSheet,updateExcelSheet,deleteExcelSheet,saveExcelWorkbookMeta,loadExcelGrid,saveExcelGridRow,watchExcelWorkbook,stopExcelWorkbook,get enabled(){return ready}};
+>>>>>>> origin/main
 })();
