@@ -1,0 +1,6 @@
+DFAB KPI v285 — mobile/tablet layout-only update (baseline v284)
+Changes: index.html now loads the previously unlinked responsive.css; new mobile-optimization-v285.css adds scoped responsive rules for R&D, Quality, other departments, admin tools, time sheet forms and dialog containment; responsive.js URL version updated for cache busting only.
+No JavaScript application/business logic or Firebase files changed. No data changed.
+Verified: 36 root JS syntax checks; v285 layout structure; mobile nav VM checks at seven viewports; v278 admin/Kaizen; v282 R&D; v284 Time Sheet & pending.
+Not verified: live device/browser interaction or live Firebase. Headless Chromium smoke could not finish in this runtime.
+Pre-existing historical assertion failure: verify-v283-timesheet-persistence.js expects old date restrictions, conflicting with requested v284 history dates.

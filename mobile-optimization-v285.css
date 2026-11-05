@@ -1,0 +1,77 @@
+/* v285 responsive presentation only. No application state, persistence or navigation logic. */
+@media (max-width: 980px) {
+  html, body { max-width:100%; overflow-x:clip; }
+  #appShell, #appShell .main, #qualityWorkspace, #departmentWorkspace,
+  #leaderCenter, #assignedTaskAdminCenter { min-width:0; max-width:100%; }
+  #appShell .panel, #qualityWorkspace .panel, #departmentWorkspace .panel,
+  #leaderCenter .leader-summary-card, #leaderCenter .leader-chart { min-width:0; }
+  /* Sidebars stay available through their existing open/close controls. */
+  #qualityWorkspace .q-sidebar, #qualityWorkspace.q-collapsed .q-sidebar {
+    position:fixed!important; inset:0 auto 0 0!important;
+    width:min(280px,85vw)!important; max-width:85vw!important;
+    height:100dvh!important; overflow-y:auto!important;
+    transform:translateX(-105%)!important;
+    z-index:1202!important;
+  }
+  #qualityWorkspace .q-sidebar.open, #qualityWorkspace.q-collapsed .q-sidebar.open { transform:translateX(0)!important; }
+  #qualityWorkspace .q-main { min-width:0; width:100%; }
+  #qualityWorkspace .q-scroll { min-width:0; overscroll-behavior-y:contain; }
+  #departmentWorkspace .dw-shell { grid-template-columns:minmax(0,1fr)!important; }
+  #departmentWorkspace .dw-content { min-width:0; }
+  #departmentWorkspace .dw-top { min-width:0; gap:10px; }
+  #departmentWorkspace .dw-top h1 { overflow-wrap:anywhere; }
+  #departmentWorkspace :is(.dw-kaizen-form,.dw-time-row,.dw-settings,.dw-kpi-filter) > * { min-width:0; }
+  #departmentWorkspace .dw-time-row { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+  #departmentWorkspace .dw-time-row button { grid-column:auto!important; }
+  #departmentWorkspace .dw-summary-grid, #departmentWorkspace .dw-weekly-summary,
+  #departmentWorkspace .dw-kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #leaderCenter .leader-center-head, #assignedTaskAdminCenter .leader-center-head { flex-wrap:wrap; }
+  #leaderCenter .leader-center-body, #assignedTaskAdminCenter .leader-center-body { min-width:0; }
+  #leaderCenter :is(.leader-filter,.leader-time-filter) > *,
+  #assignedTaskAdminCenter :is(.leader-filter,.leader-time-filter) > * { min-width:0; }
+  #leaderCenter .leader-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #leaderCenter .leader-chart-grid { grid-template-columns:minmax(0,1fr); }
+  :is(#qualityWorkspace,#departmentWorkspace,#leaderCenter,#assignedTaskAdminCenter) :is(input,textarea,select) { max-width:100%; box-sizing:border-box; }
+  :is(#qualityWorkspace,#departmentWorkspace,#leaderCenter,#assignedTaskAdminCenter) :is(button,a,[role="button"]) { touch-action:manipulation; }
+  :is(#qualityWorkspace,#departmentWorkspace,#leaderCenter,#assignedTaskAdminCenter) :is(button,a,input,select,textarea):focus-visible { outline:2px solid #397bd2; outline-offset:2px; }
+  :is(#qualityWorkspace,#departmentWorkspace,#leaderCenter,#assignedTaskAdminCenter) :is(.modal,dialog,[role="dialog"]) { max-width:calc(100vw - 20px); max-height:calc(100dvh - 20px); overflow-y:auto; }
+}
+@media (max-width: 600px) {
+  #appShell .page { min-width:0; }
+  #qualityWorkspace .q-scroll { padding:12px!important; }
+  #qualityWorkspace .topbar, #departmentWorkspace .dw-top { padding:10px 12px!important; }
+  #departmentWorkspace .dw-content { padding:12px!important; }
+  #departmentWorkspace .dw-top h1 { font-size:clamp(16px,5vw,21px); line-height:1.25; }
+  #departmentWorkspace .dw-metrics { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+  #departmentWorkspace .dw-metrics button { min-width:0; padding:12px!important; }
+  #departmentWorkspace .dw-metrics b { font-size:21px; }
+  #departmentWorkspace .dw-weekly-summary, #departmentWorkspace .dw-summary-grid,
+  #departmentWorkspace .dw-kpi-grid, #departmentWorkspace .dw-settings,
+  #departmentWorkspace .dw-kaizen-form { grid-template-columns:minmax(0,1fr)!important; }
+  #departmentWorkspace .dw-time-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important; gap:9px; }
+  #departmentWorkspace .dw-time-row :is(input,select,textarea) { width:100%; min-width:0; }
+  #departmentWorkspace .dw-record-list article { flex-wrap:wrap; align-items:flex-start; }
+  #departmentWorkspace .dw-record-list article .panel-actions { max-width:100%; flex-wrap:wrap; }
+  #departmentWorkspace .dw-bars>div { grid-template-columns:minmax(70px,1fr) minmax(0,2fr) 38px; gap:7px; }
+  #leaderCenter .leader-center-body,#assignedTaskAdminCenter .leader-center-body { padding:12px 12px max(22px,env(safe-area-inset-bottom)); }
+  #leaderCenter .leader-center-head,#assignedTaskAdminCenter .leader-center-head { padding:12px; }
+  #leaderCenter .leader-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:9px; }
+  #leaderCenter .leader-filter label { flex:1 1 145px; }
+  #leaderCenter .leader-filter :is(select,input) { width:100%; }
+  #leaderCenter .leader-report-row { grid-template-columns:minmax(0,1fr)!important; }
+  #leaderCenter .leader-bar-row { grid-template-columns:minmax(70px,.8fr) minmax(0,1.4fr) 44px; gap:6px; }
+  :is(#qualityWorkspace,#departmentWorkspace,#leaderCenter,#assignedTaskAdminCenter) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) { font-size:16px!important; }
+  :is(#qualityWorkspace,#departmentWorkspace,#leaderCenter,#assignedTaskAdminCenter) :is(button,[role="button"]) { min-height:36px; }
+  /* Override old 960px register minimum; retain the existing card layout without sideways scrolling. */
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap { overflow-x:hidden!important; }
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table { width:100%!important;min-width:0!important;max-width:100%!important; }
+  /* Preserve every cell: Kaizen registers already render as stacked cards at narrow widths. */
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td::before { flex-basis:90px; }
+}
+@media (max-width: 380px) {
+  #departmentWorkspace .dw-time-row { grid-template-columns:minmax(0,1fr)!important; }
+  #leaderCenter .leader-summary-grid { grid-template-columns:minmax(0,1fr)!important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #qualityWorkspace .q-sidebar { transition:none!important; }
+}
