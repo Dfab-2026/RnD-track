@@ -1,0 +1,6 @@
+DFAB KPI v279 — scoped Firebase and profile indicator fix.
+
+R&D: Firestore stream now updates connection state on metadata-only events, distinguishing server-backed reads from cached data. Queued writes are retained and reported as pending rather than reporting the entire connection offline.
+Other department profiles: reuse the existing green .profile-cloud-dot.live class when server-backed data is available.
+No database records, migrations, rules, or unrelated screens changed.
+Live authentication, Firestore rules and production network must still be validated in the deployed app.

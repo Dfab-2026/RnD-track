@@ -1,0 +1,42 @@
+DFAB KPI — CLEAN DEPLOYMENT PACKAGE (v276)
+
+SOURCE: The existing v275 project. Application, department logic, Firebase config,
+Firestore rules, and working UI are unchanged in this cleanup.
+
+CHANGED PACKAGE STRUCTURE:
+- Exactly ONE active root website: index.html, app.js, firebase-cloud.js,
+  firebase-config.js, admin-navigation-v275.css, and existing assets.
+- Removed the duplicate v227_work/ tree FROM THIS CLEAN ZIP ONLY.
+- A separate DFAB_KPI_v227_LEGACY_BACKUP.zip preserves that old tree.
+- This README and check-deployment.js were added for deployment verification.
+
+IMPORTANT: Extract the CONTENTS of this ZIP directly into your existing Git
+working directory (where .git and index.html are). Do NOT extract into a nested
+KPI R&D folder. Back up your working folder before replacing anything.
+
+Then from PowerShell in the Git repository:
+  git status --short
+  node check-deployment.js
+  git add -A
+  git diff --cached --stat
+  git diff --cached --name-status
+
+Check the diff before committing. Since the old duplicate tree was already
+committed, remove it EXPLICITLY after verifying backup is safely stored:
+  git rm -r -- v227_work
+  git commit -m "Clean duplicate deploy folder; keep v275 app"
+  git push origin main
+
+If you need the historic v227_work copy, it is in the separate backup ZIP.
+This will not delete any remote Firebase data. Do not use force-push.
+
+Vercel project should point at the existing GitHub repo, production branch main,
+Root Directory './', framework 'Other', and default output directory.
+Verify that the production deployment references the NEW commit.
+
+Firebase reminder: Vercel cannot deploy firestore.rules. Run this ONLY after
+reviewing the rules and checking the Firebase project ID:
+  firebase deploy --only firestore:rules --project dfab-rnd-track
+Live Firebase credentials, authentication, deployed rules, and network access
+cannot be verified from a ZIP. Do not claim a successful live connection
+until reading and writing a test record succeeds on the deployed site.

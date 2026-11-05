@@ -1,0 +1,12 @@
+DFAB KPI v281 - scoped R&D Firebase and Time Sheet repair
+
+Changes: firebase-cloud.js, department-workspace.js, time-consume.js.
+- R&D listener confirmation no longer waits for all six collections to be server-verified.
+- R&D profile connection status is not overwritten by cache-only event from a different listener.
+- R&D Time Sheet Save attempts actual verified Firestore writes even when separate subscription is syncing.
+- R&D Time Sheet defaults: From 09:00; To 18:00, editable.
+- R&D clock auto-chooses afternoon when end hour would otherwise precede start, with manual AM/PM toggle available.
+- Upon confirmed write, show record immediately rather than waiting for subscription update.
+
+Do not deploy firestore.rules without reviewing environment-specific rules.
+No live production Firebase access was available for verification.

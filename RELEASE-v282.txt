@@ -1,0 +1,5 @@
+DFAB KPI v282 — R&D live Firebase wiring only
+
+R&D startup now attaches realtime listeners without waiting for all legacy collections. The R&D department dashboard subscribes independently to workspace, Time Sheet and KPI records. Firebase connection indicators are based on server-backed responses, not queued writes. Existing data and all other departments are preserved.
+
+A live Firebase deletion is NOT performed by this package. Export and verify an R&D-only backup before intentionally deleting production records. Existing database paths and all non-R&D department records are untouched.

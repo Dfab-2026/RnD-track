@@ -1,0 +1,8 @@
+v280 R&D Firebase-only rebuild
+- Server-first R&D listener, matching department subscription model.
+- Connection is not blocked by pending write queues or initial migrations.
+- Green profile dot reflects confirmed Firebase connectivity; pending unsaved writes remain labelled.
+- No startup deletion of historical member records.
+- All other departments, routes, admin cards, Kaizen layout and stored Firebase data unchanged.
+Offline QA: node verify-v280-rnd-firebase.js; node verify-v278-scoped.js; node check-deployment.js.
+Live authentication, Firebase rules and server write permissions require production verification.

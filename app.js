@@ -284,7 +284,14 @@ function flushPendingCloudOps(){
         if(ops.length){await window.rndCloud.writeMany(ops);removePendingCloudOps(ops)}
       }
       setCloudRuntimeStatus('live');return true;
-    }catch(e){setCloudRuntimeStatus('offline',e?.message||String(e));return false}
+    }catch(e){
+      // A failed queued write is not evidence that Firestore reads are offline.
+      // Preserve the queue, report the write failure, and allow live snapshots to continue.
+      const connected=Boolean(window.rndCloud?.status?.().connected);
+      setCloudRuntimeStatus(connected?'syncing':'offline',
+        `Firebase ${connected?'connected':'unavailable'} · R&D changes pending sync: ${e?.message||String(e)}`);
+      return false;
+    }
   })().finally(()=>{cloudFlushPromise=null});
   return cloudFlushPromise;
 }
@@ -727,6 +734,18 @@ function selectDepartment(id,navigate=true){
   if(member){persistLogin(member);showApp()}else showLogin();
 }
 function restoreDepartmentRoute(){
+  // Admin cards are overlays, not R&D department pages. On browser Back,
+  // close the overlay and return to the department cards without a sidebar.
+  if(document.body.classList.contains('leader-center-active')){
+    window.leaderCenter?.closeFromHistory?.();
+    window.assignedTasks?.closeFromHistory?.();
+    document.body.classList.remove('leader-center-active');
+    document.getElementById('appShell')?.classList.add('app-locked');
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebarReopenBtn')?.classList.remove('show');
+    showDepartmentGate(false);
+    return;
+  }
   const route=history.state,id=route?.rndDepartmentRoute==='departments'?0:Number(route?.departmentId||localStorage.getItem('selectedDepartmentId'));
   const selected=activeDepartments().find(d=>Number(d.id)===id&&(isRndDepartment(d)||normalizeName(d.name)==='quality'||window.departmentWorkspace?.has?.(d.name)));
   if(selected){if(!route?.departmentHistoryReady){departmentHistory('departments',null,true);departmentHistory('workspace',selected.id)}else departmentHistory('workspace',selected.id,true);selectDepartment(selected.id,false)}
@@ -762,11 +781,12 @@ function setCloudRuntimeStatus(status,message=''){
   if(status==='offline')scheduleCloudReconnect();
   if(status==='live'){clearTimeout(cloudRetryTimer);cloudRetryTimer=null;cloudRetryAttempt=0;cloudRuntimeMessage='';}
   if(message) cloudRuntimeMessage=String(message);
+  else if(status==='connecting'||status==='syncing')cloudRuntimeMessage='';
   const dot=$('#profileCloudDot'),cloudText=$('#profileQuickCloud');
-  if(dot){dot.className='profile-cloud-dot '+status;dot.title=status==='live'?'Cloud online':status==='offline'?'Cloud offline':'Cloud connecting';}
-  if(cloudText){cloudText.textContent=status==='live'?'Online':status==='offline'?'Offline':'Connecting';cloudText.className=status==='live'?'cloud-good':status==='offline'?'cloud-warn':'';}
+  if(dot){dot.className='profile-cloud-dot '+(status==='syncing'&&window.rndCloud?.status?.().connected?'live':status==='syncing'?'connecting':status);dot.title=status==='live'?'Firebase connected':status==='offline'?'Firebase offline':status==='syncing'?'Firebase connected · R&D writes pending':'Connecting to Firebase';}
+  if(cloudText){cloudText.textContent=status==='live'?'Connected':status==='offline'?'Offline':status==='syncing'?'Connected · sync pending':'Connecting';cloudText.className=status==='live'||(status==='syncing'&&window.rndCloud?.status?.().connected)?'cloud-good':status==='offline'?'cloud-warn':'';}
   const cs=$('#cloudStatus');
-  if(cs){cs.textContent=status==='live'?'Connected · shared Firebase database':status==='offline'?(cloudRuntimeMessage||'Firebase offline · local cache active'):'Connecting to Firebase…';cs.className=status==='live'?'cloud-good':'cloud-warn';}
+  if(cs){cs.textContent=status==='live'?'Connected · shared Firebase database':status==='offline'?(cloudRuntimeMessage||'Firebase offline · local cache active'):status==='syncing'?(cloudRuntimeMessage||'Firebase connected · pending changes need synchronization'):'Connecting to Firebase…';cs.className=status==='live'||(status==='syncing'&&window.rndCloud?.status?.().connected)?'cloud-good':'cloud-warn';}
   const ce=$('#cloudErrorDetail');if(ce){ce.textContent=status==='offline'?(cloudRuntimeMessage||'No Firebase error detail available.'):' ';ce.classList.toggle('hidden',status!=='offline');}
   if(status==='live'&&currentMember())setTimeout(startTeamChat,0);else if(status==='offline')setTeamChatStatus('Chat offline · reconnecting…',false);
 }
@@ -785,7 +805,7 @@ function applyRemoteSnapshot(remote){
 async function applyRemoteSnapshotNow(remote){
   if(!remote)return;
   const signature=JSON.stringify(['members','departments','ideas','cycles','projects','progress'].map(k=>remote[k]||[]));
-  if(signature===lastRemoteSignature){setCloudRuntimeStatus('live');return}
+  if(signature===lastRemoteSignature){if(!pendingCloudOps().length&&!pendingCloudDeletes().length)setCloudRuntimeStatus('live');return}
   const local=await readSnapshot()||seedSnapshot();
   const reconciled=reconcileRemoteSnapshot(remote,local);
   await writeSnapshot(reconciled);
@@ -801,46 +821,62 @@ async function applyRemoteSnapshotNow(remote){
     }
     if(member)persistLogin(member);
   }
-  setCloudRuntimeStatus('live');
+  if(!pendingCloudOps().length&&!pendingCloudDeletes().length)setCloudRuntimeStatus('live');
   if(!$('#appShell').classList.contains('app-locked'))scheduleRender();
 }
+// R&D uses a server-first listener, the same connection model as other departments.
+// Historical migrations and queued edits must never block the live subscription.
 async function bootCloud(){
-  if(cloudBooted||cloudBootInFlight||!window.rndCloud)return;cloudBooted=true;cloudBootInFlight=true;
+  if(cloudBooted||cloudBootInFlight||!window.rndCloud)return;
+  cloudBooted=true;cloudBootInFlight=true;
   try{
     setCloudRuntimeStatus('connecting');
     const result=await window.rndCloud.init();
-    if(!result.enabled){setCloudRuntimeStatus('offline',result.reason||'Firebase is not configured.');return;}
-    const remote=await window.rndCloud.loadSnapshot();
-    const remoteMemberIds=(remote?.members||[]).map(m=>Number(m.id)).filter(Number.isFinite);
-    const local=await readSnapshot()||seedSnapshot();
-    const remoteHadData=!cloudIsEmpty(remote);
-    const merged=remoteHadData?reconcileRemoteSnapshot(remote,local):migrateSnapshot(local);
-    await writeSnapshot(merged);
-    const ui={page:state.page,selectedProject:state.selectedProject,reportType:state.reportType};
-    Object.assign(state,enrich(merged),ui);
-    // Initial migration only when the shared database is empty. Normal edits use
-    // targeted writes, which greatly reduces Firestore write quota usage.
-    if(!remoteHadData) await window.rndCloud.syncSnapshot(rawSnapshot());
-    // One-time login repair: consolidate duplicate names, remap historical references,
-    // then remove obsolete duplicate member documents from Firestore.
-    const canonicalIds=new Set(state.members.map(m=>Number(m.id)));
-    const obsoleteMemberIds=remoteMemberIds.filter(id=>!canonicalIds.has(id));
-    if(obsoleteMemberIds.length){
-      await window.rndCloud.syncSnapshot(rawSnapshot());
-      await window.rndCloud.deleteMany?.('members',obsoleteMemberIds);
-    }
-    const flushed=await flushPendingCloudOps();
-    if(!flushed)throw new Error(cloudRuntimeMessage||'Cloud changes are waiting to sync.');
-    setCloudRuntimeStatus('live');
+    if(!result.enabled){cloudBooted=false;setCloudRuntimeStatus('offline',result.reason||'Firebase is not configured.');return;}
+    // Establish the live stream immediately. A failed legacy collection read or an
+    // unrelated queued write must not prevent the R&D dashboard connecting.
     if(!cloudWatching){
       cloudWatching=true;
-      window.rndCloud.watch(applyRemoteSnapshot,status=>{setCloudRuntimeStatus(status?.connected?'live':'offline',status?.message||status?.error?.message||'');if(status?.connected)void flushPendingCloudOps()});
+      window.rndCloud.watch(
+        snapshot=>{void applyRemoteSnapshot(snapshot)},
+        status=>{
+          if(status?.error){
+            setCloudRuntimeStatus('offline',status.message||status.error.message||'Firebase listener failed');
+            return;
+          }
+          if(status?.connected){
+            // A verified Firestore server snapshot is sufficient for a green indicator.
+            // Pending local changes have their own warning, not a disconnected state.
+            setCloudRuntimeStatus('live');
+          }else if(window.rndCloud?.status?.().connected){
+            // A cache-only update must not downgrade an established server connection.
+            setCloudRuntimeStatus('live');
+          }else setCloudRuntimeStatus('connecting');
+        }
+      );
     }
+    setCloudRuntimeStatus('live');
     if(!$('#appShell').classList.contains('app-locked'))scheduleRender();
+    // Load legacy R&D collections as a non-blocking enhancement, not a prerequisite.
+    // Never automatically seed an apparently empty or inaccessible database: it can
+    // overwrite the user's intended fresh R&D workspace with old browser cache data.
+    void window.rndCloud.loadSnapshot().then(remote=>{
+      if(remote&&!cloudIsEmpty(remote))return applyRemoteSnapshot(remote);
+    }).catch(error=>{
+      console.error('R&D collection read failed; live listeners remain active',error);
+      cloudRuntimeMessage='R&D records could not be loaded: '+(error?.message||String(error));
+    });
+    if(pendingCloudOps().length||pendingCloudDeletes().length){
+      // Retry saved operations without blocking the dashboard. Failed writes retain
+      // their queue for later diagnosis; they must not change server read status.
+      void flushPendingCloudOps();
+    }
   }catch(e){
     cloudBooted=false;cloudWatching=false;
-    console.error('Firebase startup failed',e);
-    const code=String(e?.code||''); const detail=code.includes('permission-denied')?'Firebase permission denied. Deploy firestore.rules and verify Anonymous Authentication is enabled.':code.includes('auth/operation-not-allowed')?'Enable Anonymous Authentication in Firebase Console → Authentication → Sign-in method.':code.includes('auth/unauthorized-domain')?'Add this website domain to Firebase Authentication authorized domains.':code.includes('unavailable')?'Firebase network unavailable. Check network and Firestore service.':String(e?.message||e); setCloudRuntimeStatus('offline',`${code?code+': ':''}${detail}`);
+    console.error('R&D Firebase startup failed',e);
+    const code=String(e?.code||'');
+    const detail=code.includes('permission-denied')?'Firestore rules blocked R&D data access. Check Firestore rules and sign-in.':code.includes('auth/operation-not-allowed')?'Enable Anonymous Authentication in Firebase Console.':code.includes('auth/unauthorized-domain')?'Add your Vercel domain to Firebase authorized domains.':code.includes('unavailable')?'Firebase network unavailable. Check Firestore service and internet.':String(e?.message||e);
+    setCloudRuntimeStatus('offline',`${code?code+': ':''}${detail}`);
   }finally{cloudBootInFlight=false}
 }
 async function load(){

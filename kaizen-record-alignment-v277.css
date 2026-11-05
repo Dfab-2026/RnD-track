@@ -1,0 +1,88 @@
+/* v278: Scoped Kaizen register layout. No horizontal scrolling on any department. */
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap {
+  width:100%; min-width:0; max-width:100%; overflow-x:hidden!important;
+  overflow-y:auto; box-sizing:border-box;
+}
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table {
+  width:100%!important; max-width:100%!important; min-width:0!important;
+  table-layout:fixed!important; border-collapse:collapse;
+}
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap :is(th,td) {
+  min-width:0!important; max-width:none!important; box-sizing:border-box;
+  padding:10px 5px!important; font-size:clamp(9px,.78vw,12px);
+  vertical-align:top; overflow:hidden!important; overflow-wrap:normal!important;
+  word-break:normal!important;
+}
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap th {
+  white-space:nowrap!important; text-overflow:ellipsis;
+}
+/* Date, ID, type, name, department, priority, status and actions occupy stable widths.
+   Long descriptions alone wrap; the other fields remain on one line. */
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td {
+  white-space:nowrap!important; text-overflow:ellipsis!important;
+}
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(5),
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(4) {
+  white-space:normal!important; overflow-wrap:anywhere!important;
+  text-overflow:clip!important; line-height:1.45;
+}
+:is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td :is(button,.tag,.badge,[class*="status"],[class*="priority"]) {
+  white-space:nowrap!important; word-break:normal!important;
+  overflow-wrap:normal!important; max-width:100%;
+}
+/* Nine-column registers (Quality and most departments). */
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(1){width:6%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(2){width:15%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(3){width:10%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(4){width:9%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(5){width:17%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(6){width:20%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(7){width:7%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(8){width:9%}
+:is(#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table th:nth-child(9){width:7%}
+/* Ten-column R&D register, including the Type column. */
+#appShell #ideasPage .table-wrap th:nth-child(1),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(1){width:6%}
+#appShell #ideasPage .table-wrap th:nth-child(2),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(2){width:14%}
+#appShell #ideasPage .table-wrap th:nth-child(3),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(3){width:7%}
+#appShell #ideasPage .table-wrap th:nth-child(4),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(4){width:9%}
+#appShell #ideasPage .table-wrap th:nth-child(5),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(5){width:8%}
+#appShell #ideasPage .table-wrap th:nth-child(6),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(6){width:15%}
+#appShell #ideasPage .table-wrap th:nth-child(7),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(7){width:19%}
+#appShell #ideasPage .table-wrap th:nth-child(8),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(8){width:7%}
+#appShell #ideasPage .table-wrap th:nth-child(9),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(9){width:9%}
+#appShell #ideasPage .table-wrap th:nth-child(10),
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap th:nth-child(10){width:6%}
+/* R&D shared workspace also has a Type column. Override nine-column widths there. */
+#departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap table th:nth-child(n){min-width:0!important}
+/* Preserve all cells on small screens without sideways scrolling: stack one record per card. */
+@media(max-width:900px){
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap table,
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap tbody,
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap tr,
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td{display:block;width:100%!important}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap thead{display:none}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap tbody tr{margin:9px 0;border:1px solid #dde6ee;border-radius:12px;padding:7px;background:#fff}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td{padding:5px 8px!important;white-space:normal!important;overflow-wrap:anywhere!important;display:flex;gap:10px;align-items:flex-start}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td::before{content:"";flex:0 0 110px;font-weight:700;color:#567083}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-child(1)::before{content:"Date"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-child(2)::before{content:"Idea"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(7)::before{content:"Person"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(6)::before{content:"Department"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(5)::before{content:"Problem"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(4)::before{content:"Proposed Solution"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(3)::before{content:"Priority"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:nth-last-child(2)::before{content:"Status"}
+  :is(#appShell #ideasPage,#qualityWorkspace #qiRegister,#departmentWorkspace #dKaizenRegister) .table-wrap td:last-child::before{content:"Actions"}
+  #appShell #ideasPage .table-wrap td:nth-child(3)::before,
+  #departmentWorkspace #dKaizenRegister:has(th:nth-child(10)) .table-wrap td:nth-child(3)::before{content:"Type"}
+  :is(#appShell #ideasPage,#departmentWorkspace #dKaizenRegister:has(th:nth-child(10))) .table-wrap td:nth-last-child(7)::before{content:"Person"}
+}

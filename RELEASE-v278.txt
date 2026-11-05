@@ -1,0 +1,21 @@
+DFAB KPI v278 — Scoped Kaizen register layout revision
+
+Baseline: v277 scoped-fix ZIP.
+Changed application files:
+- kaizen-record-alignment-v277.css: eliminate horizontal scrolling on Kaizen tables;
+  compact table columns, keep Name / Priority / Status / Actions on one line;
+  wrap longer Problem / Proposed Solution text; small-screen rows become stacked cards.
+- index.html: cache-bump only the Kaizen stylesheet to v278.0.0.
+Added verification file: verify-v278-scoped.js.
+
+Four admin cards reviewed: KPI, Time Sheet, Analytics and Assigned Task entrypoints,
+plus navigation/back paths and task save/rate/delete handlers. Their application
+logic remains unmodified; full operational verification requires authenticated
+browser access to the production Firebase data and rules.
+
+Other department pages, Firebase configuration, database rules, and business
+logic were not modified.
+
+Validation: check-deployment.js PASS; verify-v278-scoped.js PASS;
+all JS files: syntax PASS. Legacy test suite contains extensive historical failures
+and is not a clean release gate. Do not interpret smoke checks as end-to-end proof.

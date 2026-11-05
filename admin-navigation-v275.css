@@ -7,3 +7,8 @@ body.leader-center-active #qualityWorkspace .q-reopen,
 body.leader-center-active #departmentWorkspace .q-sidebar,
 body.leader-center-active #departmentWorkspace .q-reopen { display:none!important;visibility:hidden!important;pointer-events:none!important; }
 body.leader-center-active .leader-center-shell {grid-template-columns:minmax(0,1fr)!important;width:100%;}
+
+/* Keep all four admin tools full-width regardless of stale sidebar state. */
+body.leader-center-active #appShell {visibility:hidden!important;pointer-events:none!important;}
+body.leader-center-active #leaderCenter:not(.hidden),
+body.leader-center-active #assignedTaskAdminCenter:not(.hidden) {position:fixed!important;inset:0!important;z-index:150!important;overflow:auto!important;}

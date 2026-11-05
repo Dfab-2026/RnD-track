@@ -1,0 +1,6 @@
+DFAB KPI v277 scoped fix
+- R&D Firebase: read-only snapshot remains available when an older migration or pending write fails; pending writes are retained.
+- Four admin tool cards: Chrome Back closes full-screen admin tool and returns to department cards, not R&D sidebar.
+- Kaizen register: stable one-line name/status/ID with horizontal table scroll; text fields wrap normally.
+- No other department business logic or Firebase records changed.
+Deploy Firestore rules separately if permissions remain denied. Browser verification with live Firebase credentials is still required.

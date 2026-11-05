@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const cloud=fs.readFileSync('firebase-cloud.js','utf8');
+const work=fs.readFileSync('department-workspace.js','utf8');
+const time=fs.readFileSync('time-consume.js','utf8');
+assert(cloud.includes("onStatus?.({connected:true,connecting:false,seen"),'R&D Firebase must report a confirmed server listener');
+assert(cloud.includes('verified.size>0'),'R&D workspace connection must be backed by a server snapshot');
+assert(work.includes('Object.values(connections).some(Boolean)'),'R&D workspace must not clobber connection from a separate listener');
+assert(time.includes('value="18:00" readonly required aria-label="To time"'),'R&D Time Sheet end default missing');
+assert(time.includes("value=to;$('rtcTo').value='18:00'"),'R&D Time Sheet next entry end default missing');
+assert(work.includes("deptKey==='rnd'?'18:00':''"),'Shared R&D Time Sheet end default missing');
+assert(time.includes("if(isEnd&&!periodTouched"),'R&D Time Sheet end clock AM/PM inference missing');
+assert(time.includes('const saved=await window.rndCloud.saveRndTime'),'R&D Time Sheet must use verified server save result');
+assert(time.includes('entries=[...entries.filter'),'R&D saved row must appear immediately after confirmed server response');
+assert(cloud.includes("confirmed=await withWriteRetry(()=>ref.get({source:'server'})"),'R&D write must verify server read');
+assert(!time.includes('if(!connected)return setStatus('),'R&D Time Sheet must not block saves on metadata-only listener status');
+console.log('PASS v281 R&D Firebase status, 09:00–18:00 defaults, editable afternoon clock, server-verified Time Sheet saves');

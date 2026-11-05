@@ -141,15 +141,19 @@
         if(matches.length===1){project.cycle_id=Number(matches[0].id);legacy.push({collection:'projects',row:project})}
       }
       // One-time in-place migration of older verbose documents to the compact schema.
-      if(legacy.length)await writeMany(legacy);
+      if(legacy.length){
+        // Legacy records can be decoded without rewriting them at login.
+        // Do not delay server reads, or mutate historical data on connection.
+        console.info('R&D Firebase: legacy records loaded without a blocking migration',legacy.length);
+      }
       lastError=null;return makeSnapshot();
-    }catch(e){lastError=e;ready=false;throw e}
+    }catch(e){lastError=e;throw e}
   }
   const rndAccessId=id=>`rnd_access_${String(id).replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,96)}`;
   const rndAccessPayload=row=>({kind:'rnd_access_member',m:String(row.id),h:String(row.password_hash||''),s:String(row.password_salt||''),u:Date.now()});
   async function writeMany(ops){
     if(!ready)await init(true);const rows=(ops||[]).filter(x=>COLLECTIONS.includes(x?.collection)&&x?.row?.id!==undefined&&x?.row?.id!==null);if(!rows.length)return true;
-    try{let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore batch write')};for(const op of rows){const ref=db.collection(op.collection).doc(String(op.row.id));const encoded=encode(op.collection,{...op.row,updated_at:op.row.updated_at||new Date().toISOString()});batch.set(ref,encoded);count++;if(op.collection==='members'&&op.row.password_hash&&op.row.password_salt){batch.set(db.collection('app_meta').doc(rndAccessId(op.row.id)),rndAccessPayload(op.row),{merge:true});count++}if(count>=398)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
+    try{let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore batch write')};for(const op of rows){const ref=db.collection(op.collection).doc(String(op.row.id));const encoded=encode(op.collection,{...op.row,updated_at:op.row.updated_at||new Date().toISOString()});batch.set(ref,encoded);count++;if(op.collection==='members'&&op.row.password_hash&&op.row.password_salt){batch.set(db.collection('app_meta').doc(rndAccessId(op.row.id)),rndAccessPayload(op.row),{merge:true});count++}if(count>=398)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;throw e}
   }
   async function syncSnapshot(snapshot){
     const ops=[];for(const name of COLLECTIONS){for(const row of Array.isArray(snapshot?.[name])?snapshot[name]:[])ops.push({collection:name,row})}await writeMany(ops);return snapshot;
@@ -191,31 +195,42 @@
   }
   async function deleteMany(collection,ids){
     if(!COLLECTIONS.includes(collection))return true;if(!ready)await init(true);const clean=[...new Set((ids||[]).map(String).filter(Boolean))];if(!clean.length)return true;
-    try{for(const id of clean)await archiveBeforeDelete(collection,id);let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore delete')};for(const id of clean){batch.delete(db.collection(collection).doc(id));count++;if(collection==='members'){batch.delete(db.collection('app_meta').doc(rndAccessId(id)));count++}if(count>=398)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;if(!isRetryable(e))ready=false;throw e}
+    try{for(const id of clean)await archiveBeforeDelete(collection,id);let batch=db.batch(),count=0;const flush=async()=>{if(!count)return;const committing=batch;batch=db.batch();count=0;await withWriteRetry(()=>committing.commit(),'Firestore delete')};for(const id of clean){batch.delete(db.collection(collection).doc(id));count++;if(collection==='members'){batch.delete(db.collection('app_meta').doc(rndAccessId(id)));count++}if(count>=398)await flush()}await flush();lastError=null;ready=true;return true}catch(e){lastError=e;throw e}
   }
   function clearWatchers(){unsubscribers.forEach(fn=>{try{fn()}catch{}});unsubscribers=[]}
+  // Listen directly to the six R&D collections, like shared department records.
+  // Cached snapshots are usable immediately; only server snapshots confirm online.
   function watch(onChange,onStatus){
     if(!ready||typeof onChange!=='function')return()=>{};
-    clearWatchers();let seen=0,emitTimer=null,lastSig='';
+    clearWatchers();let emitTimer=null,lastSig='',serverConfirmed=false;const received=new Set();
     const emit=()=>{
       clearTimeout(emitTimer);
       emitTimer=setTimeout(()=>{
+        // Do not replace the R&D local snapshot with an incomplete first read.
+        if(received.size<COLLECTIONS.length)return;
         const snapshot=makeSnapshot();
         const sig=JSON.stringify(COLLECTIONS.map(k=>snapshot[k]||[]));
         if(sig===lastSig)return;
-        lastSig=sig;seen++;ready=true;lastError=null;
-        if(typeof onStatus==='function')onStatus({connected:true,seen});
+        lastSig=sig;
         onChange(snapshot);
       },35);
     };
     COLLECTIONS.forEach(name=>{
-      const unsub=db.collection(name).onSnapshot(qs=>{
-        if(qs.metadata?.fromCache&&!qs.metadata?.hasPendingWrites)return;
+      const unsub=db.collection(name).onSnapshot({includeMetadataChanges:true},qs=>{
+        // Keep the live state after ANY verified server response. Firestore may
+        // subsequently deliver metadata-only events from its local cache.
+        if(!qs.metadata?.fromCache){
+          serverConfirmed=true;ready=true;lastError=null;
+          onStatus?.({connected:true,connecting:false,message:'Live Firebase server'});
+        }else if(!serverConfirmed){
+          onStatus?.({connected:false,connecting:true,fromCache:true,message:'Waiting for R&D Firebase server'});
+        }
         remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));
-        emit();
+        received.add(name);emit();
       },err=>{
-        lastError=err;ready=false;console.error('Firebase live listener',name,err);
-        if(typeof onStatus==='function')onStatus({connected:false,error:err,message:errText(err)});
+        lastError=err;console.error('R&D Firebase live listener',name,err);
+        // A listener error must be visible, even if another collection is live.
+        onStatus?.({connected:serverConfirmed,error:err,collection:name,message:errText(err)});
       });
       unsubscribers.push(unsub);
     });
@@ -541,8 +556,20 @@
     const back=await withWriteRetry(()=>ref.get({source:'server'}),'R&D Time Sheet delete verify');if(back.exists)throw new Error('Firebase did not confirm R&D Time Sheet deletion.');return true;
   }
   function watchRndWorkspace(onRows,onError){
-    let unsubs=[],timer=null,last='';const emit=()=>{clearTimeout(timer);timer=setTimeout(()=>{const snap=makeSnapshot(),sig=JSON.stringify([snap.members||[],snap.departments||[],snap.ideas||[],snap.projects||[]]);if(sig===last)return;last=sig;onRows?.(snap,{connected:true})},30)};
-    const start=async()=>{try{if(!ready)await init(true);for(const name of ['members','departments','ideas','projects'])unsubs.push(db.collection(name).onSnapshot({includeMetadataChanges:true},qs=>{if(qs.metadata?.fromCache&&!qs.metadata?.hasPendingWrites)return;remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));ready=true;lastError=null;emit()},err=>{lastError=err;onError?.(err)}))}catch(err){onError?.(err)}};start();return()=>{clearTimeout(timer);unsubs.forEach(fn=>{try{fn()}catch{}});unsubs=[]};
+    let unsubs=[],timer=null,stopped=false,last='';const verified=new Set();
+    const emit=()=>{clearTimeout(timer);timer=setTimeout(()=>{if(stopped)return;const snap=makeSnapshot(),connected=verified.size>0;
+      const sig=JSON.stringify([snap.members||[],snap.departments||[],snap.ideas||[],snap.projects||[],connected]);
+      if(sig===last)return;last=sig;onRows?.(snap,{connected,fromCache:!connected})},30)};
+    const start=async()=>{try{if(!ready)await init(true);if(stopped)return;
+      for(const name of ['members','departments','ideas','projects']){
+        const unsub=db.collection(name).onSnapshot({includeMetadataChanges:true},qs=>{
+          if(stopped)return;if(!qs.metadata?.fromCache){verified.add(name);ready=true;lastError=null}
+          remoteCache[name]=qs.docs.map(d=>decode(name,d.data()||{},d.id));emit();
+        },err=>{if(stopped)return;verified.delete(name);lastError=err;onError?.(err);emit()});
+        unsubs.push(unsub);
+      }
+    }catch(err){if(!stopped)onError?.(err)}};void start();
+    return()=>{stopped=true;clearTimeout(timer);unsubs.forEach(fn=>{try{fn()}catch{}});unsubs=[]};
   }
   async function loadRndTimeOnce(){
     const store=await productionDatabase();

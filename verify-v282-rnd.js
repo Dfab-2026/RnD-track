@@ -1,0 +1,14 @@
+const fs=require('node:fs');const assert=require('node:assert/strict');
+const a=fs.readFileSync('app.js','utf8'),f=fs.readFileSync('firebase-cloud.js','utf8'),w=fs.readFileSync('department-workspace.js','utf8');
+const boot=a.slice(a.indexOf('async function bootCloud(){'),a.indexOf('\nasync function load(){'));
+const firstWatch=boot.indexOf('window.rndCloud.watch(');
+const firstLoad=boot.indexOf('window.rndCloud.loadSnapshot()');
+assert(firstWatch>=0&&firstLoad>firstWatch,'R&D must subscribe before loading legacy collections');
+assert(!boot.includes('syncSnapshot(rawSnapshot())'),'R&D must not automatically seed cached records into an empty server');
+assert(f.includes('const received=new Set()')&&f.includes('if(received.size<COLLECTIONS.length)return'),'First R&D snapshot cannot be incomplete');
+const rnd=w.slice(w.indexOf("    if(deptKey==='rnd'){",w.indexOf('  async function connect(){')),w.indexOf("    if(deptKey==='quality'){",w.indexOf('  async function connect(){')));
+assert(rnd.includes('watchRndWorkspace')&&rnd.includes('watchRndTime')&&rnd.includes("watchDepartmentRecords('rnd'"),'R&D all 3 listeners wired');
+assert(!rnd.includes('await window.rndCloud.loadSnapshot()'),'R&D subscriptions must not wait on six historical collections');
+assert(f.includes("const rndTimeKind='rnd_time_entry'")&&f.includes('R&D Time Sheet verify'),'R&D Time Sheet persistence retained');
+assert(f.includes('saveDepartmentRecord')&&f.includes('watchDepartmentRecords'),'Shared database functions retained');
+console.log('PASS: R&D server-first listeners, complete snapshots, Time Sheet persistence and shared department APIs');
