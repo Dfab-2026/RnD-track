@@ -1,0 +1,17 @@
+DFAB KPI v289 — R&D Kaizen/Innovation page scoped fix
+
+CAUSE: R&D department page wrote its ideas through the legacy Firestore 'ideas' collection, while working departments wrote through the authenticated 'app_meta' department record flow. The production 'ideas' rules may reject the legacy write.
+
+CHANGED FILES:
+- department-workspace.js: R&D ideas now use the shared server-verified app_meta flow; live list and Kaizen KPI count include these records. Existing legacy ideas remain readable. Legacy edit creates an app_meta replacement with the same logical ID without modifying the old document. New submissions do not modify the old collection.
+- firebase-cloud.js: compact department-record codec now preserves idea_type=kaizen|innovation.
+- index.html: cache versions bumped ONLY for the two changed scripts.
+- verify-v289-rnd-kaizen.js: R&D-only checks.
+
+IMPORTANT: This solution stores NEW R&D submissions in app_meta, the same collection used for the other department forms. The R&D Kaizen/Innovation page displays them as one idea list, with Kaizen records counted for Kaizen KPI. Legacy 'ideas' records are not deleted. Other legacy consumers that exclusively query Firestore 'ideas' will not automatically receive the new app_meta documents.
+
+Only R&D Kaizen/Innovation flow is modified. This does not change Firestore rules or other departments.
+
+VERIFICATION: JS syntax passed, v289 targeted tests passed, v288 scoped tests passed, deployment assets passed, zip integrity tested. Live authenticated Firebase submit/reload has NOT been run.
+
+DEPLOY: Back up project, replace corresponding files, run node verify-v289-rnd-kaizen.js and node check-deployment.js, review git diff, commit and push to main. No Firebase rules change is required if the working departments' app_meta access is already permitted.

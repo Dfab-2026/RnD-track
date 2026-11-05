@@ -1,0 +1,16 @@
+/* v288: scoped touch scrolling and loading feedback; no workflow changes. */
+#leaderCenter,#assignedTaskAdminCenter,.leader-center {overflow-y:auto!important;touch-action:pan-y!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+#leaderCenter .leader-center-shell,#leaderCenter .leader-center-body,#assignedTaskAdminCenter .leader-center-shell,#assignedTaskAdminCenter .leader-center-body {touch-action:pan-y!important;min-height:0}
+#leaderCenter .leader-day-summary,#leaderCenter .leader-day-entry,#leaderCenter .leader-day-detail,#leaderCenter .leader-report-list,#leaderCenter .leader-report-row {touch-action:pan-y!important}
+#leaderCenter .leader-day-summary {overflow-y:visible;overflow-x:visible}
+#leaderCenter .leader-day-detail {overflow-x:auto;-webkit-overflow-scrolling:touch}
+.leader-loading{min-height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#4b6582;font-weight:650;background:#fff;border:1px solid #e4ebf3;border-radius:14px}
+.leader-loading-spinner{display:block;width:33px;height:33px;border-radius:50%;border:3px solid #d6e7fa;border-top-color:#2476d4;animation:leader-loading-spin .8s linear infinite}
+@keyframes leader-loading-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.leader-loading-spinner{animation:none;border-top-color:#2476d4}}
+/* Do not hide or suppress Firebase errors: rejected writes must remain visible. */
+#loginPassword[type=password]{-webkit-text-security:disc}
+#loginPassword.password-visible[type=text]{-webkit-text-security:none}
+
+#dLoginForm input[name=password][type=password]{-webkit-text-security:disc}
+#dLoginForm input[name=password].password-visible[type=text]{-webkit-text-security:none}

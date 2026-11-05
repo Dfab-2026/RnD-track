@@ -48,7 +48,7 @@
   }
   function qualityOwnPendingItems(){const data=qualityPendingSummary();return [...data.reviews,...data.mine]}
   function showQualityPendingPopup(hourKey){
-    if(localStorage.getItem(hourKey))return false;
+    if(localStorage.getItem(hourKey)||adminView()||window.adminSession?.active?.())return false;
     const items=qualityOwnPendingItems(),existing=document.getElementById('qPendingDialog');if(!items.length||existing?.open||document.querySelector('dialog[open]'))return false;
     let dialog=document.getElementById('qPendingDialog');if(!dialog){dialog=document.createElement('dialog');dialog.id='qPendingDialog';dialog.className='modal pending-task-dialog';document.body.append(dialog)}
     dialog.innerHTML=`<div class="pending-task-panel"><div class="modal-head"><div><span class="kicker">DAILY ATTENTION</span><h2>Pending Tasks</h2><p>Your pending Quality work. Select an item to open it.</p></div><div class="pending-total"><span>PENDING</span><strong>${items.length}</strong></div></div><div class="pending-task-content"><section class="pending-day single"><div class="pending-day-head"><div><span>MY PENDING WORK</span><strong>${esc(person())}</strong></div><b>${items.length}</b></div>${items.map(r=>`<button type="button" class="pending-task-item pending-popup-link" data-q-popup="${esc(r.kind||'report')}"><div><strong>${esc(qualityNoticeLabel(r))}</strong><h4>${esc(qualityNoticeTitle(r))}</h4><p>${esc(r.kind==='report'?'KPI remarks/review is due today.':r.status==='in_progress'?'Work is still in progress.':'Pending item needs attention.')}</p></div><span class="pending-status">${r.kind==='report'?'REVIEW':String(r.status||'pending').replace('_',' ').toUpperCase()}</span></button>`).join('')}</section></div><div class="modal-actions pending-actions"><button class="secondary-btn" id="qPendingNotify" type="button">Enable Chrome Notifications</button><button class="primary-btn" id="qPendingClose" type="button">Got it</button></div></div>`;
@@ -58,7 +58,7 @@
   }
   function maybeShowQualityPendingPopup(){
     const member=person();if(!ready||adminView()||!member)return;
-    const hourKey=`pending-popup:quality:${clean(member)}:${today()}:${new Date().getHours()}`;
+    const now=new Date();if(now.getDay()===0||now.getHours()<9||now.getHours()>17||now.getMinutes()!==0)return;const hourKey=`pending-popup:quality:${clean(member)}:${today()}:${now.getHours()}`;
     if(localStorage.getItem(hourKey)||pendingPopupScheduledKey===hourKey||!qualityOwnPendingItems().length)return;
     pendingPopupScheduledKey=hourKey;
     setTimeout(()=>{if(person()===member&&ready)showQualityPendingPopup(hourKey);pendingPopupScheduledKey=''},450);
@@ -69,7 +69,7 @@
   function qualityHourlyTimesheetReminder(){
     window.monthBackup?.remind?.({key:'quality',label:'Quality',mode:'quality',eligible:!adminView()&&qualityRole()==='Quality Lead',openSettings:()=>dailyContext().navigate('settings')});
     if(adminView())return;
-    const now=new Date(),member=person();if(!member||!root||root.hidden||now.getDay()===0||now.getHours()<9||now.getHours()>17)return;
+    const now=new Date(),member=person();if(!member||!root||root.hidden||now.getDay()===0||now.getHours()<9||now.getHours()>17||now.getMinutes()!==0)return;
     const reminderKey=`timesheet-hourly:quality:${clean(member)}:${today()}:${now.getHours()}`;if(localStorage.getItem(reminderKey))return;
     const message='Please update your Time Sheet for the work completed during the past hour.';
     if(typeof notificationsEnabled==='function'&&notificationsEnabled()&&typeof notifyUser==='function')notifyUser('Quality · Time Sheet Reminder',message);

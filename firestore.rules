@@ -5,7 +5,7 @@ service cloud.firestore {
 
     // Main collections only accept the compact fields used by the app.
     function validMember() { return request.resource.data.keys().hasOnly(['n','r','a','o','c','u']); }
-    function validIdea() { return request.resource.data.keys().hasOnly(['n','s','d','p','i','b','q','t','x','y','f','c','u']); }
+    function validIdea() { return request.resource.data.keys().hasOnly(['n','s','d','p','i','b','q','t','x','y','f','c','u']) && (!('y' in request.resource.data) || request.resource.data.y in ['kaizen','innovation']); }
     function validCycle() { return request.resource.data.keys().hasOnly(['l','s','e','x','c','u']); }
     function validProject() { return request.resource.data.keys().hasOnly(['c','i','n','t','o','s','e','p','x','g','z','l','u']); }
     function validProgress() { return request.resource.data.keys().hasOnly(['p','m','d','w','r','b','n','v','f','c','u']); }

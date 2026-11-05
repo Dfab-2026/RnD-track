@@ -1,0 +1,1 @@
+v286 scoped: Kaizen/Innovation Firestore rules, admin Time Sheet overall selection and alignment, hourly reminders for staff only, popup scrolling, default end 18:00. Firebase rules must be deployed separately. Live Firebase verification not performed.

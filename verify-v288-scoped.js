@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const read=name=>fs.readFileSync(__dirname+'/'+name,'utf8');
+const app=read('app.js'),firebase=read('firebase-cloud.js'),html=read('index.html'),css=read('v288-scoped.css'),leader=read('leader-center.js'),department=read('department-workspace.js');
+assert(app.includes('await window.rndCloud.saveIdeaVerified(row)'),'R&D idea should await verified write');
+const create=app.slice(app.indexOf('async function createIdeaLocal'),app.indexOf('async function createCycleLocal'));
+assert(create.indexOf('await window.rndCloud.saveIdeaVerified(row)')<create.indexOf('state.ideas.unshift('),'No phantom local idea before save');
+assert(firebase.includes('saved.data()?.y!==row.idea_type'),'Verify saved Kaizen type on server');
+assert(firebase.includes('window.rndCloud={saveIdeaVerified'),'Expose server-verified save');
+assert(html.includes('autocomplete="current-password"') && html.includes('id="loginPassword" type="password"'),'Chrome login autofill');
+assert(department.includes('id="dLoginForm" autocomplete="on"')&&department.includes('autocomplete="current-password"'),'Department login autofill');
+assert(css.includes('touch-action:pan-y') && css.includes('-webkit-overflow-scrolling:touch'),'Touch scrolling');
+assert(leader.includes('leader-loading-spinner'),'Admin loading indicator');
+assert(app.includes('renderPendingTaskPopup(`pending-popup:open:${Date.now()}`)'),'Open-time pending reminder');
+console.log('PASS v288 scoped structural verification');

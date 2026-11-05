@@ -1,0 +1,1 @@
+v288: R&D Firebase verified idea writes (no phantom Kaizen rows), browser login autofill, admin person-wise touch scrolling, admin loading animation, pending popup on each app open (only when tasks exist). Live Firebase rules must be deployed separately. Other departments locked.

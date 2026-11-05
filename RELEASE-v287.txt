@@ -1,0 +1,7 @@
+v287 — SCOPED CORRECTIONS
+- Firestore ideas use a single collection and y=kaizen|innovation. A permissions error requires deploying firestore.rules in Firebase; Git/Vercel deployments do NOT publish Firestore rules. This ZIP does not and cannot update live Firebase rules.
+- Admin Time Sheet displays one 8-hour-target row per date and person; expand details for each task. All person/date/department filters and CSV export retained.
+- R&D pending popup no longer opens when count is zero and rechecks admin session after timer. Quality pending popup restricted to hourly 09:00–17:00 reminders.
+- No live Firebase records changed or deleted.
+Required: firebase deploy --only firestore:rules --project dfab-rnd-track
+Before deploying rules, review changes and confirm correct Firebase project ID. After deployment, verify Kaizen save with actual authenticated user.

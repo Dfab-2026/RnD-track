@@ -1,0 +1,22 @@
+/* v287: scoped to admin person-wise Time Sheet and pending dialogs. */
+.leader-day-summary{display:grid;gap:10px;padding:12px 16px 20px}
+.leader-day-entry{min-width:0;border:1px solid var(--line,#e0e6ef);border-radius:12px;overflow:hidden;background:var(--surface,#fff)}
+.leader-day-entry>summary{display:grid;grid-template-columns:minmax(110px,1fr) minmax(125px,1.2fr) minmax(126px,1fr) minmax(120px,1fr) minmax(100px,1fr);align-items:center;gap:12px;padding:16px;cursor:pointer;list-style:none}
+.leader-day-entry>summary::-webkit-details-marker{display:none}
+.leader-day-entry>summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+.leader-day-entry[open]>summary{border-bottom:1px solid var(--line,#e0e6ef)}
+.leader-day-entry>summary:hover{background:rgba(64,125,215,.06)}
+.leader-day-date,.leader-day-person,.leader-day-hours,.leader-day-remaining,.leader-day-count{min-width:0;overflow-wrap:anywhere}
+.leader-day-date,.leader-day-hours strong{font-weight:750;white-space:nowrap}
+.leader-day-hours small{display:block;font-size:.78rem;opacity:.7}
+.leader-day-remaining.met{color:#15803d;font-weight:700}
+.leader-day-remaining.short{color:#b45309;font-weight:700}
+.leader-day-count{text-align:right;font-size:.85rem}
+.leader-day-detail{padding:12px;min-width:0}
+.leader-day-detail .leader-time-table{width:100%}
+.leader-day-detail .leader-time-table th:not(:nth-child(2)),.leader-day-detail .leader-time-table td:not(:nth-child(2)){white-space:nowrap}
+/* Pending cards: avoid screen-size overflow but preserve per-task scrolling. */
+.pending-task-dialog .pending-task-panel{max-height:min(90dvh,780px);display:flex;flex-direction:column;min-height:0}
+.pending-task-dialog .pending-task-content{min-height:0;overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:960px){.leader-day-entry>summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.leader-day-count{text-align:left}}
+@media(max-width:600px){.leader-day-summary{padding:10px}.leader-day-entry>summary{padding:12px}.leader-day-detail{padding:8px}.leader-day-date{font-size:.9rem}.leader-day-count{grid-column:1/-1}}
