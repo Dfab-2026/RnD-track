@@ -1,0 +1,8 @@
+DFAB KPI v263 — scoped update from v262
+- Admin department KPI period keys match department KPI, admin saves to same document ID. Owner is a department member; admin remains separate audit actor.
+- Quality Admin mirror keeps Quality review engine/records.
+- Admin Time Sheet/analytics now includes modern R&D Timesheet Firestore data.
+- R&D manual KPI entry records included in monthly PDF data source; Quality and other department month records remain sourced from original collections.
+- Settings Help popup opens an editable issue report and the WhatsApp composer for 8428866121. User must press Send inside WhatsApp.
+- No Firebase schema migrations, role changes, or unrelated feature edits.
+- Firebase live credentials/permissions must be validated in deployed environment before production acceptance.

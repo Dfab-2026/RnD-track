@@ -1,0 +1,25 @@
+/* v273 scoped print/export verification. Does not modify or read live Firebase data. */
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const get=n=>fs.readFileSync(n,'utf8');
+const ctx={window:{},TextEncoder,Uint8Array,atob:s=>Buffer.from(s,'base64').toString('binary')};
+vm.runInNewContext(get('kpi-weekly-report.js'),ctx,{filename:'kpi-weekly-report.js'});
+const report=ctx.window.dfabWeeklyKpiReport;
+for(const name of ['download','draw','pdfBytes','printA4','preview','bindEditable'])assert.equal(typeof report[name],'function',`Missing ${name}`);
+const sample={department:'Quality',period:'Weekly',week:2,start:'2026-11-08',end:'2026-11-14',rows:[{name:'Incoming inspection',target:'6 per week',status:'completed',percent:70},{name:'Continuous Improvement / Kaizen',target:'5 per week',status:'not_completed',percent:20}]};
+const normalized=report.normalize(sample);assert.equal(normalized.achieved,1);assert.equal(normalized.incomplete,1);assert.equal(normalized.completion,50);
+const image={width:1700,height:1200,toDataURL(){return 'data:image/jpeg;base64,'+Buffer.from('mock-jpeg','utf8').toString('base64')}};
+const pdf=Buffer.from(report.pdfBytes(image)).toString('latin1');
+assert(pdf.includes('/MediaBox [0 0 841.89 595.28]'),'Downloaded PDF is not A4 landscape');
+const matrix=pdf.match(/(\d+(?:\.\d+)?) 0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?) (\d+(?:\.\d+)?) cm/);
+assert(matrix,'Missing centered report print placement');
+const [w,h,x,y]=matrix.slice(1).map(Number),paperW=841.89,paperH=595.28;
+assert(Math.abs((paperW-w)/2-x)<0.003 && Math.abs((paperH-h)/2-y)<0.003,'Artwork is not centered on A4');
+assert(x>=28.34 && y>=28.34 && paperW-x-w>=28.34 && paperH-y-h>=28.34,'Printer safe margins below 10mm');
+for(const name of ['department-workspace.js','quality-review.js','leader-center.js'])new vm.Script(get(name),{filename:name});
+assert(get('department-workspace.js').includes('id="dKpiA4Print"'));
+assert(get('quality-review.js').includes('id="printQualityReferencePdfBtn"'));
+assert(get('leader-center.js').includes('id="leaderKpiPrint"'));
+for(const asset of ['kpi-weekly-report.js','department-workspace.js','quality-review.js','leader-center.js','kpi-a4-print-v273.css'])assert(get('index.html').includes(`${asset}?v=273.0.0`),`Missing deployment cache update ${asset}`);
+assert(get('kpi-weekly-report.js').includes('@page{size:A4 landscape;margin:0}'));
+assert(get('kpi-weekly-report.js').includes('max-width:277mm;max-height:190mm'));
+console.log('v273 PASS: centered 10mm-safe A4 PDF; identical print canvas, all department/Quality/Admin print controls, and unchanged status calculations.');

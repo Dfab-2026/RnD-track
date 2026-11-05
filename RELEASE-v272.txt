@@ -1,0 +1,15 @@
+DFAB KPI Tracker v272 - Layout-only KPI and Settings refinement
+Source: DFAB_KPI_v271.zip (locked baseline)
+
+Scope:
+1. KPI report filter header: aligned PERIOD, MONTH, WEEK, FROM and TO controls with responsive grid rules, preserving all existing IDs and event handlers.
+2. Shared department Settings page: improved profile, connection and Help/Logout layout; existing Help action and Monthly Backup mounting retained.
+3. Dedicated R&D Settings page: visual-only card, list, field and scrolling polish.
+
+Files changed: KPI R&D/department-workspace.js, KPI R&D/index.html
+Files added: KPI R&D/kpi-settings-layout-v272.css, KPI R&D/verify-v272.js, KPI R&D/RELEASE-v272.txt
+All other source files are unchanged from v271.
+
+Verification: node --check department-workspace.js, node verify.js, node verify-v263.js, node verify-v272.js passed. Browser geometry of KPI filters and Settings controls passed on simulated shared workspace at 1440,1280,1024,768,390 pixels.
+
+No live Firebase write, real deployed integration, or authenticated route E2E testing was performed. Firebase paths, KPI save/download functions and other pages remain unchanged.

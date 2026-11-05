@@ -16,11 +16,11 @@
     if(now.getHours()<17||!rows.length||document.hidden){close();return}
     const signature=JSON.stringify(rows);
     if(dialog?.open){if(signature===lastSignature)return;close()}
-    if(Date.now()-lastShown<60000)return;
+    if(Date.now()-lastShown<3600000)return;
     const active=document.activeElement;
     if(active&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)||document.querySelector('dialog[open]'))return;
     if(!dialog){dialog=document.createElement('dialog');dialog.className='modal daily-sheet-reminder';dialog.setAttribute('aria-labelledby','dailySheetReminderTitle');dialog.setAttribute('aria-describedby','dailySheetReminderDescription');document.body.append(dialog);dialog.addEventListener('close',()=>{lastShown=Date.now()})}
-    dialog.innerHTML=`<div class="work-text-content"><span class="kicker">5 PM · DAILY SHEET REQUIRED</span><h2 id="dailySheetReminderTitle">Today's Excel entry is missing</h2><p id="dailySheetReminderDescription" class="sheet-reminder-note">${esc(fmtDate(today()))} · Fill the daily target and select a status for each listed project. In Progress or Issue is accepted. This reminder repeats every minute until the entries are filled.</p><div class="sheet-reminder-list">${rows.map(r=>`<button type="button" class="sheet-reminder-item" data-sheet-project="${r.projectId}"><strong>${esc(r.owner)}</strong><span>${esc(r.title)}</span><span>Open today's sheet →</span></button>`).join('')}</div><button type="button" class="ghost-btn" data-sheet-later>Close for now</button></div>`;
+    dialog.innerHTML=`<div class="work-text-content"><span class="kicker">5 PM · DAILY SHEET REQUIRED</span><h2 id="dailySheetReminderTitle">Today's Excel entry is missing</h2><p id="dailySheetReminderDescription" class="sheet-reminder-note">${esc(fmtDate(today()))} · Fill the daily target and select a status for each listed project. In Progress or Issue is accepted. This reminder checks again in the next hour if entries are still missing.</p><div class="sheet-reminder-list">${rows.map(r=>`<button type="button" class="sheet-reminder-item" data-sheet-project="${r.projectId}"><strong>${esc(r.owner)}</strong><span>${esc(r.title)}</span><span>Open today's sheet →</span></button>`).join('')}</div><button type="button" class="ghost-btn" data-sheet-later>Close for now</button></div>`;
     dialog.querySelectorAll('[data-sheet-project]').forEach(btn=>btn.onclick=()=>{close();goToPendingItem('progress',Number(btn.dataset.sheetProject))});
     dialog.querySelector('[data-sheet-later]').onclick=close;lastSignature=signature;lastShown=Date.now();dialog.showModal();
   }

@@ -1,0 +1,1 @@
+v260 — scoped changes from v259: Timesheet workspace scroll and saved-records scrolling; Weekly Report displays every configured task with all custom tasks summarized only as Others; shared-department KPI card alignment. R&D and Admin unchanged. No Firebase schema or save handlers changed.

@@ -2,7 +2,16 @@
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
   let tasks=[],stop=null,adminRoot=null;
-  const identity=()=>window.departmentWorkspace?.currentIdentity?.()||window.qualityAssignedTaskIdentity?.()||window.rndAssignedTaskIdentity?.()||null;
+  const workspaceVisible=id=>{const el=document.getElementById(id);return Boolean(el&&!el.hidden)};
+  const identity=()=>{
+    // Respect the workspace currently on screen. Do not fall through to a stale login
+    // from another department (for example Quality/Admin accidentally showing R&D tasks).
+    if(workspaceVisible('departmentWorkspace'))return window.departmentWorkspace?.currentIdentity?.()||null;
+    if(workspaceVisible('qualityWorkspace'))return window.qualityAssignedTaskIdentity?.()||null;
+    const app=document.getElementById('appShell');
+    if(app&&!app.classList.contains('app-locked'))return window.rndAssignedTaskIdentity?.()||null;
+    return null;
+  };
   const managerAccess=()=>{if(window.adminSession?.active?.())return{admin:true,departmentKey:'',department:'',person:window.adminSession.name()};try{const x=JSON.parse(localStorage.getItem('dfabDepartmentLeadSession')||'null');return x?.departmentKey&&x?.department&&x?.person?x:null}catch{return null}};
   const ownTasks=()=>{const me=identity();return me?tasks.filter(t=>t.department_key===me.departmentKey&&norm(t.person)===norm(me.person)):[]};
   const pending=()=>ownTasks().filter(t=>t.status!=='completed');

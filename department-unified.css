@@ -1,0 +1,210 @@
+/* v251 — common operations interface, shared by Quality and all non-R&D departments.
+   No rules are applied to the R&D workspace or the four Admin tools. */
+:is(#qualityWorkspace,#departmentWorkspace){
+  --dept-accent:#2463cc;
+  --dept-border:#dbe5f1;
+  --dept-text:#1b344e;
+  --dept-muted:#637b91;
+  --dept-surface:#fff;
+  --dept-shadow:0 4px 14px rgba(24,63,102,.045);
+  color:var(--dept-text);
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-main,.q-scroll,#dContent,#qFormHost,.production-inner){min-width:0;min-height:0}
+:is(#qualityWorkspace,#departmentWorkspace) .q-scroll{
+  padding:clamp(12px,1.4vw,22px)!important;
+  padding-bottom:clamp(20px,2vw,28px)!important;
+  gap:12px;
+  overflow:auto;
+  scrollbar-gutter:stable;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .quality-person{
+  background:#f3f7fc!important;
+  border:1px solid #e1e9f3!important;
+  border-radius:12px!important;
+  padding:8px 13px!important;
+  margin:0 0 12px!important;
+  align-items:center;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .quality-person>*{line-height:1.45}
+:is(#qualityWorkspace,#departmentWorkspace) .section-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;margin:0 0 14px;padding:0;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .section-toolbar h2,
+:is(#qualityWorkspace,#departmentWorkspace) .panel-head h3{
+  line-height:1.2;letter-spacing:-.025em;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .section-toolbar p,
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-panel-head p{
+  line-height:1.5;margin-top:4px;color:var(--dept-muted);
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.panel,.tc-panel,.qd-task-card,.q-weekly-report-panel,.kpi101-card,.q-quality-kpi-grid>article){
+  min-width:0;min-height:0;height:auto;align-self:start;
+  border:1px solid var(--dept-border)!important;
+  border-radius:15px!important;
+  background:var(--dept-surface);
+  box-shadow:var(--dept-shadow)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.panel,.tc-panel,.q-weekly-report-panel) {padding:clamp(12px,1.2vw,18px)!important}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.panel-head,.q-weekly-panel-head){
+  display:flex;gap:12px;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;margin:0 0 12px;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.panel-head,.q-weekly-panel-head)>*{min-width:0;max-width:100%}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.metric-grid,.q-quality-kpi-grid,.q-weekly-overview,.q-weekly-panel-grid){gap:12px!important;align-items:start}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px!important;align-items:stretch!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric{
+  position:relative;overflow:hidden;
+  min-height:90px!important;height:auto!important;
+  padding:13px 16px!important;
+  border:1px solid var(--dept-border)!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  box-shadow:var(--dept-shadow)!important;
+  display:flex!important;flex-direction:column;align-items:flex-start;
+  justify-content:center;gap:5px;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric:nth-child(1){border-top:3px solid #169e8e!important;background:linear-gradient(130deg,#fff 72%,#edfaf7)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric:nth-child(2){border-top:3px solid #3274de!important;background:linear-gradient(130deg,#fff 72%,#eef5ff)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric:nth-child(3){border-top:3px solid #8660d3!important;background:linear-gradient(130deg,#fff 72%,#f6f1ff)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric:nth-child(4){border-top:3px solid #dc922d!important;background:linear-gradient(130deg,#fff 72%,#fff8ee)!important}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric strong{font-variant-numeric:tabular-nums;line-height:1.05}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric small{min-height:0!important;line-height:1.35!important}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-dashboard-link{
+  cursor:pointer;transition:box-shadow .16s ease,border-color .16s ease,transform .16s ease;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-dashboard-link:hover{
+  transform:translateY(-2px);box-shadow:0 8px 22px rgba(24,63,102,.12)!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .qd-dashboard-link:focus-visible{outline:2px solid #3476de;outline-offset:2px}
+/* The analytics header and filters live *inside* the chart card, even at 1024px. */
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics{
+  display:flex;flex-direction:column;min-width:0;min-height:0;
+  padding:clamp(14px,1.4vw,20px)!important;
+  gap:10px;overflow:hidden;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics>.panel-head{
+  width:100%;min-width:0;
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,360px)!important;
+  align-items:end!important;gap:14px!important;
+  margin:0!important;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-chart-filters{
+  display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  gap:10px!important;align-items:end;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-chart-filters label{
+  display:flex!important;flex-direction:column;gap:5px;margin:0!important;
+  min-width:0!important;max-width:100%!important;
+  color:#516a81;font-size:11px;font-weight:700;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-chart-filters select{
+  box-sizing:border-box;display:block;width:100%!important;min-width:0;
+  max-width:100%!important;height:40px;min-height:40px!important;
+  padding:8px 10px;border-radius:9px;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-chart-summary{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;min-width:0;
+  padding:10px 0;border-block:1px solid #e6edf5;
+}
+:is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-task-chart{
+  min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;
+  padding:12px 4px 9px;scrollbar-width:thin;
+}
+/* Uniform form, table and weekly review treatment, while preserving each department's data fields. */
+:is(#qualityWorkspace,#departmentWorkspace) :is(.filter-line,.q-report-filter,.qt-filters){
+  box-sizing:border-box;min-width:0;width:100%;max-width:100%;
+  padding:12px!important;background:#f6f9fd;border:1px solid #e1eaf4;
+  border-radius:12px;gap:10px!important;align-items:end;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.filter-line,.q-report-filter,.qt-filters)>*{
+  min-width:0;max-width:100%;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(input,select,textarea){
+  max-width:100%;box-sizing:border-box;border-radius:9px;
+  border:1px solid #ccd9e7;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(input,select,textarea):focus-visible{
+  border-color:#3f80dd;outline:3px solid rgba(63,128,221,.16);
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-report-panel,.q-weekly-overview>article,.kpi101-card,.q-quality-kpi-grid>article){
+  box-sizing:border-box;overflow-wrap:anywhere;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-tabs,.report-tabs){
+  display:flex;gap:7px;flex-wrap:wrap;padding:5px;
+  border:1px solid #dce5f1;border-radius:12px;background:#f1f5fb;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-tabs,.report-tabs)>button{
+  min-height:34px;min-width:0;border-radius:8px;transition:background .15s ease,color .15s ease;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.q-weekly-panel-grid,.q-weekly-timesheet-summary,.kpi101-grid,.q-quality-kpi-grid){
+  min-width:0;align-items:start;gap:12px;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .q-weekly-report-panel:not([hidden]){animation:departmentReveal .18s ease-out}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.table-wrap,.q-weekly-workspace,#dTimeRows,#qtEntries){
+  min-width:0;max-width:100%;overflow:auto;scrollbar-width:thin;
+}
+:is(#qualityWorkspace,#departmentWorkspace) .table-wrap{border:1px solid #e0e8f2;border-radius:12px;background:#fff}
+:is(#qualityWorkspace,#departmentWorkspace) :is(th,td){vertical-align:middle}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.tc-entry,.qt-entry-row){
+  height:auto!important;min-height:0!important;max-width:100%;overflow-wrap:anywhere;
+}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.qt-inline-form,.qd-task-fields,.q-fields){gap:10px!important;min-width:0}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.qt-inline-form,.qd-task-fields,.q-fields) label{min-width:0;max-width:100%;line-height:1.4}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.qt-inline-status,[role='status']){overflow-wrap:anywhere}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.primary-btn,.secondary-btn,.ghost-btn):not(:disabled){cursor:pointer;transition:box-shadow .16s ease,background-color .16s ease}
+:is(#qualityWorkspace,#departmentWorkspace) :is(.primary-btn,.secondary-btn,.ghost-btn):focus-visible{outline:2px solid #3775d9;outline-offset:3px}
+@keyframes departmentReveal{from{opacity:.55;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media(max-width:1100px){
+  :is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics>.panel-head{grid-template-columns:1fr!important;align-items:start!important}
+  :is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-chart-filters{width:min(100%,480px)!important}
+}
+@media(max-width:800px){
+  :is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  :is(#qualityWorkspace,#departmentWorkspace) .section-toolbar{align-items:flex-start}
+}
+@media(max-width:520px){
+  :is(#qualityWorkspace,#departmentWorkspace) .q-scroll{padding:12px!important;padding-bottom:24px!important}
+  :is(#qualityWorkspace,#departmentWorkspace) .qd-four-metrics>.metric{padding:12px!important;min-height:85px!important}
+  :is(#qualityWorkspace,#departmentWorkspace).q-dashboard-page .qd-task-analytics .qd-chart-filters{grid-template-columns:1fr!important}
+  :is(#qualityWorkspace,#departmentWorkspace) :is(.filter-line,.q-report-filter,.qt-filters){padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(#qualityWorkspace,#departmentWorkspace) *, .department-confirm-dialog *, .department-action-notice{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+/* New confirmation and save feedback are app-owned. They never invoke native browser confirm(). */
+.department-confirm-dialog{
+  position:fixed;inset:0;margin:auto;box-sizing:border-box;
+  width:min(calc(100vw - 32px),430px);max-height:min(80vh,480px);
+  border:1px solid #d9e4f1;border-radius:18px;padding:0;
+  box-shadow:0 26px 80px rgba(12,35,64,.28);background:#fff;color:#1a344d;
+}
+.department-confirm-dialog::backdrop{background:rgba(16,36,64,.5);backdrop-filter:blur(3px)}
+.department-confirm-body{padding:24px;display:grid;gap:12px}
+.department-confirm-body .kicker{color:#597694;font-size:11px;letter-spacing:.1em}
+.department-confirm-body h2{font-size:21px;margin:0;line-height:1.2}
+.department-confirm-body p{font-size:13px;line-height:1.65;color:#5a7189;margin:0;white-space:pre-line}
+.department-confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+.department-confirm-actions button{min-width:90px;padding:10px 16px;border-radius:9px}
+.department-action-notice{
+  position:fixed;z-index:99999;right:22px;bottom:22px;max-width:min(430px,calc(100vw - 24px));
+  opacity:0;transform:translateY(9px);pointer-events:none;
+  padding:13px 16px;border-radius:11px;border:1px solid #b6dccf;
+  color:#145e4c;background:#f0fbf6;box-shadow:0 10px 25px rgba(21,65,93,.16);
+  font-size:13px;font-weight:600;line-height:1.45;transition:opacity .16s ease,transform .16s ease;
+}
+.department-action-notice.is-visible{opacity:1;transform:translateY(0)}
+.department-action-notice.is-error{border-color:#f3c4bd;background:#fff3f1;color:#aa3930}
+.member-inline-status{font-size:11px;font-weight:700;color:#117a61;align-self:center;white-space:nowrap}
+@media(max-width:520px){.department-action-notice{left:12px;right:12px;bottom:12px}}
+/* Quality's dedicated Time Sheet workspace shares the same work-record styling. */
+#qualityTimeWorkspace .production-inner{min-width:0;padding:clamp(12px,1.4vw,22px);box-sizing:border-box}
+#qualityTimeWorkspace :is(.tc-panel,.qt-entry-row){border:1px solid #dbe5f1;border-radius:15px;box-shadow:0 4px 14px rgba(24,63,102,.045)}
+#qualityTimeWorkspace .qt-filters{background:#f6f9fd;border:1px solid #e1eaf4;padding:12px!important;border-radius:12px;gap:10px!important}
+#qualityTimeWorkspace :is(input,select){box-sizing:border-box;min-width:0;max-width:100%;border-radius:9px}
+#qualityTimeWorkspace :is(.qt-inline-form,.qt-filters)>*{min-width:0;max-width:100%}
+#qualityTimeWorkspace :is(#qtEntries,.qt-entry-row){min-width:0;max-width:100%;overflow-wrap:anywhere}

@@ -1,0 +1,7 @@
+DFAB KPI Tracker v269
+
+Scoped change only:
+- Kabil remains R&D Lead.
+- Kabil is now included in the R&D KPI/member contributor count.
+- If R&D has 3 active non-visitor members including Kabil, KPI/Kaizen team count is 3.
+- No other runtime behavior intentionally changed.

@@ -1,0 +1,32 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const read=f=>fs.readFileSync(path.join(__dirname,f),'utf8');
+const context={window:{}};vm.runInNewContext(read('department-shared-ui.js'),context);
+const ui=context.window.departmentSharedUI;
+assert(ui,'Unified component missing');
+const expected=['Dashboard','Kaizen Ideas','Weekly Report','KPI Report','Assigned Tasks','Time Sheet','Settings'];
+assert.deepEqual(Array.from(ui.items.map(x=>x.label)),expected);
+for(const mode of ['quality','department']){
+  const nav=ui.navigation(mode,'dashboard');
+  assert.equal((nav.match(/class="nav-btn/g)||[]).length,7,mode+' nav must have seven items');
+  for(const name of expected)assert(nav.includes(name),mode+' missing '+name);
+  assert(nav.includes(mode==='quality'?'id="qTime"':'id="dTime"'));
+  assert(nav.includes(mode==='quality'?'data-q-page="ideas"':'data-d-page="kaizen"'));
+  assert(nav.includes(mode==='quality'?'data-q-page="report"':'data-d-page="kpi"'));
+  assert(nav.includes('active'),mode+' Dashboard active missing');
+}
+const html=read('index.html'),q=read('quality.js'),d=read('department-workspace.js'),leader=read('leader-center.js'),cloud=read('firebase-cloud.js'),css=read('department-v255.css');
+assert(html.indexOf('department-shared-ui.js')<html.indexOf('quality.js'));
+assert(html.indexOf('department-shared-ui.js')<html.indexOf('department-workspace.js'));
+assert(q.includes("window.departmentSharedUI.navigation('quality',page)"));
+assert(d.includes("window.departmentSharedUI.navigation('department',page)"));
+assert(q.includes('window.rndCloud.watchQualityTime')&&d.includes('window.rndCloud.watchDepartmentRecords'));
+assert(!q.includes('deleteQualityRecords')&&!d.includes('deleteQualityRecords'));
+assert(leader.includes("dfab:department-record-saved")&&leader.includes('cache=null'));
+assert(cloud.includes("department:'quality'")&&cloud.includes('dfab:department-record-saved'));
+assert(css.includes('#appShell:not(.app-locked) #sidebar')&&css.includes('height:100dvh'));
+assert(css.includes('.leader-chart-grid')&&css.includes('prefers-reduced-motion'));
+for(const file of ['app.js','quality-time.js','quality-review.js','quality-daily.js','quality-ideas.js','quality-login.js','assigned-tasks.js','backup-tools.js','department-timesheet-policy.js'])assert(fs.existsSync(path.join(__dirname,file)));
+console.log('v255 PASS: shared Quality/non-R&D navigation, data adapters preserved, admin cache invalidation, R&D fixed sidebar, visual theming');

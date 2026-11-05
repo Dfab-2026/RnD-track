@@ -1,0 +1,40 @@
+DFAB KPI Tracker v270 — reference-style department KPI reports
+
+Baseline: v269; preserve all existing application flows.
+
+Scoped changes:
+1. KPI Report pages in the shared workspace (R&D, Welding Qualification,
+   Production, NPD, Outsourcing, Sales, Purchase, Stores, HR & Admin,
+   Accounts, Finance, Maintenance and Digital Marketing) show a reference-
+   style KPI report preview and downloadable A3 landscape PDF. Report reads
+   the selected period's saved KPI data and computed Kaizen progress.
+2. Quality KPI Report uses the same reference layout and downloadable PDF,
+   while preserving existing Quality review, inspection and training flows.
+3. Report includes selected week/month and From/To, departmental KPI rows,
+   completion state, percentages, donut/bar charts, summary and department
+   lead where recorded.
+4. Weekly equivalents: daily numeric targets use six working days/week;
+   explicit weekly source targets are retained; monthly/quarterly/yearly
+   deliverables show the existing weekly progress checkpoints.
+5. Attendance appears once in every shared department KPI list. It is
+   appended only when absent so pre-existing KPI indices/Firebase IDs remain
+   stable. A full reporting week expects six working days per active member.
+   Saved actuals remain editable. Timesheet day coverage is used as an
+   initial indication when actual has not been entered; Leave is excluded.
+6. Quality attendance is appended after its original KPI Master measures
+   and uses the existing Quality KPI actual storage path.
+
+Unchanged: Timesheet save/Continue/Delete, Weekly Report, Assigned Tasks,
+ratings, member login/passwords, roles, Admin cards, Kaizen entry,
+backups, existing Firebase collection paths, KPI record IDs and other
+runtime features.
+
+Testing: main verify.js PASS; verify-v260.js PASS; verify-v263.js PASS;
+verify-v270.js PASS; Chromium Quality KPI render with 12 rows PASS; 14-row
+Production PDF download and PDF render PASS; R&D 9-row export PASS;
+JavaScript syntax PASS. PDF geometry and chart visibility visually checked.
+Legacy verification scripts that hard-code old cache-version expectations
+will not pass after incrementing the scoped asset version.
+
+No live production Firebase writes were performed. Existing permissions
+are not changed.

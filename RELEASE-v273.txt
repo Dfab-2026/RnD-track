@@ -1,0 +1,15 @@
+DFAB KPI Tracker v273 - A4 Report Printing Only
+Baseline: DFAB_KPI_v272.zip (locked)
+
+Scope:
+- Add Print A4 button to the existing department, Quality, and Admin KPI report views.
+- Print uses the exact same KPI model/canvas as Download A4 PDF and opens the native browser print dialog in a dedicated A4 landscape print window.
+- Center both printer output and downloaded PDF on one A4 landscape page with minimum 10mm printer-safe margins.
+- Preserve long KPI names/standards with word wrapping and adapt long department heading/metadata to prevent clipping.
+- No changes to KPI saving, row statuses, Firebase paths, Time Sheet, Weekly Report, Kaizen, Assigned Tasks, Settings, backup, role permissions, and other existing features.
+
+Modified runtime files: kpi-weekly-report.js, department-workspace.js, quality-review.js, leader-center.js, index.html.
+Added: kpi-a4-print-v273.css, verify-v273.js, RELEASE-v273.txt.
+
+Verification: node verify.js, node verify-v263.js, node verify-v260.js, node verify-v273.js; syntax of each modified JS; simulated browser PDF download + print, 16 long rows, both 1-page A4 landscape with centered equal L/R, T/B margins. Browser test used no Firebase data.
+Old release checks with hardcoded cache references are expected to reject v273 asset versions; baseline already has some outdated tests.

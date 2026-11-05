@@ -1,0 +1,27 @@
+DFAB KPI Tracker v267
+Baseline: v266 (locked except requested scope)
+
+Requested scope implemented
+- KPI Report redesigned as a clean period-focused workspace.
+- Default reporting period is Weekly; Monthly is selectable.
+- Weekly/Monthly date range and period focus are shown clearly.
+- Excel export added for the selected KPI period with Summary, KPI Detail and Period Focus sheets.
+- Existing KPI Firebase IDs, manual entry/save flows and department KPI definitions are preserved.
+- Hourly Time Sheet reminder now shows only the logged-in person's pending work; Team Pending is removed.
+- R&D now routes through the same shared department workspace template used by other departments.
+- R&D keeps legacy member, idea and Time Sheet Firebase sources through compatibility adapters.
+- R&D Idea entry supports Kaizen / Innovation Idea and saved records show the selected type.
+- Only R&D Kaizen records count toward the Kaizen KPI; legacy ideas remain compatible.
+- Kabil remains excluded from performance-member denominators while Lead access remains unchanged.
+
+Validation performed
+- node verify.js: PASS
+- node verify-v267.js: PASS
+- node verify-timesheet-controls.js: PASS
+- node verify-v260.js: PASS
+- node verify-v263.js: PASS
+- JavaScript syntax checks for changed runtime modules: PASS
+
+Known validation boundary
+- Live production Firebase write/delete operations were not performed during release validation.
+- Legacy verification files that hard-code older cache versions or retired UI expectations may fail and were not modified.

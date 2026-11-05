@@ -1,0 +1,14 @@
+/* v268 — KPI Master alignment and Kaizen readability. Scoped to shared department workspace. */
+#departmentWorkspace #dKaizenRegister .table-wrap table{table-layout:auto;min-width:1120px}
+#departmentWorkspace #dKaizenRegister tbody td{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;word-break:break-word;vertical-align:top;line-height:1.45}
+#departmentWorkspace #dKaizenRegister tbody td:nth-child(2),
+#departmentWorkspace #dKaizenRegister tbody td:nth-child(6),
+#departmentWorkspace #dKaizenRegister tbody td:nth-child(7){min-width:180px;max-width:320px}
+#departmentWorkspace .notification-item.team{border-left:3px solid #7a56cf;background:linear-gradient(90deg,rgba(122,86,207,.07),#fff)}
+#departmentWorkspace .notification-item.team .notification-owner{color:#6a45ba}
+#departmentWorkspace .kpi-premium-target strong{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+#departmentWorkspace .kpi102-accountability{white-space:normal;line-height:1.35}
+#departmentWorkspace .kpi-focus-row p{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:760px){
+  #departmentWorkspace #dKaizenRegister .table-wrap table{min-width:980px}
+}

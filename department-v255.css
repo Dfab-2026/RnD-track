@@ -1,0 +1,78 @@
+/* v255: shared Quality / department presentation, R&D fixed sidebar, Admin visual polish. */
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace {
+ --dept-card-border:#dce6f3;--dept-card-radius:14px;--dept-card-shadow:0 7px 22px rgba(16,54,100,.055);
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .q-sidebar .brand-copy strong{
+ font-size:13px;letter-spacing:.045em;line-height:1.2;
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .q-sidebar nav{
+ display:flex;flex-direction:column;gap:5px;min-height:0;
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .q-sidebar nav .nav-btn{
+ box-sizing:border-box;min-height:41px;border-radius:10px;
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .q-sidebar nav .nav-btn.active{
+ background:linear-gradient(100deg,#163c70,#20599b);color:#fff;
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace :is(.panel,.metric,.qd-task-card,.q-review-card,.qt-entry-row){
+ border-color:var(--dept-card-border);border-radius:var(--dept-card-radius);box-shadow:var(--dept-card-shadow);
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace :is(.panel,.metric,.qd-task-card){
+ min-width:0;max-width:100%;box-sizing:border-box;
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .q-main>.topbar{
+ min-width:0;padding-inline:clamp(16px,2vw,28px);
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace :is(.q-scroll,#dContent,#qFormHost){min-width:0}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .qd-task-analytics .qd-chart-filters{
+ padding:4px 2px;box-sizing:border-box;min-width:0;
+}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .qd-task-analytics .qd-chart-filters select{max-width:100%;min-width:0}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .qd-dashboard-link{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+:is(#qualityWorkspace,#departmentWorkspace).department-unified-workspace .qd-dashboard-link:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(22,75,138,.12)}
+/* Fixed R&D sidebar: no internal scrolling; all navigation visible on common desktop heights. */
+@media(min-width:981px){
+ #appShell:not(.app-locked) #sidebar{
+  position:sticky!important;top:0!important;height:100dvh!important;max-height:100dvh!important;
+  overflow:hidden!important;display:flex!important;flex-direction:column!important;
+ }
+ #appShell:not(.app-locked) #sidebar>.brand{flex:0 0 auto;min-height:0}
+ #appShell:not(.app-locked) #sidebar #nav{
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;
+  gap:clamp(1px,.6vh,8px);overflow:hidden!important;
+ }
+ #appShell:not(.app-locked) #sidebar #nav .nav-btn{
+  flex:0 1 auto;min-height:clamp(28px,4.6vh,45px);padding-block:clamp(4px,.75vh,10px);
+  white-space:normal;
+ }
+ #appShell:not(.app-locked) #sidebar>.side-note{flex:0 0 auto;margin-top:auto;max-height:15vh;overflow:hidden}
+}
+/* Admin cards: responsive, visually distinct, with no changes to existing actions or datasets. */
+.leader-center :is(.leader-summary-card,.leader-chart,.kpi101-card,.leader-person-times,.member-admin-panel){
+ box-sizing:border-box;min-width:0;border:1px solid #dbe6f3;border-radius:16px;
+ background:linear-gradient(135deg,#fff 65%,#f1f6ff);
+ box-shadow:0 9px 26px rgba(21,67,117,.055);
+ transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;
+}
+.leader-center :is(.leader-summary-card,.leader-chart,.kpi101-card):hover{
+ border-color:#a9c8ec;box-shadow:0 13px 28px rgba(21,67,117,.11);transform:translateY(-2px);
+}
+.leader-center .leader-bar-track{overflow:hidden;border-radius:999px;background:#e9f1fc}
+.leader-center .leader-bar-track>i{border-radius:999px;transition:width .42s cubic-bezier(.2,.7,.2,1)}
+.leader-center .leader-filter{box-sizing:border-box;min-width:0;gap:12px;padding:15px 18px}
+.leader-center .leader-filter :is(select,input){min-width:0;max-width:100%;box-sizing:border-box}
+.leader-center .leader-chart-grid{min-width:0;gap:16px}
+.leader-center .leader-table-wrap{overflow:auto;max-width:100%}
+@media(max-width:800px){.leader-center .leader-chart-grid{grid-template-columns:1fr}.leader-center .leader-filter{padding:12px}}
+@media(prefers-reduced-motion:reduce){.leader-center :is(.leader-bar-track>i,.leader-summary-card,.leader-chart,.kpi101-card),:is(#qualityWorkspace,#departmentWorkspace) .qd-dashboard-link{transition:none!important;transform:none!important}}
+/* Admin secondary cards retain their controls, but align with KPI/analytics card styling. */
+.leader-center :is(.member-admin-row,.assigned-task-admin-row,.leader-report-row){
+ min-width:0;box-sizing:border-box;border-radius:13px;border:1px solid #dce7f4;
+ background:#fff;transition:border-color .16s ease,box-shadow .16s ease;
+}
+.leader-center :is(.member-admin-row,.assigned-task-admin-row,.leader-report-row):hover{
+ border-color:#a9c8ee;box-shadow:0 5px 17px rgba(19,64,115,.08);
+}
+.leader-center :is(.member-admin-row,.assigned-task-admin-row) :is(input,textarea,select){
+ box-sizing:border-box;min-width:0;max-width:100%;
+}

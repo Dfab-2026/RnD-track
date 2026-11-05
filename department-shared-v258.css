@@ -1,0 +1,37 @@
+/* v258 – All non-R&D cards including Quality use the shared workspace shell. */
+#departmentWorkspace .q-scroll{min-height:0;max-height:100%;overflow:hidden;display:flex;flex-direction:column}
+#departmentWorkspace #dContent{min-height:0;min-width:0;flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:12px}
+#departmentWorkspace:has(#dTimeForm) #dContent{display:flex;flex-direction:column;overflow:hidden;gap:10px}
+#departmentWorkspace:has(#dTimeForm) #dContent>.section-toolbar{flex:none;margin:0}
+#departmentWorkspace:has(#dTimeForm) #dContent>.tc-panel{flex:none;min-height:0;max-height:none}
+#departmentWorkspace:has(#dTimeForm) #dContent>.panel:last-child{flex:1;min-height:0;max-height:none;overflow:hidden;display:flex;flex-direction:column}
+#departmentWorkspace:has(#dTimeForm) #dContent>.panel:last-child .panel-head{flex:none}
+#departmentWorkspace #dTimeRows{flex:1;min-height:64px;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;display:block;padding:3px 4px 12px}
+#departmentWorkspace #dTimeRows>.tc-entry{flex:0 0 auto;max-width:100%;margin-bottom:8px}
+#departmentWorkspace .q-weekly-timesheet-summary{min-width:0;overflow-y:auto;scrollbar-gutter:stable;align-content:start}
+#departmentWorkspace .q-weekly-task-summary{height:auto!important;min-height:105px;overflow:visible;min-width:0}
+#departmentWorkspace .q-weekly-task-summary>div:first-child{min-width:0}
+#departmentWorkspace .q-weekly-task-summary strong{overflow-wrap:anywhere;word-break:normal;white-space:normal!important}
+#departmentWorkspace .q-weekly-task-summary .dept-hour-track{height:6px;border-radius:99px;overflow:hidden;background:#e8eef7}
+#departmentWorkspace .q-weekly-task-summary .dept-hour-track span{display:block;height:100%;background:linear-gradient(90deg,#3d84f0,#62bd9d);border-radius:99px}
+#departmentWorkspace .quality-legacy-detail{min-height:0;overflow-y:auto}
+#departmentWorkspace .quality-legacy-detail .q-weekly-command{margin-top:0}
+#departmentWorkspace .quality-legacy-detail .q-weekly-overview{display:none}
+#departmentWorkspace .quality-legacy-detail [data-qw-panel="summary"]{display:none!important}
+#departmentWorkspace .quality-legacy-detail .q-weekly-tabs button[data-qw-tab="summary"]{display:none}
+@media(max-width:980px){#departmentWorkspace:has(#dTimeForm) #dContent{overflow-y:auto;display:block}#departmentWorkspace #dTimeRows{max-height:clamp(220px,38vh,560px)}#departmentWorkspace .q-weekly-timesheet-summary{overflow:visible}}
+@media(max-height:700px) and (min-width:981px){#departmentWorkspace:has(#dTimeForm) #dContent{overflow-y:auto;display:block}#departmentWorkspace #dTimeRows{max-height:270px}}
+/* The old fixed-screen layer hides record overflow; the history itself is the scroll container. */
+#departmentWorkspace #dTimeRows,
+#departmentWorkspace #dContent #dTimeRows,
+#departmentWorkspace .q-main #dTimeRows {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+  overscroll-behavior-y: contain;
+}
+@media(max-width:980px){
+ #departmentWorkspace .q-open-nav{display:grid!important;place-items:center!important;flex:0 0 auto}
+ #departmentWorkspace .q-sidebar.open{transform:translateX(0)!important;opacity:1!important;pointer-events:auto!important}
+ #departmentWorkspace #dBackdrop:not([hidden]){display:block!important;position:fixed;inset:0;z-index:1000;background:rgba(9,31,60,.55);border:0}
+}
