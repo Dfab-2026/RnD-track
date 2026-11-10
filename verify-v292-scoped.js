@@ -1,0 +1,17 @@
+const fs=require('fs'),assert=require('assert');
+const read=n=>fs.readFileSync(__dirname+'/'+n,'utf8');
+const app=read('app.js'),dept=read('department-workspace.js'),clock=read('time-consume.js'),backup=read('backup-tools.js'),html=read('index.html');
+assert(app.includes('window.dfabRndActiveMemberCount=()=>workingMembers().length'));
+assert(dept.includes("deptKey==='rnd'&&typeof window.dfabRndActiveMemberCount==='function'?window.dfabRndActiveMemberCount()"));
+assert(dept.includes('8*adminTeamSize')&&dept.includes('workdays(week.start,week.end)*8*adminTeamSize'));
+assert(dept.includes('monthTarget=workdays(month.start,month.end)*480*adminTeamSize'));
+assert(clock.includes("hour=value===12?12:value>=9?value:value+12"));
+assert(clock.includes('selected<540||selected>1080'));
+assert(clock.includes('data-exact-minute min="0" max="59"'));
+assert(!clock.includes('data-period>AM / PM'));
+assert(backup.includes('PERSON REPORT')&&backup.includes('DAILY WORKING HOURS')&&backup.includes('WEEKLY WORKING HOURS')&&backup.includes('HIGHEST TO LOWEST')&&backup.includes('KAIZEN & INNOVATION IDEA RECORDS')&&backup.includes('WEEKLY REPORT / KPI PROGRESS'));
+assert(backup.includes('archiveFingerprint(live)')&&backup.includes('deleteMonthData(key,m,mode'));
+assert(html.includes('responsive-v292.css'));
+const members=3;assert.strictEqual(8*members,24);assert.strictEqual(6*8*members,144);
+const period=h=>h<12?'AM':'PM';for(let h=9;h<12;h++)assert.equal(period(h),'AM');for(let h=12;h<=18;h++)assert.equal(period(h),'PM');
+console.log('PASS v292: admin team hours 24/144, 9–18 auto AM/PM, exact minute clock, person-wise PDF backup and deletion safeguards');

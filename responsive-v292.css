@@ -1,0 +1,5 @@
+/* v292: scoped workday clock precision, no changes to other screens. */
+.tc-clock .tc-minute-precision{display:flex;align-items:center;justify-content:center;gap:12px;font-size:.85rem;font-weight:600;margin:7px auto 4px}
+.tc-clock .tc-minute-precision input{width:65px;min-height:38px;border:1px solid #b7c9db;border-radius:8px;padding:6px;text-align:center;color:#173f69;background:#fff}
+.tc-clock .tc-clock-error{min-height:1.1em;text-align:center;color:#b42318;font-size:.79rem;margin:0}
+.tc-clock .tc-dial button:disabled{opacity:.25;pointer-events:none}

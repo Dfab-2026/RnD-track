@@ -1,0 +1,7 @@
+DFAB KPI v292 — Scoped changes over v291
+
+1. Admin department dashboard only: R&D counts the live working member roster, including its lead, for 8h/day/person daily, weekly (six-day workweek) and monthly workday targets. Other departments continue to exclude Kabil in member targets per existing policy. Employee view unchanged.
+2. Shared 9AM–6PM Time Sheet clock (R&D, Quality, all workspaces): 09:00–11:59 AM and 12:00–18:00 PM determined automatically by the selected hour, with exact 0–59 minute field and strict range validation. Historical records outside that range retained.
+3. Monthly backup PDF: per-person daily/weekly work hours, month total, highest/lowest task by time, all task totals, Kaizen and Innovation idea details, and KPI progress cards. Full raw dated records and lossless JSON remain included. All existing delete verification guards retained; no records deleted by this release.
+
+Live browser and Firebase tests are still required after deployment; do not perform cleanup until reviewing both downloaded archives.

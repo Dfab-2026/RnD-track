@@ -1,0 +1,15 @@
+DFAB KPI v291 — Scoped Admin Targets, Workday Time Labels, Verified Monthly Archive
+Base: v290 Assigned Task Undo.
+
+Changes:
+1. Admin-only department dashboard targets multiply daily/weekly/monthly working-hour targets by the counted active department member total; employees retain their own 8h/48h/monthly targets.
+2. Admin Time Sheet overall view displays total achieved hours against the appropriate number of people and days.
+3. Admin Kaizen KPI displays counted Kaizen submissions against team-size targets (weekly 5 per person, monthly 20 per person), rather than a stale manual value. Quality admin receives a separate team Kaizen summary. R&D uses specifically marked Kaizen records.
+4. R&D admin dashboard hour tile loads the full R&D time data across active members and shows day/week/month team comparisons.
+5. Department and Quality Time Sheet time dropdowns show AM/PM correctly from 9:00 AM to 6:00 PM, preserving out-of-hours historical selections when editing existing records. No change to overlap or save behavior.
+6. Month backup provides detailed PDF plus a complete JSON snapshot, member roster, per-person time, Kaizen/Innovation and KPI summaries.
+7. Monthly cleanup is NEVER automatic. It requires a full archive SHA-256 record fingerprint, a fresh server preflight, downloads acknowledgment, three confirmations, a typed month, and a past-month-only guard. Current/future month, unfinished/cross-month assigned tasks, and cross-month project time entries are protected. After deletion, Firebase is re-read; history is marked complete only if no target-month records remain. Do not discard original backups.
+
+Untouched: Other department workflow logic, assigned task completion/reversal, member logins, Firebase rules, existing database content, Kaizen submission flow, and unrelated routes.
+
+Live Firebase and full browser interaction tests were not available in this environment. Do not treat structural checks as production proof.

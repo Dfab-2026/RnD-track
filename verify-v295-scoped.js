@@ -1,0 +1,28 @@
+const fs=require('fs'), assert=require('assert'), vm=require('vm');
+const read=f=>fs.readFileSync(require('path').join(__dirname,f),'utf8');
+const index=read('index.html'),nav=read('department-shared-ui.js'),leader=read('leader-center.js'),dept=read('department-workspace.js'),quality=read('quality-review.js');
+assert(nav.indexOf("{id:'kpi'")<nav.indexOf("{id:'assigned'"),'Department navigation KPI must be before Assigned Tasks');
+assert(index.indexOf('data-page="kpi"')<index.indexOf('data-page="assigned"'),'R&D navigation KPI must be before Assigned Tasks');
+for(const script of ['kpi-task-editor-v295.js','kpi-task-editor-v295.css'])assert(index.includes(script));
+assert(leader.includes("attachEditor(body,'quality',host)"),'Quality admin editor missing');
+assert(leader.includes("attachEditor(body,department,body.querySelector('#leaderKpiEditableReport'))"),'Other department admin editor missing');
+assert(dept.includes("apply(content().querySelector('#dKpiEditableReport'),deptKey)"),'Department KPI live label missing');
+assert(quality.includes("apply(host,'quality')"),'Quality KPI live label missing');
+assert(read('app.js').includes("apply(host,'rnd')"),'R&D dedicated KPI label missing');
+let active=true,fail=false;const records=new Map();
+const rndCloud={async loadDepartmentRecordsOnce(department){if(fail)throw Error('permission-denied');return [...records.entries()].filter(([key])=>key.startsWith(department+'|')).map(([key,row])=>({...row,id:key.split('|')[1]}))},async saveDepartmentRecord(department,id,row){if(fail)throw Error('permission-denied');records.set(department+'|'+id,{...row});return row}};
+const context={window:{rndCloud,adminSession:{active:()=>active,name:()=> 'Admin'}},console};vm.createContext(context);vm.runInContext(read('kpi-task-editor-v295.js'),context);
+(async()=>{
+  const tool=context.window.kpiTaskTitles;
+  const initial=await tool.load('quality');assert.strictEqual(initial.size,0);
+  await tool.save('quality','Attendance & Team Discipline','Team Attendance & Discipline');
+  const restored=await tool.load('quality',true);
+  assert.strictEqual(restored.get('Attendance & Team Discipline'),'Team Attendance & Discipline');
+  assert.strictEqual(records.size,1);assert.strictEqual([...records.values()][0].type,'kpi_task_title');
+  assert.strictEqual([...records.values()][0].actor_role,'all_departments_leader');
+  active=false;await assert.rejects(tool.save('quality','Attendance & Team Discipline','Unauthorized'),/administrator/);
+  active=true;await assert.rejects(tool.save('quality','Original',''),/between 1 and 120/);
+  fail=true;await assert.rejects(tool.save('rnd','Test','New name'),/permission-denied/);
+  assert.strictEqual(records.size,1);
+  console.log('PASS v295: navigation swap, all-department KPI editor wiring, Firebase save/read-back, admin gating, validation and denied-write handling');
+})().catch(e=>{console.error(e);process.exitCode=1});

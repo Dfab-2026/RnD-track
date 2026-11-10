@@ -1,0 +1,1 @@
+v294 scoped update: Company Analytics Kaizen achieved/active-team monthly target (5 ideas/week × 4 weeks) as whole-number ratio; swapped Assigned Tasks and KPI Report navigation positions without removing routes. Other functionality preserved.

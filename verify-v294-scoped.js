@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const leader=fs.readFileSync('leader-center.js','utf8');
+const nav=fs.readFileSync('department-shared-ui.js','utf8');
+const index=fs.readFileSync('index.html','utf8');
+assert(leader.includes('function analyticsKaizenCount('));
+assert(leader.includes('function analyticsKaizenTeamSize('));
+assert(leader.includes('function kaizenTeamBars('));
+assert(leader.includes('x.value} / ${target}'));
+assert(leader.includes("String(r.idea_type||'kaizen').toLowerCase()==='kaizen'"));
+assert(leader.includes("analyticsKaizenTeamSize(data,d.key)*20"));
+assert(nav.indexOf("{id:'assigned'")<nav.indexOf("{id:'kpi'"));
+assert(index.indexOf('data-page="assigned"')<index.indexOf('data-page="kpi"'));
+assert(leader.includes("metric==='kaizen'?kaizenTeamBars(items)"));
+console.log('PASS v294: admin analytics Kaizen team achieved/target, integer labels, and navigation ordering');

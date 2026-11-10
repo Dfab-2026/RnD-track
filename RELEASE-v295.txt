@@ -1,0 +1,5 @@
+DFAB KPI v295 — scoped update based on v294.
+1. Swapped KPI Report and Assigned Tasks positions in the shared departmental navigation and R&D sidebar. Neither page was removed.
+2. Added admin-only editable KPI TASK NAMES on All Department KPI Reports (including Quality and R&D). Names persist as independent `kpi_task_title` records in the existing department Firebase path, using verified writes and server read-back. Department KPI report views load the overrides. Existing KPI IDs, original formula identifiers, task targets, saved progress, and workflows are unchanged.
+3. This edit changes display titles, NOT the mathematical KPI definition or target. Other kinds of KPI edits were deliberately excluded to avoid affecting calculations.
+4. Tests: node verify-v295-scoped.js; node check-deployment.js. Production Firebase write/reload and real-browser behavior require deployment verification.

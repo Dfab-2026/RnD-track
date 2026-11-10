@@ -618,6 +618,8 @@ function requireTaskOwner(project){if(!canEditTask(project))throw new Error('You
 function taskPriority(project){return state.ideas.find(i=>Number(i.id)===Number(project?.idea_id))?.priority||'Medium'}
 function isVisitor(){return currentMember()?.role==='visitor'}
 function workingMembers(){return state.members.filter(m=>m.role!=='visitor'&&Number(m.active)!==0).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0))}
+// Read-only roster for admin-only department target calculations.
+window.dfabRndActiveMemberCount=()=>workingMembers().length;
 function persistLogin(member){if(activeUser()!==Number(member.id))state.selectedProject=null;localStorage.setItem('rndLoggedInMember',JSON.stringify({id:member.id,name:member.name,role:member.role||'member'}));localStorage.setItem('rndActiveUser',String(member.id))}
 function clearLogin(){localStorage.removeItem('rndLoggedInMember');localStorage.removeItem('rndActiveUser')}
 function activeDepartments(){return state.departments.filter(d=>Number(d.active)!==0).sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||Number(a.id)-Number(b.id))}
@@ -913,6 +915,7 @@ function renderKpiReport(){
   const kaizenPeople=eligible.map(m=>{const done=new Set(kaizenRows.filter(i=>Number(i.submitted_by)===Number(m.id)).map(i=>i.submission_date)).size;return{name:m.name,done,missing:Math.max(0,dayCount-done)}});
   host.innerHTML=`<section class="panel kpi-report-card rnd-kpi-unified"><div class="kpi-report-head"><div class="kpi-report-avatar">${esc(member.name.charAt(0).toUpperCase())}</div><div><span class="kicker">${monthly?'MONTHLY':`WEEK ${week}`} KPI REPORT</span><h3>${esc(member.name)}</h3><p>R&D performance · ${esc(timeStart)} → ${esc(timeEnd)}</p></div></div><div class="kpi-report-grid rnd-kpi-grid"><article><span>DAILY IDEAS</span><strong>${ideas.length}</strong><small>Kaizen + Innovation ideas submitted by ${esc(member.name)}</small></article><article class="rnd-kaizen-kpi"><span>KAIZEN KPI</span><strong>${kaizenActual} / ${kaizenTarget}</strong><small>${eligible.length} counted member${eligible.length===1?'':'s'} · ${dayCount} day target</small><div class="rnd-kaizen-progress"><i style="width:${kaizenPct}%"></i></div><div class="rnd-kaizen-members">${kaizenPeople.length?kaizenPeople.map(x=>`<span class="${x.missing?'pending':'done'}"><b>${esc(x.name)}</b> ${x.done}/${dayCount}${x.missing?` · ${x.missing} pending`:' · complete'}</span>`).join(''):'<span>No counted R&D members configured.</span>'}</div></article><article><span>MY WEEKLY ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed · ${Math.max(0,projects.length-completed)} remaining</small></article><article><span>TEAM EXECUTION</span><strong>${teamCompleted} / ${teamProjects.length}</strong><small>Completed assignments in the selected period</small></article></div><section class="kpi-auto-evidence"><div><span class="kicker">REPORT SOURCE DATA</span><h4>Saved work · ${esc(timeStart)} → ${esc(timeEnd)}</h4></div><div class="kpi-auto-evidence-grid"><article><span>TIME SHEET</span><strong>${timeData.entries} entries · ${timeData.hours}h</strong><small>${timeData.completed} completed · ${timeData.inProgress} in progress · ${timeData.pending} pending</small></article><article><span>KAIZEN</span><strong>${kaizenActual}</strong><small>Counted against ${kaizenTarget} for this period</small></article><article><span>ASSIGNMENTS</span><strong>${projects.length}</strong><small>${completed} completed · ${Math.max(0,projects.length-completed)} remaining</small></article></div><div class="kpi-auto-evidence-actions"><button type="button" class="ghost-btn" data-kpi-source="timeconsume">Review Time Sheet</button><button type="button" class="ghost-btn" data-kpi-source="ideas">Review Ideas</button><button type="button" class="ghost-btn" data-kpi-source="projects">Review Assignments</button></div></section></section>`;
   host.querySelectorAll('[data-kpi-source]').forEach(button=>button.onclick=()=>showPage(button.dataset.kpiSource));
+  window.kpiTaskTitles?.apply(host,'rnd');
 }
 window.refreshRndKpiReport=()=>{if(state.page==='kpi')renderKpiReport()};
 
@@ -1056,6 +1059,27 @@ function renderDashboard(){
   const pendingLines=myPending.length?myPending.slice(0,5).map(x=>`<button type="button" class="dashboard-pending-line" data-pending-go="${esc(x.page)}" data-pending-project="${Number(x.projectId)||0}"><span>${esc(x.label)}</span><small>${esc(x.detail)}</small><b>→</b></button>`).join(''):'<div class="dashboard-pending-empty">No pending items for you.</div>';
   const progressTasks=[0,1].map(i=>{const x=todayProgress.tasks[i];return `<div class="today-task-line ${x?'':'is-disabled'}"><b>T${i+1}</b><div><span style="width:${x?x.score:0}%"></span></div><strong>${x?x.score:0}%</strong></div>`}).join('');
   $('#dashboardMetrics').innerHTML=`<div class="metric accent dashboard-nav" data-go="ideas" role="button" tabindex="0"><span class="m-label">IDEAS TODAY</span><strong>${submitters.size} / ${workers.length}</strong><small>members submitted today</small></div><div class="metric dashboard-nav dashboard-week-metric" data-go="weekly" role="button" tabindex="0"><div class="dashboard-week-heading"><span class="m-label">ACTIVE WEEK TASKS</span><b class="dashboard-current-week">W${weekInfo.week}</b></div><div class="dashboard-week-value"><strong>${weekInfo.active}</strong></div><small>${weekInfo.active===1?'assigned task in the current week':'assigned tasks in the current week'}</small></div><div class="metric dashboard-nav dashboard-progress-metric" data-go="progress" role="button" tabindex="0"><span class="m-label">TODAY'S PROGRESS</span><div class="today-task-progress">${progressTasks}</div><small>${todayProgress.projects?`${todayProgress.updated} / ${todayProgress.projects} my projects updated today`:'no project assigned to me today'}</small></div><div class="metric dashboard-month-metric"><span class="m-label">${monthCompletion.monthName} WEEKS COMPLETE</span><div class="month-week-lights">${monthCompletion.weeks.map((done,i)=>`<span class="${done?'done':''}" title="Week ${i+1}"><i></i><b>W${i+1}</b></span>`).join('')}</div><small>green = completed week</small></div><div class="metric dashboard-nav rnd-hours-metric" data-go="datas" role="button" tabindex="0"><span class="m-label">HOURS SPENT</span><strong>${window.rndTimeSummary?.().monthLabel||'0h 0m'}</strong><small>this month · open time data</small></div>`;
+  // Admin dashboard aggregates R&D time across active members; member login keeps its own metrics.
+  if(window.adminSession?.active?.()&&window.rndCloud?.loadRndTimeOnce){
+    const expectedPeople=workers.length||1;
+    window.rndCloud.loadRndTimeOnce().then(records=>{
+      if(!window.adminSession?.active?.())return;
+      const tile=$('#dashboardMetrics .rnd-hours-metric');if(!tile)return;
+      const date=today(),month=date.slice(0,7),d=new Date(date+'T12:00:00'),dayIndex=d.getDay(),monday=new Date(d);
+      monday.setDate(d.getDate()-((dayIndex+6)%7));
+      const asDate=x=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+      const weekStart=asDate(monday),sunday=new Date(monday);sunday.setDate(monday.getDate()+6);const weekEnd=asDate(sunday);
+      const monthEnd=`${month}-${String(new Date(d.getFullYear(),d.getMonth()+1,0).getDate()).padStart(2,'0')}`;
+      const workdays=(start,end)=>{let n=0;for(let x=new Date(start+'T12:00:00');x<=new Date(end+'T12:00:00');x.setDate(x.getDate()+1))if(x.getDay()!==0)n++;return n};
+      const members=new Set(workingMembers().map(m=>String(m.name||'').trim().toLowerCase()));
+      const actual=(start,end)=>records.filter(r=>r.date>=start&&r.date<=end&&members.has(String(r.owner||r.member||'').trim().toLowerCase())).reduce((total,r)=>total+(Number(r.minutes)||0),0);
+      const hours=mins=>`${(mins/60).toFixed(mins%60?1:0)}h`;
+      const dayActual=actual(date,date),weekActual=actual(weekStart,weekEnd),monthActual=actual(`${month}-01`,monthEnd);
+      const value=tile.querySelector('strong'),detail=tile.querySelector('small');
+      if(value)value.textContent=`${hours(monthActual)} / ${hours(workdays(`${month}-01`,monthEnd)*480*expectedPeople)}`;
+      if(detail)detail.textContent=`${expectedPeople} members · today ${hours(dayActual)}/${hours(480*expectedPeople)} · week ${hours(weekActual)}/${hours(workdays(weekStart,weekEnd)*480*expectedPeople)}`;
+    }).catch(error=>console.warn('Admin R&D time summary could not refresh',error));
+  }
   const pendingBtn=$('#dashboardPendingBtn'),pendingCount=$('#dashboardPendingCount');
   if(pendingBtn){pendingBtn.classList.toggle('has-pending',myPending.length>0);pendingBtn.classList.toggle('is-clear',myPending.length===0)}
   if(pendingCount)pendingCount.textContent=String(myPending.length);

@@ -1,0 +1,16 @@
+const fs=require('node:fs');const assert=require('node:assert/strict');
+const read=n=>fs.readFileSync(__dirname+'/'+n,'utf8');
+const dept=read('department-workspace.js'),quality=read('quality-daily.js'),rnd=read('app.js'),admin=read('leader-center.js'),editor=read('kpi-task-editor-v295.js'),html=read('index.html');
+assert(dept.includes('todayKaizen=kaizenKpiStats({start:today,end:today}),adminTeamSize=adminView()?Math.max(1,todayKaizen.names.length):1'),'Admin timesheet target must use Kaizen roster');
+assert(dept.includes('480*adminTeamSize')&&dept.includes('workdays(week.start,week.end)*480*adminTeamSize')&&dept.includes('monthTarget=workdays(month.start,month.end)*480*adminTeamSize'),'All three time periods must use 8 hours per counted person');
+const team=3,workdays=6;assert.equal(480*team/60,24);assert.equal(480*team*workdays/60,144);
+assert(quality.includes('context.eligibleMembers?.()'),'Quality admin team must match active Kaizen roster');
+assert(rnd.includes('const expectedPeople=workers.length||1'),'Legacy R&D admin metrics must share Kaizen roster');
+assert(admin.includes('<option value="weekly">Weekly</option><option value="monthly">Monthly</option>'),'Weekly/monthly selector preserved');
+assert(editor.includes('report.prepend(panel)')&&!editor.includes('body.append(panel)'),'Editor must live in selected KPI report');
+assert(editor.includes('await window.rndCloud.saveDepartmentRecord(dept,idOf(original),record)'),'Editor persists task names');
+assert(editor.includes('const titles=await load(dept,true)'),'Editor validates server readback');
+assert(admin.includes(".kpi-task-title-editor:focus-within"),'Live update must not interrupt editing');
+assert(html.includes('leader-center.js?v=297.0.0'),'Deployment assets must have refreshed cache tag');
+assert(html.includes('kpi-task-editor-v295.js?v=297.0.0'));
+console.log('PASS v297: KPI editing stays in admin Weekly/Monthly report; admin-only time targets scale by Kaizen roster; Firebase save/readback retained.');

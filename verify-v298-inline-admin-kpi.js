@@ -1,0 +1,36 @@
+/* Scoped verification: preserve KPI report and department flows while enabling inline admin editing. */
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const read=f=>fs.readFileSync(path.join(__dirname,f),'utf8');
+const editor=read('kpi-task-editor-v295.js');
+const admin=read('leader-center.js');
+const dept=read('department-workspace.js');
+const quality=read('quality-review.js');
+const html=read('index.html');
+assert(editor.includes("node.replaceChildren(visible,edit,form)"),'KPI table target cell must contain its own editor');
+assert(editor.includes("edit.insertAdjacentElement('afterend',form)"),'Quality KPI must show edit within its KPI card');
+assert(editor.includes("button.type='submit'")===false || editor.includes("saveButton.type='submit'"),'Inline submit button');
+assert(editor.includes('const next=normalize(input.value)')&&editor.includes('await save(dept,original,next)'),'Inline task rename validates and persists');
+assert(editor.includes("isAdmin()")&&editor.includes("if(!isAdmin())throw"),'Admin write authorization must remain enforced');
+assert(!editor.includes('report.prepend(panel)'),'No separate task editor panel');
+assert(admin.includes("window.kpiTaskTitles?.attachEditor(body,'quality',host)"),'Quality uses same inline editor');
+assert(admin.includes('window.kpiTaskTitles?.attachEditor(body,department,body.querySelector'),'All department report uses inline editor');
+assert(admin.includes('window.dfabWeeklyKpiReport.bindEditable'),'Existing per-KPI completion save remains');
+assert(admin.includes('<option value="weekly">Weekly</option><option value="monthly">Monthly</option>'),'Weekly/Monthly toggle remains');
+assert(dept.includes('window.kpiTaskTitles?.apply(')&&quality.includes("window.kpiTaskTitles?.apply(host,'quality')"),'Respective department report reads saved titles');
+for(const file of ['kpi-task-editor-v295.js','kpi-task-editor-v295.css','leader-center.js'])assert(html.includes(file+'?v=298.0.0'),'Missing updated cache identifier '+file);
+(async()=>{
+  let stored=[],writes=0,adminActive=true;
+  const cloud={loadDepartmentRecordsOnce:async()=>stored,saveDepartmentRecord:async(dept,id,row)=>{assert.equal(dept,'rnd');assert(id.startsWith('kpi_task_title_'));writes++;stored=[{...row}];}};
+  const context={window:{adminSession:{active:()=>adminActive,name:()=> 'Admin'},rndCloud:cloud},document:{},console,Map,Math,Date,encodeURIComponent,unescape};
+  vm.createContext(context);vm.runInContext(editor,context);
+  assert.equal(await context.window.kpiTaskTitles.save('rnd','Weekly Kaizen','Team Kaizen'),'Team Kaizen');
+  assert.equal(writes,1);assert.equal(stored[0].original,'Weekly Kaizen');assert.equal(stored[0].title,'Team Kaizen');
+  assert.equal((await context.window.kpiTaskTitles.load('rnd')).get('Weekly Kaizen'),'Team Kaizen');
+  adminActive=false;
+  await assert.rejects(context.window.kpiTaskTitles.save('rnd','Weekly Kaizen','Other'),/administrator/);
+  assert.equal(writes,1);
+  console.log('PASS v298: inline task editing, 1:1 Firebase title persistence, admin gating, Weekly/Monthly report, department reflection');
+})().catch(e=>{console.error(e);process.exitCode=1});

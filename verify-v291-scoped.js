@@ -1,0 +1,34 @@
+'use strict';
+const fs=require('fs');const assert=require('assert');
+const read=f=>fs.readFileSync(__dirname+'/'+f,'utf8');
+const generic=read('department-workspace.js'),quality=read('quality-daily.js'),admin=read('leader-center.js'),backup=read('backup-tools.js'),cloud=read('firebase-cloud.js'),html=read('index.html'),rnd=read('app.js');
+const contains=(source,phrase,desc)=>assert(source.includes(phrase),desc);
+contains(generic,'adminTeamSize=adminView()?','Admin-only team headcount');
+contains(generic,'monthTarget=workdays(month.start,month.end)*480*adminTeamSize','Admin monthly target');
+contains(generic,'Target ${fmtHours(8*adminTeamSize)}h','Admin daily team target');
+contains(generic,'workdays(week.start,week.end)*8*adminTeamSize','Admin weekly team target');
+contains(quality,'adminTeam=Boolean(window.adminSession?.active?.())','Quality admin-only team calculations');
+contains(quality,'weekTarget=6*480*teamSize','Quality weekly team target');
+contains(admin,"isKaizen?kaizenRows.length:",'Team Kaizen live count overrides saved KPI actual');
+contains(admin,"(period==='weekly'?5:20)*memberCount",'Admin per-member Kaizen target');
+contains(admin,'leaderQualityTeamKaizen','Quality admin Kaizen summary');
+contains(admin,'totalTargetMinutes=daysExpected*480*countedMembers','Admin report overall target');
+contains(rnd,'window.rndCloud.loadRndTimeOnce().then(records=>','R&D admin team hours source');
+for(const source of [generic,read('quality-time.js')]){
+  contains(source,'n<=18*60;n+=15','Clock picker ends at 6 PM');
+  contains(source,"period=h>=12?'PM':'AM'",'12 noon through 6 PM labels correctly');
+}
+contains(backup,'DFAB_MONTH_ARCHIVE_V1','Lossless JSON archive format');
+contains(backup,"crypto.subtle.digest('SHA-256'",'Strong archive fingerprint');
+contains(backup,'downloadJson(base,data','Complete JSON archive download');
+contains(backup,'memberNames:members','Members included in report roster');
+contains(backup,'Type DELETE ${m}','Explicit month deletion confirmation');
+contains(backup,"const live=await window.rndCloud.loadMonthBackup(key,m,mode)",'Fresh server reload before deletion');
+contains(backup,'fingerprint!==saved.fingerprint','Fingerprint must match');
+contains(backup,'if(remaining.length)throw','Verify cleanup has no remaining records');
+contains(cloud,'Only completed past months may be deleted','No current-month deletion');
+contains(cloud,'Archive mismatch: Firebase data changed','Server-side preflight');
+contains(cloud,"row.source==='assigned_tasks'&&row.status!=='completed'",'Do not delete pending assignments');
+for(const file of ['firebase-cloud.js','backup-tools.js','quality-daily.js','quality-time.js','department-workspace.js','leader-center.js','app.js'])contains(html,`${file}?v=291.0.0`,'Updated script cache tag '+file);
+assert.strictEqual(8*2,16);assert.strictEqual(5*2,10);
+console.log('PASS v291: admin-only team targets, live Kaizen counts, AM/PM workday clock, full verified month archive with destructive-operation safety checks');

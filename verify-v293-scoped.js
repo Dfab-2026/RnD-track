@@ -1,0 +1,14 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const d=fs.readFileSync('department-workspace.js','utf8');
+const b=fs.readFileSync('backup-tools.js','utf8');
+assert(d.includes('Target ${fmtHours(480*adminTeamSize)}h'),'Daily team/personal target should be in minutes');
+assert(d.includes('Target ${fmtHours(workdays(week.start,week.end)*480*adminTeamSize)}h'),'Weekly team/personal target should be in minutes');
+assert(d.includes('monthTarget=workdays(month.start,month.end)*480*adminTeamSize'),'Existing monthly target should remain in minutes');
+assert(!d.includes('fmtHours(8*adminTeamSize)'), 'Wrong daily hour-to-minute calculation remains');
+assert(b.includes('const monthTargetMinutes=workdayCount*8*60'), 'Monthly person target missing');
+assert(b.includes('progressCard(')&&b.includes("tone==='highest'")&&b.includes("tone==='lowest'"),'Task ranking color cards missing');
+for(const term of ['KAIZEN & INNOVATION IDEA RECORDS','Proposed solution','Expected benefit','DAILY WORKING HOURS','WEEKLY WORKING HOURS'])assert(b.includes(term),term);
+assert(b.includes('fingerprint!==saved.fingerprint'),'Keep backup/delete verification');
+const fmtHours=m=>(m/60).toFixed(m%60?1:0);
+assert.equal(fmtHours(480),'8');assert.equal(fmtHours(6*480),'48');assert.equal(fmtHours(3*480),'24');assert.equal(fmtHours(3*6*480),'144');
+console.log('PASS: v293 personal/admin time targets and backup structural safety checks');

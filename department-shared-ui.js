@@ -5,8 +5,8 @@
     {id:'dashboard',label:'Dashboard'},
     {id:'kaizen',label:'Kaizen Ideas'},
     {id:'weekly',label:'Weekly Report'},
-    {id:'kpi',label:'KPI Report'},
     {id:'assigned',label:'Assigned Tasks'},
+    {id:'kpi',label:'KPI Report'},
     {id:'timesheet',label:'Time Sheet'},
     {id:'settings',label:'Settings'}
   ];

@@ -1,0 +1,28 @@
+/* v295: admin-only task-title editing; existing KPI layout untouched. */
+.kpi-task-title-editor{margin-top:16px;padding:16px;max-width:100%;}
+.kpi-task-title-editor>summary{font-weight:700;cursor:pointer;list-style-position:inside;}
+.kpi-task-title-editor>p{color:#64748b;font-size:13px;margin:10px 0;}
+.kpi-task-title-list{display:grid;gap:10px;max-height:430px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;}
+.kpi-task-title-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;border-bottom:1px solid #e2e8f0;padding:9px 0;}
+.kpi-task-title-row label{display:grid;gap:5px;min-width:0;font-size:13px;}
+.kpi-task-title-row input{width:100%;min-width:0;min-height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;font:inherit;}
+.kpi-task-title-row small{grid-column:1/-1;font-size:12px;color:#475569;min-height:1em;}
+@media(max-width:560px){.kpi-task-title-row{grid-template-columns:1fr}.kpi-task-title-row button{width:100%}}
+
+/* v297: editor within admin KPI report */
+#leaderKpiEditableReport > .kpi-task-title-editor, #leaderExactQualityKpi > .kpi-task-title-editor {margin:0 0 14px;box-sizing:border-box;}
+
+/* v298: task editor is directly in each admin KPI report row. */
+#leaderCenter .kpi-inline-title-edit{display:inline-flex;align-items:center;margin:4px 0 0 8px;padding:3px 9px;border:1px solid #9dbadd;border-radius:6px;background:#eff6ff;color:#174e88;font:600 12px inherit;cursor:pointer;vertical-align:middle}
+#leaderCenter .kpi-inline-title-form{margin-top:7px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#leaderCenter .kpi-inline-title-form[hidden],#leaderCenter .kpi-inline-title-edit[hidden]{display:none!important}
+#leaderCenter .kpi-inline-title-form input{flex:1 1 170px;min-width:100px;max-width:100%;border:1px solid #9dbadd;border-radius:7px;padding:8px;font:inherit}
+#leaderCenter .kpi-inline-title-form button{border-radius:7px;padding:7px 10px;font-weight:650;cursor:pointer}
+#leaderCenter .kpi-inline-title-cancel{border:1px solid #cbd5e1;background:white;color:#334155}
+#leaderCenter .kpi-inline-title-status{width:100%;font-size:12px;color:#475569;min-height:1em}
+#leaderCenter .kref-target{min-width:0;overflow-wrap:anywhere}
+@media(max-width:600px){#leaderCenter .kpi-inline-title-form{align-items:stretch}#leaderCenter .kpi-inline-title-form input{flex-basis:100%}}
+
+/* v299: standard edit is inline in the existing Target / Standard cell only. */
+#leaderCenter .kref-standard .kpi-inline-title-edit{margin-left:8px}
+#leaderCenter .kpi-inline-title-form textarea{flex:1 1 240px;min-width:130px;width:100%;max-width:100%;box-sizing:border-box;resize:vertical;min-height:54px;border:1px solid #9dbadd;border-radius:7px;padding:8px;font:inherit}
