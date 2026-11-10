@@ -1,0 +1,13 @@
+const fs=require('fs'),assert=require('assert');
+const ui=fs.readFileSync('assigned-tasks.js','utf8'),cloud=fs.readFileSync('firebase-cloud.js','utf8'),style=fs.readFileSync('leader-center.css','utf8'),html=fs.readFileSync('index.html','utf8');
+assert(ui.includes('data-undo-complete='),'Completed task undo control missing');
+assert(ui.includes("updateAssignedTaskStatus(b.dataset.undoComplete,'pending')"),'Undo does not call Firebase pending transition');
+assert(ui.includes("confirm('Cancel completion and move this task back to Pending?')"),'Undo confirmation missing');
+assert(ui.includes('data-complete='),'Original completion button missing');
+assert(ui.includes('data-delete-task='),'Admin delete action must remain');
+assert(ui.includes('data-rate='),'Admin rating action must remain');
+assert(cloud.includes("next==='pending'?{R:0,B:'',A:0}:{}"),'Reopening does not clear stale rating');
+assert(cloud.includes('decodeAssignedTask(back).status!==next'),'Server confirmation for status missing');
+assert(style.includes('.assigned-task-undo:focus-visible'),'Focus style missing');
+assert(html.includes('assigned-tasks.js?v=290.0.0'),'Cache-busting file ref missing');
+console.log('PASS v290: completion undo, Firebase pending reset, rating cleanup, existing admin actions, accessible styling');

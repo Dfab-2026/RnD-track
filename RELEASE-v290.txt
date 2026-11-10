@@ -1,0 +1,9 @@
+DFAB KPI v290: Assigned Task accidental-completion undo
+Baseline: v289. Scoped changes only:
+- assigned-tasks.js: X button on completed employee tasks, confirmation, Firebase status revert to pending.
+- firebase-cloud.js: clear completion rating when reopening and verify returned server status.
+- leader-center.css: minimal X button styling.
+- index.html: cache bust assigned-tasks.js.
+- verify-v290-assigned-undo.js: targeted structural checks.
+Other department logic, records, database schemas, and flows left unchanged.
+Deploy to existing repo/Vercel. Live Firestore write must be verified in production.
